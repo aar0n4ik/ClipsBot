@@ -1,0 +1,131 @@
+# ─────────────────────────────────────────────────────────────
+#  Главный конфиг. Меняй прямо на GitHub (карандаш ✏️).
+#  Секреты (ключи, пароли) сюда НЕ пишем — они в Settings → Secrets.
+#  Ставка за 1000 просмотров и порог вывода — в Settings → Variables → MONEY_CONFIG.
+#  Многое здесь — только СТАРТОВЫЕ значения: бот подстраивает их по статистике (см. «Решения бота» в дашборде).
+# ─────────────────────────────────────────────────────────────
+
+streamer:
+  twitch_login: "albert1million"
+  display_name: "albert1million"
+  language: ru
+  persona: >
+    Русскоязычный стример родом из России, живёт в США (Лос-Анджелес).
+    Стримит IRL: в основном работает курьером доставки, ездит по городу на Тесле,
+    общается с чатом, попадает в ситуации с клиентами, на дорогах, в районах ЛА.
+    Сильные темы: Америка глазами русского, работа в доставке, деньги и чаевые,
+    странные клиенты, жизнь в ЛА, реакции на донаты и чат.
+  audience: >
+    Русскоязычные зрители за пределами России и с VPN (СНГ, диаспора в США и Европе),
+    которым интересна жизнь в Америке. Из России без VPN новые видео TikTok почти не видны.
+
+timezone: America/Chicago            # часовой пояс владельца: «сегодня» в дашборде и реестре
+
+# Фирменный шаблон — одинаковый в каждом ролике
+branding:
+  name: "albert1million"             # снизу по центру: [логотип] ALBERT1MILLION
+  uppercase: true
+  color: "#9146FF"                   # фирменный фиолетовый (заголовок, текущее слово, акценты)
+  logo: "assets/twitch-logo.png"     # круглый значок Twitch; фон «шахматкой» бот вычищает сам
+
+# На какие площадки делать версии (рендерится только под подключённые аккаунты)
+platforms: {tiktok: 1, youtube: 1, instagram: 1}
+
+accounts:                            # один клип выходит на площадке один раз; аккаунтов на площадке может быть несколько
+  - id: tt_main
+    platform: tiktok
+    name: "TikTok"                   # как показывать в дашборде
+    enabled: true
+    warmup: auto                     # auto — разгон, если роликов мало или аккаунт долго молчал
+  - id: yt_main
+    platform: youtube
+    name: "YouTube Shorts"
+    enabled: true
+    warmup: auto
+  - id: ig_main
+    platform: instagram
+    name: "Instagram Reels"
+    enabled: true
+    warmup: auto
+
+processing:
+  backfill_hours: 12
+  chunk_minutes: 120                 # пока стрим идёт — режем кусками по 2 часа
+  live_margin_seconds: 240
+  overlap_seconds: 120
+  min_window_seconds: 360
+  candidates_per_hour: 7
+  max_candidates_per_chunk: 18
+  max_renders_per_chunk: 12
+  min_per_chunk: 2
+  min_gap_seconds: 90
+  chat_delay_seconds: 9
+  context_before: 55
+  context_after: 25
+  weights: {chat: 1.0, keywords: 1.3, audio: 0.8, viewer_clips: 2.5, spam_wave: 0.8}
+
+whisper:
+  model: large-v3-turbo
+  compute_type: int8
+
+clips:
+  min_seconds: 12
+  max_seconds: 58
+  layout: auto                       # auto: горизонтальный стрим → крупная панель; вертикальный → на весь экран
+  subtitles: ru                      # по умолчанию; бот тестирует ru / ru+en сам
+  subtitle_caps: true
+  hook_overlay: true
+  follow_subject: true               # камера плавно едет за стримером, если он ушёл от центра (без дёрганий)
+
+audio:
+  max_muted: 0.15                    # больше 15% цифровой тишины (заглушка Twitch) — клип пропускается
+  music_suspect: 0.5                 # порог «похоже на музыку»: клип просто помечается в дашборде
+  separate_music: false              # музыку из ролика НЕ вырезаем — звук идёт как на стриме
+
+judge:
+  min_score: 5
+  fill_min_score: 4
+  use_frames: true
+  batch_size: 3
+  learn_from_stats: true
+
+learning:
+  arms: [hook_style, cold_open, subtitles, progress_bar]   # что бот тестирует и подстраивает сам
+
+health:
+  cusum_alarm: 3.0                   # чувствительность ранней тревоги о просадке
+
+llm:
+  providers:
+    - {name: github-models, base_url: "https://models.github.ai/inference", model: openai/gpt-4.1-mini, key_env: GITHUB_TOKEN}
+    - {name: github-models-backup, base_url: "https://models.github.ai/inference", model: openai/gpt-4o-mini, key_env: GITHUB_TOKEN}
+    - {name: gemini, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-2.5-flash, key_env: GEMINI_API_KEY}
+
+posting:
+  timezone: Europe/Moscow            # время аудитории: по нему ночь, лучшие часы, «сегодня» для лимитов
+  daily_cap: 6                       # СТАРТОВЫЙ потолок постов в сутки на аккаунт; дальше подбирается по данным
+  min_gap_minutes: 80
+  quiet_hours: [2, 3, 4, 5, 6]
+  hot_score: 8                       # такой клип, сделанный во время эфира, уходит сразу
+  warmup: {ramp: [2, 2, 3, 3, 3, 4, 4, 5, 5, 6]}
+  fixed_hashtags: ["#albert1million"]
+  disable_duet: false
+  disable_stitch: false
+  disable_comment: false
+  tiktok:
+    mode: inbox                      # inbox = в черновики (без аудита) | direct = сразу публично (после аудита)
+    max_age_hours: 72
+    max_cap: 12
+  youtube:
+    privacy: public
+    category_id: "24"                # Entertainment
+    max_age_hours: 168               # на Shorts клип живёт дольше — можно выкладывать позже
+    max_cap: 10
+    daily_cap: 4
+  instagram:
+    max_age_hours: 120
+    max_cap: 8
+    daily_cap: 3
+
+dashboard:
+  title: ""                          # пусто — «Нарезки albert1million»
