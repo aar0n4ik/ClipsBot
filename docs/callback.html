@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Почти готово</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&family=Onest:wght@400;600&family=JetBrains+Mono&display=swap">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+<main class="page">
+  <h1 id="h">Почти готово</h1>
+  <div id="ok" hidden>
+    <p>Код действует несколько минут. Скопируй его и запусти воркфлоу <b>«0 · Connect account»</b>:</p>
+    <div class="codebox"><code id="code"></code><button class="btn" id="copy" type="button">Скопировать</button></div>
+    <ol>
+      <li>Открой <a id="wf" target="_blank" rel="noopener">страницу воркфлоу</a> → <b>Run workflow</b>.</li>
+      <li>platform: <code id="plat"></code>, account: <code id="acc"></code>, code: вставь скопированное.</li>
+      <li>Через минуту в логе появится «✅ Аккаунт подключён», а в дашборде аккаунт станет зелёным.</li>
+    </ol>
+  </div>
+  <p id="err" class="err" hidden></p>
+</main>
+<script src="app-config.js"></script>
+<script>
+const q = new URLSearchParams(location.search), cfg = window.CLIPHQ_CONFIG || {};
+const code = (q.get("code") || "").replace(/#_$/, ""), state = q.get("state") || "";
+const error = q.get("error_description") || q.get("error_reason") || q.get("error");
+const saved = sessionStorage.getItem("oauth_state");
+const fail = (h, m) => { document.getElementById("h").textContent = h; const e = document.getElementById("err"); e.hidden = false; e.textContent = m; };
+if (error || !code) fail("Не получилось", error || "Площадка не вернула код. Попробуй ещё раз со страницы подключения.");
+else if (saved && saved !== state) fail("Подозрительный ответ", "Параметр state не совпал. Начни подключение заново.");
+else {
+  const [plat, acc] = state.split(".");
+  document.getElementById("ok").hidden = false;
+  document.getElementById("code").textContent = code;
+  document.getElementById("plat").textContent = plat || "tiktok";
+  document.getElementById("acc").textContent = acc || "tt_main";
+  const owner = cfg.owner || location.hostname.split(".")[0];
+  const repo = cfg.repo || location.pathname.split("/").filter(Boolean)[0];
+  document.getElementById("wf").href = `https://github.com/${owner}/${repo}/actions/workflows/auth.yml`;
+  document.getElementById("copy").onclick = async ev => {
+    try { await navigator.clipboard.writeText(code); ev.target.textContent = "Скопировано"; }
+    catch { const r = document.createRange(); r.selectNodeContents(document.getElementById("code")); getSelection().removeAllRanges(); getSelection().addRange(r); }
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+name: 0 · Connect account (TikTok / YouTube / Instagram)
+# Запусти после страницы connect.html: она покажет, что вписать в поля.
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Площадка"
+        type: choice
+        options: [tiktok, youtube, instagram]
+        default: tiktok
+      account:
+        description: "ID аккаунта из config.yaml (accounts → id)"
+        default: tt_main
+        required: true
+      code:
+        description: "Код со страницы подключения (действует несколько минут)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: accounts
+  cancel-in-progress: false
+
+jobs:
+  auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+      IG_CLIENT_ID: ${{ secrets.IG_CLIENT_ID }}
+      IG_CLIENT_SECRET: ${{ secrets.IG_CLIENT_SECRET }}
+      OAUTH_REDIRECT_URI: ${{ vars.OAUTH_REDIRECT_URI || vars.TIKTOK_REDIRECT_URI }}
+      TOKEN_KEY: ${{ secrets.TOKEN_KEY }}
+      DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
+      MONEY_CONFIG: ${{ vars.MONEY_CONFIG }}
+    steps:
+      - name: Hide code in logs
+        run: echo "::add-mask::${{ inputs.code }}"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -q -r requirements-light.txt
+      - run: bash scripts/mount_state.sh
+      - name: Exchange code
+        run: python -m clipper auth --platform "$PLATFORM" --account "$ACCOUNT" --code "$CODE"
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          ACCOUNT: ${{ inputs.account }}
+          CODE: ${{ inputs.code }}

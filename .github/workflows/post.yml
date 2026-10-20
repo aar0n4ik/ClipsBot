@@ -1,0 +1,43 @@
+name: 3 · Post (все площадки)
+# Каждый час: для каждого аккаунта решает, пора ли постить, и что именно.
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Опубликовать прямо сейчас лучший клип, не дожидаясь плана"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: accounts      # пост, статистика, doctor и подключение не пересекаются (общие токены)
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+      IG_CLIENT_ID: ${{ secrets.IG_CLIENT_ID }}
+      IG_CLIENT_SECRET: ${{ secrets.IG_CLIENT_SECRET }}
+      TOKEN_KEY: ${{ secrets.TOKEN_KEY }}
+      DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
+      MONEY_CONFIG: ${{ vars.MONEY_CONFIG }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip, cache-dependency-path: requirements-light.txt}
+      - run: pip install -q -r requirements-light.txt
+      - run: bash scripts/mount_state.sh
+      - run: python -m clipper post ${{ inputs.force && '--force' || '' }}
+      - if: failure()
+        run: python -m clipper fail --job post || true

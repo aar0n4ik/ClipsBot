@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Нарезки</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: диспетчерская доставки — сводка денег сверху, конвейер и расписание рядом, ниже ролики как накладные */
+:root {
+  --bg: #eef0f4;
+  --panel: #ffffff;
+  --panel-2: #f6f7fa;
+  --line: #dde1e9;
+  --fg: #171a21;
+  --muted: #5d6474;
+  --accent: #e2570f;       /* оранжевый «доставка» */
+  --accent-soft: #fde7da;
+  --ink-on-accent: #ffffff;
+  --good: #1f8a4c;  --good-soft: #dcf2e4;
+  --warn: #b76e00;  --warn-soft: #fbefd6;
+  --bad: #c62a3a;   --bad-soft: #fadfe2;
+  --live: #e5243b;
+  --bar: #e2570f;  --bar-dim: #f2b896;
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "Onest", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12141a; --panel: #1a1d25; --panel-2: #20242e; --line: #2c313d; --fg: #eceef3; --muted: #9aa2b3;
+  --accent: #ff8a4c; --accent-soft: #3a2418; --ink-on-accent: #1a0f08;
+  --good: #4fd18b; --good-soft: #15301f; --warn: #f2b84b; --warn-soft: #33280f; --bad: #ff6b7a; --bad-soft: #3a1a1f;
+  --live: #ff4d61; --bar: #ff8a4c; --bar-dim: #6b3f27; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12141a; --panel: #1a1d25; --panel-2: #20242e; --line: #2c313d; --fg: #eceef3; --muted: #9aa2b3;
+  --accent: #ff8a4c; --accent-soft: #3a2418; --ink-on-accent: #1a0f08;
+  --good: #4fd18b; --good-soft: #15301f; --warn: #f2b84b; --warn-soft: #33280f; --bad: #ff6b7a; --bad-soft: #3a1a1f;
+  --live: #ff4d61; --bar: #ff8a4c; --bar-dim: #6b3f27; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; display: grid; gap: 18px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h2 { font: 600 13px/1.2 var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--f-mono); }
+.muted { color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; }
+
+/* шапка */
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand h1 { font: 700 22px/1 var(--f-display); letter-spacing: -.01em; }
+.brand .who { color: var(--muted); font-size: 14px; }
+.live { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; max-width: 100%; }
+.live .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.live.on .dot { background: var(--live); box-shadow: 0 0 0 0 var(--live); animation: pulse 1.6s infinite; }
+.live.on b { color: var(--live); letter-spacing: .06em; }
+.live .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 55%, transparent); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.iconbtn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 7px 12px; font-size: 13px; }
+.iconbtn:hover { border-color: var(--accent); }
+.fresh { font-size: 12px; color: var(--muted); }
+
+/* фильтры */
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; font-size: 13px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.filters select, .filters input[type=date] { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 13px; }
+.range { display: inline-flex; gap: 6px; align-items: center; }
+
+/* баннер выплаты */
+.payout-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 18px; border-radius: var(--r); background: var(--good-soft); border: 1px solid color-mix(in srgb, var(--good) 35%, transparent); }
+.payout-banner strong { font: 700 16px/1.2 var(--f-display); color: var(--good); }
+.payout-banner .x { margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: 13px; text-decoration: underline; }
+
+/* деньги */
+.money { display: grid; grid-template-columns: 1.35fr 1fr 1fr 1.25fr; gap: 14px; }
+.kpi { display: grid; gap: 6px; align-content: start; }
+.kpi .label { font-size: 13px; color: var(--muted); }
+.kpi .val { font: 700 30px/1.05 var(--f-display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kpi.hero { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.kpi.hero .label, .kpi.hero .sub { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+.kpi.hero .val { font-size: 40px; color: var(--accent); }
+.kpi .sub { font-size: 12.5px; color: var(--muted); }
+.meter { height: 8px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--line); overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s; }
+.meter.ok > i { background: var(--good); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+.chip.good { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.chip.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.chip.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.acc { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+
+/* средний ряд */
+.mid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.stages { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 4px 0 14px; }
+.stage { display: grid; gap: 6px; font-size: 11.5px; color: var(--muted); text-align: center; }
+.stage i { height: 6px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--line); }
+.stage.done i { background: var(--bar-dim); border-color: transparent; }
+.stage.now i { background: var(--accent); border-color: transparent; animation: glow 1.4s ease-in-out infinite alternate; }
+.stage.now { color: var(--fg); font-weight: 600; }
+@keyframes glow { from { opacity: .55; } to { opacity: 1; } }
+.now-line { font: 600 17px/1.3 var(--f-body); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13.5px; margin-top: 10px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.countdown { font: 700 28px/1 var(--f-display); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.slots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.slots span { font: 600 12px/1 var(--f-mono); padding: 6px 8px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); }
+.slots span.next { background: var(--accent); color: var(--ink-on-accent); border-color: var(--accent); }
+.slots span.past { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent); }
+
+/* график */
+.chart-wrap { overflow-x: auto; }
+svg.chart { display: block; width: 100%; height: 220px; min-width: 520px; }
+svg.chart text { fill: var(--muted); font: 11px var(--f-mono); }
+svg.chart .grid { stroke: var(--line); stroke-width: 1; }
+svg.chart rect.b { fill: var(--bar-dim); }
+svg.chart rect.b.in { fill: var(--bar); }
+svg.chart rect.hit { fill: transparent; }
+svg.chart g.col:hover rect.b { fill: var(--accent); }
+.tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); padding: 8px 10px; border-radius: 9px; font-size: 12.5px; line-height: 1.35; z-index: 20; white-space: nowrap; }
+
+/* аккаунты */
+.accs { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.acc { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); }
+.acc b { font-weight: 600; }
+.acc .big { font: 700 20px/1.2 var(--f-display); font-variant-numeric: tabular-nums; }
+
+/* таблица роликов */
+.tbl-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 760px; }
+th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.r, td.r { text-align: right; }
+th button { border: 0; background: none; padding: 0; color: inherit; font: inherit; }
+th button[aria-sort] { color: var(--fg); }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+.vid { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.th { width: 34px; height: 60px; border-radius: 6px; flex: none; object-fit: cover; background: var(--panel-2); display: grid; place-items: center; font: 600 9px var(--f-mono); color: var(--muted); text-transform: uppercase; overflow: hidden; border: 1px solid var(--line); }
+.vid .tt { font-weight: 500; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 46ch; }
+td a { color: var(--accent); text-decoration: none; font-weight: 600; }
+td a:hover { text-decoration: underline; }
+.money-cell { font-family: var(--f-mono); font-weight: 600; }
+.delta { color: var(--good); font-family: var(--f-mono); font-size: 12.5px; }
+
+/* очередь */
+.queue { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.qcard { display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); min-width: 0; }
+.qcard .th { width: 58px; height: 103px; }
+.qcard .ov { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.qcard .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.score { font: 700 12px/1 var(--f-mono); padding: 4px 7px; border-radius: 7px; background: var(--fg); color: var(--bg); }
+.score.hi { background: var(--accent); color: var(--ink-on-accent); }
+
+/* инсайты */
+.insights { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hbar { display: grid; grid-template-columns: 74px 1fr 64px; gap: 8px; align-items: center; font-size: 13px; padding: 3px 0; }
+.hbar i { height: 10px; border-radius: 99px; background: var(--bar); display: block; }
+.hbar .bg { background: var(--panel-2); border-radius: 99px; overflow: hidden; }
+
+/* вход */
+.gate { min-height: 80vh; display: grid; place-items: center; }
+.gate form { width: min(380px, 100%); display: grid; gap: 12px; }
+.gate h1 { font: 700 26px/1.1 var(--f-display); }
+.gate input[type=password] { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-size: 16px; }
+.btn { padding: 11px 16px; border: 0; border-radius: 12px; background: var(--accent); color: var(--ink-on-accent); font-weight: 600; }
+.err { color: var(--bad); font-size: 13px; min-height: 1.2em; }
+label.check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--muted); }
+
+/* настройки */
+dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--fg); padding: 22px; width: min(440px, calc(100% - 32px)); }
+dialog::backdrop { background: rgb(0 0 0 / .45); }
+dialog h3 { font: 700 18px/1.2 var(--f-display); margin-bottom: 14px; }
+.setting { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.switch { position: relative; width: 44px; height: 26px; flex: none; }
+.switch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 99px; background: var(--line); transition: background .2s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--panel); transition: transform .2s; box-shadow: 0 1px 2px rgb(0 0 0 / .25); }
+.switch input:checked + span { background: var(--good); }
+.switch input:checked + span::after { transform: translateX(18px); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.demo-note { font-size: 12.5px; padding: 8px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); }
+
+@media (max-width: 980px) {
+  .money { grid-template-columns: 1fr 1fr; }
+  .mid, .insights { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .money { grid-template-columns: 1fr; }
+  .kpi.hero .val { font-size: 34px; }
+  .stages { grid-template-columns: repeat(3, 1fr); }
+  .live .t { max-width: 22ch; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* ── добавлено: предупреждения, реестр, план, A/B ── */
+.alerts { display: grid; gap: 8px; }
+.alert { display: flex; gap: 10px; align-items: flex-start; padding: 11px 14px; border-radius: 12px; font-size: 13.5px; border: 1px solid transparent; }
+.alert b { font-weight: 600; }
+.alert.warn { background: var(--warn-soft); color: var(--warn); }
+.alert.bad { background: var(--bad-soft); color: var(--bad); }
+.alert .msg { color: var(--fg); }
+.payout-banner .btn { padding: 8px 14px; font-size: 14px; }
+.payout-banner .x { margin-left: 0; }
+.plan { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.plan span { font: 600 12px/1 var(--f-mono); padding: 6px 8px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); }
+.plan span.next { background: var(--accent); color: var(--ink-on-accent); border-color: var(--accent); }
+.plan span.past { color: var(--muted); text-decoration: line-through; }
+.health { display: inline-flex; gap: 6px; align-items: center; }
+
+/* очередь — раскрытие */
+.qcard details { margin-top: 8px; font-size: 12.5px; }
+.qcard summary { cursor: pointer; color: var(--accent); font-weight: 600; list-style: none; }
+.qcard summary::-webkit-details-marker { display: none; }
+.qcard .more { display: grid; gap: 6px; margin-top: 6px; color: var(--muted); }
+.qcard .more b { color: var(--fg); font-weight: 600; }
+.copyline { display: flex; gap: 6px; align-items: flex-start; }
+.copyline span { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--fg); }
+.mini { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 3px 8px; font-size: 12px; color: var(--fg); cursor: pointer; }
+.mini:hover { border-color: var(--accent); }
+
+/* реестр выплат */
+.ledger-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.ledger-sum { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-bottom: 14px; font-size: 13.5px; color: var(--muted); }
+.ledger-sum b { font: 700 18px/1.2 var(--f-display); color: var(--fg); font-variant-numeric: tabular-nums; }
+.entries { display: grid; gap: 10px; }
+.entry { border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); padding: 12px 14px; display: grid; gap: 8px; }
+.entry.void { opacity: .6; }
+.entry.void .amt { text-decoration: line-through; }
+.entry-top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; }
+.entry .amt { font: 700 20px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+.entry .when { color: var(--muted); font-size: 13px; }
+.entry .menu { margin-left: auto; }
+.entry .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border-radius: 10px; background: var(--bad-soft); color: var(--bad); font-size: 13px; }
+.entry details summary { cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 600; }
+.entry table { min-width: 0; font-size: 12.5px; margin-top: 6px; }
+.entry td, .entry th { padding: 5px 6px; }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn.danger { background: var(--bad); color: #fff; }
+.btn:disabled { opacity: .55; cursor: default; }
+
+/* диалог выплаты */
+#payDlg { width: min(520px, calc(100% - 32px)); }
+.field { display: grid; gap: 6px; margin-bottom: 12px; font-size: 13.5px; }
+.field input[type=number], .field input[type=text], .field input[type=datetime-local], .field input[type=password] {
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-size: 15px; width: 100%; }
+.radios { display: flex; flex-wrap: wrap; gap: 14px; }
+.radios label { display: inline-flex; gap: 6px; align-items: center; }
+.preview { padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); font-size: 13px; display: grid; gap: 4px; margin-bottom: 14px; }
+.big-confirm { font: 600 16px/1.45 var(--f-body); padding: 14px; border-radius: 12px; background: var(--good-soft); color: var(--fg); margin-bottom: 14px; }
+.dlg-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 30; }
+.exp { display: grid; gap: 4px; margin-bottom: 12px; }
+.exp-title { font-size: 13px; font-weight: 600; }
+/* ── v3: площадки, выплаты, решения, система ── */
+.money { grid-template-columns: 1.3fr 1fr 1fr 1fr; }
+button.kpi { text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .15s, transform .15s; }
+button.kpi:hover { border-color: var(--accent); }
+button.kpi:active { transform: translateY(1px); }
+.kpi .more-link { font-size: 12.5px; color: var(--accent); font-weight: 600; }
+.payline { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.payline .total { font: 700 22px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+.payline .meter { flex: 1 1 160px; min-width: 120px; }
+.payline .x { border: 0; background: transparent; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; padding: 0; }
+.payline.ready { border-color: color-mix(in srgb, var(--good) 45%, transparent); background: var(--good-soft); }
+.pl { display: inline-flex; align-items: center; justify-content: center; font: 700 10.5px/1 var(--f-mono); letter-spacing: .02em;
+  min-width: 26px; height: 20px; padding: 0 5px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); }
+.pl.tiktok::before { content: "TT"; } .pl.youtube::before { content: "YT"; } .pl.instagram::before { content: "IG"; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+.links a, .links span.l { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; padding: 3px 7px 3px 3px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); text-decoration: none; font-variant-numeric: tabular-nums; }
+.links a:hover { border-color: var(--accent); }
+.links .best { border-color: var(--accent); }
+.acc-rows { display: grid; gap: 8px; margin-top: 12px; }
+.acc-row { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 12px; border-radius: 12px;
+  background: var(--panel-2); border: 1px solid var(--line); font-size: 13px; }
+.acc-row .sub { grid-column: 2 / -1; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.acc-row .err { grid-column: 1 / -1; color: var(--bad); font-size: 12.5px; }
+.tabs { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.tabs button { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 5px 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.learn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.dimbox { display: grid; gap: 6px; }
+.dimbox h3 { font: 600 13px/1.3 var(--f-body); margin: 0; }
+.arm { display: grid; grid-template-columns: 110px 1fr 92px; gap: 8px; align-items: center; font-size: 12.5px; }
+.arm .bg { height: 10px; border-radius: 99px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line); }
+.arm .bg i { display: block; height: 100%; background: var(--bar); }
+.arm .eff { text-align: right; font-family: var(--f-mono); color: var(--muted); }
+.arm .eff.up { color: var(--good); } .arm .eff.down { color: var(--bad); }
+.hours24 { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; align-items: end; height: 54px; }
+.hours24 i { display: block; background: var(--bar-dim); border-radius: 2px 2px 0 0; }
+.hours24 i.top { background: var(--bar); }
+.hours-lbl { display: grid; grid-template-columns: repeat(24, 1fr); font: 10px var(--f-mono); color: var(--muted); }
+.dec { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; align-items: start; }
+.dec:last-child { border-bottom: 0; }
+.dec .when { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.dec .what { min-width: 0; overflow-wrap: anywhere; }
+.dec.reverted .what { text-decoration: line-through; color: var(--muted); }
+.dec .confirm { grid-column: 1 / -1; }
+.sys { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.sys-item { padding: 10px 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); display: grid; gap: 4px; font-size: 13px; }
+.sys-item .msg { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.sys-item a { color: var(--accent); font-size: 12.5px; }
+dialog.wide { width: min(860px, calc(100% - 24px)); max-height: calc(100% - 40px); }
+dialog .tbl-wrap { margin: 0; padding: 0; }
+dialog table { min-width: 560px; }
+.bd-row { display: grid; grid-template-columns: 150px 1fr 120px; gap: 10px; align-items: center; font-size: 13.5px; padding: 4px 0; }
+.bd-row .bg { height: 12px; border-radius: 99px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line); }
+.bd-row .bg i { display: block; height: 100%; background: var(--bar); }
+.statement { font-size: 13px; }
+.statement .head { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 12px; }
+.statement .head b { font: 700 18px/1.2 var(--f-display); }
+.kind { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+.kind.new { background: var(--accent-soft); color: var(--accent); } .kind.topup { background: var(--good-soft); color: var(--good); }
+.qcard .tg { display: grid; gap: 4px; margin-top: 6px; }
+.qcard .tg-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12.5px; }
+@media (max-width: 980px) { .money { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .money { grid-template-columns: 1fr; } .arm { grid-template-columns: 90px 1fr 80px; } .bd-row { grid-template-columns: 110px 1fr 90px; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <section class="gate" id="gate" hidden>
+    <form id="gateForm">
+      <h1 id="gateTitle">Нарезки</h1>
+      <p class="muted" style="margin:0">Данные зашифрованы. Введи пароль дашборда (секрет <span class="mono">DASHBOARD_PASSWORD</span>).</p>
+      <input type="password" id="pw" autocomplete="current-password" placeholder="Пароль" required>
+      <label class="check"><input type="checkbox" id="remember" checked> Запомнить на этом устройстве</label>
+      <button class="btn" type="submit">Открыть</button>
+      <div class="err" id="gateErr" role="alert"></div>
+    </form>
+  </section>
+
+  <div id="dash" hidden style="display:contents">
+    <header class="top">
+      <div class="brand"><h1 id="title">Нарезки</h1><span class="who" id="who"></span></div>
+      <div class="live" id="live"><span class="dot"></span><span id="liveText">—</span></div>
+      <span class="fresh" id="fresh"></span>
+      <button class="iconbtn" id="reload" type="button">Обновить</button>
+      <button class="iconbtn" id="openSettings" type="button">Настройки</button>
+    </header>
+    <div class="demo-note" id="demoNote" hidden>Это демо с выдуманными цифрами, чтобы было видно, как всё выглядит. На твоём сайте GitHub Pages будут только настоящие данные бота.</div>
+    <div class="alerts" id="alerts"></div>
+
+    <div class="filters">
+      <div class="seg" id="period" role="group" aria-label="Период">
+        <button type="button" data-p="today">Сегодня</button>
+        <button type="button" data-p="yesterday">Вчера</button>
+        <button type="button" data-p="7">7 дней</button>
+        <button type="button" data-p="30">30 дней</button>
+        <button type="button" data-p="all">Всё время</button>
+        <button type="button" data-p="custom">Свой период</button>
+      </div>
+      <span class="range" id="range" hidden>
+        <input type="date" id="from" aria-label="С"> — <input type="date" id="to" aria-label="По">
+      </span>
+      <select id="platform" aria-label="Площадка"><option value="">Все площадки</option></select>
+    </div>
+
+    <section class="money">
+      <div class="panel kpi hero">
+        <span class="label" id="lblIncome">Доход за период</span>
+        <span class="val" id="income">$0</span>
+        <span class="sub" id="rateLine"></span>
+      </div>
+      <div class="panel kpi">
+        <span class="label">Просмотры за период</span>
+        <span class="val" id="views">0</span>
+        <span class="sub" id="viewsSub"></span>
+      </div>
+      <button class="panel kpi" type="button" id="kpiNew">
+        <span class="label">К выплате · новые клипы</span>
+        <span class="val" id="owedNew">$0</span>
+        <span class="sub" id="owedNewSub"></span>
+        <span class="more-link">По площадкам и клипам</span>
+      </button>
+      <button class="panel kpi" type="button" id="kpiTop">
+        <span class="label">К выплате · доплата за рост</span>
+        <span class="val" id="owedTop">$0</span>
+        <span class="sub" id="owedTopSub"></span>
+        <span class="more-link">По площадкам и клипам</span>
+      </button>
+    </section>
+
+    <section class="panel payline" id="payline">
+      <span class="muted">К выплате всего</span>
+      <span class="total" id="owedTotal">$0</span>
+      <div class="meter" id="meter"><i style="width:0"></i></div>
+      <span class="muted" id="payMeta"></span>
+      <button class="btn" type="button" id="payBtn">Подтвердить получение</button>
+      <button class="x" type="button" id="hideBanner" hidden>Скрыть напоминание</button>
+    </section>
+
+    <section class="mid">
+      <div class="panel">
+        <div class="panel-head"><h2>Конвейер нарезки</h2><span class="chip" id="procChip">—</span></div>
+        <div class="stages" id="stages"></div>
+        <div class="now-line" id="procStage">—</div>
+        <dl class="kv" id="procKv"></dl>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Публикация</h2><span class="chip" id="modeChip">—</span></div>
+        <div class="muted" style="font-size:13px" id="nextLbl">Следующий пост по плану через</div>
+        <div class="countdown" id="countdown">—</div>
+        <div class="acc-rows" id="accRows"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Просмотры по дням</h2><span class="muted" style="font-size:13px" id="chartNote"></span></div>
+      <div class="chart-wrap"><svg class="chart" id="chart" role="img" aria-label="Просмотры по дням"></svg></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Клипы и доход</h2><span class="muted" style="font-size:13px" id="tblNote"></span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Клип</th><th>Где вышел (просмотры)</th>
+            <th><button type="button" data-sort="date">Дата</button></th>
+            <th class="r"><button type="button" data-sort="pviews">За период</button></th>
+            <th class="r"><button type="button" data-sort="best">Лучший</button></th>
+            <th class="r"><button type="button" data-sort="owed">К выплате</button></th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="ledgerPanel">
+      <div class="panel-head"><h2>Реестр выплат</h2><button class="iconbtn" type="button" id="ledgerAdd">Добавить получение</button></div>
+      <div class="ledger-tools">
+        <div class="seg" id="lperiod" role="group" aria-label="Период реестра">
+          <button type="button" data-l="all">Всё</button>
+          <button type="button" data-l="month">Этот месяц</button>
+          <button type="button" data-l="prev">Прошлый месяц</button>
+          <button type="button" data-l="custom">Свой период</button>
+        </div>
+        <span class="range" id="lrange" hidden><input type="date" id="lfrom" aria-label="С"> — <input type="date" id="lto" aria-label="По"></span>
+        <select id="lplatform" aria-label="Площадка в реестре"><option value="">Все площадки</option></select>
+        <label class="check"><input type="checkbox" id="lvoid"> Показывать отменённые</label>
+      </div>
+      <div class="ledger-sum" id="ledgerSum"></div>
+      <div class="entries" id="entries"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Очередь и последние клипы</h2><span class="muted" style="font-size:13px" id="queueNote"></span></div>
+      <div class="queue" id="queue"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Что бот выяснил</h2>
+        <div class="tabs" id="learnTabs"></div></div>
+      <p class="muted" style="margin:0 0 14px;font-size:13px" id="learnNote"></p>
+      <div class="learn-grid" id="learnGrid"></div>
+    </section>
+
+    <section class="insights">
+      <div class="panel"><div class="panel-head"><h2>Какие темы заходят</h2></div><div id="byCat"></div></div>
+      <div class="panel"><div class="panel-head"><h2>Площадки</h2></div><div id="byPlat"></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Решения бота</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <label class="check"><input type="checkbox" id="decOnlyRev"> Только с откатом</label>
+          <button class="iconbtn" type="button" id="freezeBtn">Поставить обучение на паузу</button>
+        </div></div>
+      <div id="decisions"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Система</h2><span class="muted" style="font-size:13px" id="sysNote"></span></div>
+      <div class="sys" id="sys"></div>
+    </section>
+  </div>
+</div>
+
+<dialog id="settings">
+  <h3>Настройки</h3>
+  <div class="setting">
+    <div><div>Напоминание о выплате</div><div class="muted" style="font-size:12.5px" id="thrNote">Подсветка, когда накопится сумма для вывода</div></div>
+    <label class="switch"><input type="checkbox" id="optAlert" aria-label="Напоминание о выплате"><span></span></label>
+  </div>
+  <div class="setting" style="display:grid;gap:8px">
+    <div>Ключ GitHub для записи</div>
+    <div class="muted" style="font-size:12.5px">Нужен для кнопок «Подтвердить получение», «Откатить» и пауз. GitHub → Settings → Developer settings → Fine-grained tokens → только этот репозиторий, права Contents: Read and write. Хранится только в этом браузере.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="password" id="ghToken" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:180px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2)">
+    <button class="iconbtn" type="button" id="saveToken">Сохранить</button></div>
+    <div class="muted" style="font-size:12.5px" id="tokenState"></div>
+  </div>
+  <div class="setting">
+    <div><div>Ставка и порог вывода</div><div class="muted" style="font-size:12.5px">GitHub → Settings → Variables → <span class="mono">MONEY_CONFIG</span></div></div>
+  </div>
+  <div class="setting">
+    <div>Забыть пароль и ключ на этом устройстве</div>
+    <button class="iconbtn" type="button" id="forget">Забыть</button>
+  </div>
+  <div class="dlg-actions" style="margin-top:14px"><button class="btn" type="button" id="closeSettings">Готово</button></div>
+</dialog>
+
+<dialog id="payDlg" class="wide">
+  <div id="payStep1">
+    <h3>Подтвердить получение</h3>
+    <div class="field"><label for="payAmount">Сколько получил</label><input type="number" id="payAmount" min="0" step="0.01" inputmode="decimal"></div>
+    <div class="field"><span>Когда</span>
+      <div class="radios">
+        <label><input type="radio" name="payWhen" value="now" checked> Сейчас</label>
+        <label><input type="radio" name="payWhen" value="custom"> Другая дата</label>
+      </div>
+      <input type="datetime-local" id="payDate" hidden>
+    </div>
+    <div class="field"><label for="payNote">Комментарий (необязательно)</label><input type="text" id="payNote" placeholder="например: PayPal, за неделю" maxlength="120"></div>
+    <div class="preview" id="payPreview"></div>
+    <div class="err" id="payErr"></div>
+    <div class="dlg-actions"><button class="btn ghost" type="button" id="payCancel">Отмена</button><button class="btn" type="button" id="payNext">Дальше</button></div>
+  </div>
+  <div id="payStep2" hidden>
+    <h3>Точно записать?</h3>
+    <div class="big-confirm" id="payConfirmText"></div>
+    <div class="err" id="payErr2"></div>
+    <div class="dlg-actions"><button class="btn ghost" type="button" id="payBack">Назад</button><button class="btn" type="button" id="paySave">Да, записать в реестр</button></div>
+  </div>
+</dialog>
+
+<dialog id="bdDlg" class="wide">
+  <div class="panel-head" style="margin-bottom:10px"><h3 id="bdTitle" style="margin:0">—</h3><button class="iconbtn" type="button" id="bdClose">Закрыть</button></div>
+  <p class="muted" style="margin:0 0 12px;font-size:13px" id="bdNote"></p>
+  <div id="bdBars"></div>
+  <div class="tabs" id="bdTabs" style="margin:14px 0 10px"></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Клип</th><th>Площадки</th><th class="r">Лучший</th><th class="r">Уже оплачено</th><th class="r">К выплате</th></tr></thead><tbody id="bdRows"></tbody></table></div>
+</dialog>
+
+<dialog id="stDlg" class="wide">
+  <div class="panel-head" style="margin-bottom:10px"><h3 style="margin:0">Отчёт о выплате</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="iconbtn" type="button" id="stCopy">Скопировать текстом</button><button class="iconbtn" type="button" id="stCsv">Скопировать CSV</button><button class="iconbtn" type="button" id="stClose">Закрыть</button></div></div>
+  <div class="statement" id="stBody"></div>
+</dialog>
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="app-config.js"></script>
+<script src="money.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const M = window.Money;
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem("clips:" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("clips:" + k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem("clips:" + k); } catch {} },
+};
+
+/* ── где лежат данные ─────────────────────────────── */
+const CFG = window.CLIPHQ_CONFIG || {};
+function repo() {
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+  const owner = CFG.owner || (m && m[1]);
+  const name = CFG.repo || location.pathname.split("/").filter(Boolean)[0];
+  return owner && name ? { owner, name } : null;
+}
+const REPO = repo();
+const DEMO = !REPO || /[?&]demo\b/.test(location.search);
+const rawUrl = f => `https://raw.githubusercontent.com/${REPO.owner}/${REPO.name}/data/${f}?t=${Date.now()}`;
+const apiUrl = f => `https://api.github.com/repos/${REPO.owner}/${REPO.name}/contents/${f}`;
+
+/* ── шифрование (как в clipper/crypto.py) ─────────── */
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const b64e = u8 => { let s = ""; u8.forEach(b => s += String.fromCharCode(b)); return btoa(s); };
+const utf8b64 = str => b64e(new TextEncoder().encode(str));
+async function keyFrom(password, salt, iter, usage) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, [usage]);
+}
+async function decrypt(env, password) {
+  const key = await keyFrom(password, b64d(env.salt), env.iter, "decrypt");
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64d(env.iv) }, key, b64d(env.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function encrypt(obj, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 250000;
+  const key = await keyFrom(password, salt, iter, "encrypt");
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(obj))));
+  return JSON.stringify({ v: 1, iter, salt: b64e(salt), iv: b64e(iv), ct: b64e(ct) });
+}
+
+/* ── загрузка и запись в ветку data ───────────────── */
+let password = null, D = null;
+const ledger = { entries: [], loaded: false, error: null };
+const sentCmds = new Set(LS.get("sentCmds", []));
+async function fetchData() {
+  const r = await fetch(rawUrl("data.enc"), { cache: "no-store" });
+  if (!r.ok) throw new Error(r.status === 404 ? "Данных ещё нет: бот не сделал ни одного запуска." : `Не удалось скачать данные (${r.status}).`);
+  return decrypt(await r.json(), password);
+}
+async function ghRead(path) {
+  const token = LS.get("gh", "");
+  if (!token) {
+    const r = await fetch(rawUrl(path), { cache: "no-store" });
+    return { sha: null, text: r.ok ? await r.text() : null };
+  }
+  const r = await fetch(apiUrl(path) + "?ref=data&t=" + Date.now(), { headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json" }, cache: "no-store" });
+  if (r.status === 404) return { sha: null, text: null };
+  if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? "Ключ GitHub не подошёл (нужен доступ Contents: Read and write)." : "GitHub ответил " + r.status);
+  const js = await r.json();
+  return { sha: js.sha, text: new TextDecoder().decode(b64d(js.content.replace(/\n/g, ""))) };
+}
+async function ghWrite(path, mutate, message, encrypted) {
+  if (DEMO) { return; }
+  const token = LS.get("gh", "");
+  if (!token) throw new Error("Добавь ключ GitHub в настройках, чтобы сохранять изменения.");
+  for (let i = 0; i < 4; i++) {
+    const cur = await ghRead(path);
+    let obj = cur.text ? (encrypted ? await decrypt(JSON.parse(cur.text), password) : JSON.parse(cur.text)) : null;
+    obj = mutate(obj);
+    const text = encrypted ? await encrypt(obj, password) : JSON.stringify(obj, null, 1);
+    const body = { message, branch: "data", content: utf8b64(text) };
+    if (cur.sha) body.sha = cur.sha;
+    const r = await fetch(apiUrl(path), { method: "PUT", headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json" }, body: JSON.stringify(body) });
+    if (r.ok) return obj;
+    if (r.status !== 409 && r.status !== 422) throw new Error(r.status === 401 || r.status === 403 ? "Ключ GitHub не подошёл: нужен доступ Contents: Read and write к этому репозиторию." : "GitHub ответил " + r.status);
+  }
+  throw new Error("Не получилось сохранить из-за одновременных изменений. Попробуй ещё раз.");
+}
+async function fetchLedger() {
+  try {
+    const cur = await ghRead("ledger.enc");
+    ledger.entries = cur.text ? ((await decrypt(JSON.parse(cur.text), password)).entries || []) : [];
+    ledger.loaded = true; ledger.error = null;
+  } catch (e) { ledger.error = e.message; }
+}
+async function mutateLedger(fn, message) {
+  if (DEMO) { fn(ledger.entries); return; }
+  const obj = await ghWrite("ledger.enc", o => { const entries = (o && o.entries) || []; fn(entries); return { entries, updated_at: new Date().toISOString() }; }, message, true);
+  ledger.entries = obj.entries;
+}
+async function sendCommand(cmd, message) {
+  const c = { id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), at: new Date().toISOString(), ...cmd };
+  if (DEMO) { toast("В демо команды не отправляются"); return; }
+  await ghWrite("control/commands.json", list => { list = list || []; list.push(c); return list.slice(-300); }, "дашборд: " + message, false);
+  sentCmds.add(c.id); LS.set("sentCmds", [...sentCmds].slice(-100));
+  pendingUi.push({ ...cmd, id: c.id });
+  toast("Отправлено. Бот выполнит при следующем запуске (до часа)");
+}
+const pendingUi = [];
+
+/* ── даты и форматирование ───────────────────────── */
+let TZ = "UTC";
+const dayKey = d => new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+const addDays = (key, n) => { const d = new Date(key + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const daysBetween = (a, b) => Math.round((new Date(b + "T12:00:00Z") - new Date(a + "T12:00:00Z")) / 864e5);
+const fmtInt = n => Math.round(n || 0).toLocaleString("ru-RU");
+const fmtMoney = (n, cur) => (cur === "USD" || !cur ? "$" : "") + (+n || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (cur && cur !== "USD" ? " " + cur : "");
+const fmtShortDate = key => new Date(key + "T12:00:00Z").toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" });
+const fmtDateTime = iso => new Date(iso).toLocaleString("ru-RU", { timeZone: TZ, day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+function ago(iso) {
+  if (!iso) return "—";
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 60) return "только что";
+  if (s < 3600) return Math.floor(s / 60) + " мин назад";
+  if (s < 86400) return Math.floor(s / 3600) + " ч назад";
+  return Math.floor(s / 86400) + " дн назад";
+}
+const dur = sec => { sec = Math.max(0, Math.floor(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h} ч ${m} мин` : `${m} мин`; };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const plural = (n, a, b, c) => { n = Math.abs(n) % 100; const k = n % 10; return n > 10 && n < 20 ? c : k === 1 ? a : k >= 2 && k <= 4 ? b : c; };
+const fmtHms = s => { s = Math.floor(s || 0); return `${Math.floor(s / 3600)}:${String(Math.floor(s % 3600 / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; };
+const pct = m => (m >= 0 ? "+" : "−") + Math.abs(Math.round((Math.exp(m) - 1) * 100)) + "%";
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3000); }
+async function copy(text, btn) {
+  try { await navigator.clipboard.writeText(text); if (btn) { const o = btn.textContent; btn.textContent = "Скопировано"; setTimeout(() => btn.textContent = o, 1500); } }
+  catch { toast("Выдели текст и скопируй вручную"); }
+}
+
+/* ── справочники ─────────────────────────────────── */
+const PL = { tiktok: "TikTok", youtube: "Shorts", instagram: "Reels" };
+const plChip = p => `<span class="pl ${esc(p)}" title="${esc(PL[p] || p)}"></span>`;
+const STATUS = { ready: ["В очереди", "acc"], inbox: ["В черновиках TikTok", "warn"], inbox_stale: ["Черновик не опубликован", "warn"], posted: ["Опубликован", "good"],
+  processing: ["Обрабатывается", ""], failed: ["Ошибка", "bad"], expired: ["Устарел", ""], used: ["Выложен", "good"], retry: ["Повтор", "warn"], broken: ["Битый", "bad"] };
+const CATS = { funny: "Смешное", conflict: "Конфликт", money: "Деньги", america: "Америка", customer: "Клиенты", road: "Дорога", emotional: "Эмоции", chat: "Чат", other: "Другое" };
+const DIMS = { hook_style: "Стиль заголовка", cold_open: "Панчлайн в первые секунды", subtitles: "Английская строка субтитров", progress_bar: "Полоса прогресса" };
+const VALS = { tease: "недосказанность", conflict: "конфликт", number: "цифра", quote: "цитата", True: "да", False: "нет", true: "да", false: "нет", ru: "только RU", both: "RU + EN" };
+const HL = { ok: ["норма", "good"], watch: ["присмотреться", "warn"], cooldown: ["остывание", "warn"], pause: ["пауза", "bad"] };
+const accName = id => (D.accounts.find(a => a.id === id) || {}).name || id;
+const accPlat = id => (D.accounts.find(a => a.id === id) || {}).platform || "tiktok";
+
+/* ── деньги ──────────────────────────────────────── */
+const rate = () => +(D.money || {}).rate_per_1000 || 0;
+const cur = () => (D.money || {}).currency || "USD";
+let G = {}, POST2G = {};
+function rebuildGroups() {
+  G = M.groups(D.posts, D.clips);
+  POST2G = {};
+  for (const x of Object.values(G)) for (const p of x.posts) POST2G[p.id] = x.key;
+}
+const activeEntries = () => ledger.entries.filter(e => e.status !== "void");
+function owedNow() {
+  const lines = M.owed(G, M.paidTo(ledger.entries, POST2G), rate());
+  return { lines, sum: M.summarize(lines), received: activeEntries().reduce((s, e) => s + (+e.amount || 0), 0),
+           min: +(D.money || {}).payout_min || 20, last: activeEntries().sort((a, b) => b.received_at.localeCompare(a.received_at))[0] };
+}
+
+/* ── UI-состояние ────────────────────────────────── */
+const ui = { period: LS.get("period", "7"), platform: "", from: null, to: null, sort: LS.get("sort", "pviews"),
+             lperiod: "all", lfrom: null, lto: null, lplatform: "", lvoid: false, confirmVoid: null, learnTab: "tiktok",
+             bdKind: "new", bdPlat: "", confirmRevert: null, decOnlyRev: false };
+const STAGES = [["звук", "Скачиваю звук"], ["чат", "Читаю чат"], ["пики", "Ищу пики"], ["речь", "Расшифровываю"], ["ИИ", "ИИ"], ["монтаж", "Монтирую"]];
+
+function periodRange() {
+  const today = dayKey(new Date());
+  const first = D.posts.flatMap(v => Object.keys(v.history || {})).sort()[0] || today;
+  return { today: [today, today], yesterday: [addDays(today, -1), addDays(today, -1)], "7": [addDays(today, -6), today],
+           "30": [addDays(today, -29), today], all: [first, today], custom: [ui.from || addDays(today, -6), ui.to || today] }[ui.period];
+}
+const filteredGroups = () => ui.platform ? Object.fromEntries(Object.entries(G).filter(([, x]) => x.posts.some(p => p.platform === ui.platform))
+  .map(([k, x]) => [k, { ...x, posts: x.posts.filter(p => p.platform === ui.platform) }])) : G;
+
+function render() {
+  rebuildGroups();
+  const [d1, d2] = periodRange();
+  const FG = filteredGroups();
+  const gain = M.periodGain(FG, d1, d2, addDays, dayKey);
+  const O = owedNow();
+  const name = D.streamer?.display_name || "";
+  $("title").textContent = D.title || (name ? "Нарезки " + name : "Нарезки");
+  document.title = $("title").textContent;
+  $("who").textContent = name ? "twitch.tv/" + name : "";
+  $("fresh").textContent = "данные " + ago(D.generated_at);
+
+  const L = D.status.live || {};
+  $("live").classList.toggle("on", !!L.is_live);
+  $("liveText").innerHTML = L.is_live
+    ? `<b>LIVE</b> <span class="t">${esc(L.title || "")}</span> <span class="muted num">${dur((Date.now() - new Date(L.started_at)) / 1000)}${L.viewers ? " · " + fmtInt(L.viewers) + " зрит." : ""}</span>`
+    : `Оффлайн${L.last_seen_live ? " · эфир был " + ago(L.last_seen_live) : ""}`;
+
+  renderAlerts();
+  const label = { today: "сегодня", yesterday: "вчера", "7": "за 7 дней", "30": "за 30 дней", all: "за всё время", custom: `${fmtShortDate(d1)} — ${fmtShortDate(d2)}` }[ui.period];
+  $("lblIncome").textContent = "Доход " + label + (ui.platform ? " · " + PL[ui.platform] : "");
+  $("income").textContent = fmtMoney(gain.total * rate() / 1000, cur());
+  $("rateLine").textContent = `${fmtMoney(rate(), cur())} за 1 000 просмотров лучшей площадки клипа`;
+  $("views").textContent = fmtInt(gain.total);
+  const inRange = x => { const k = x.created < 9e12 ? dayKey(new Date(x.created * 1000)) : ""; return k >= d1 && k <= d2; };
+  const newClips = Object.values(FG).filter(inRange).length;
+  $("viewsSub").textContent = `${newClips} ${plural(newClips, "новый клип", "новых клипа", "новых клипов")} за период · всего клипов ${Object.keys(FG).length}`;
+
+  const S = O.sum;
+  $("owedNew").textContent = fmtMoney(S.new.amount, cur());
+  $("owedNewSub").textContent = `${S.new.count} ${plural(S.new.count, "клип", "клипа", "клипов")} ещё ни разу не оплачены`;
+  $("owedTop").textContent = fmtMoney(S.topup.amount, cur());
+  $("owedTopSub").textContent = `${S.topup.count} ${plural(S.topup.count, "клип вырос", "клипа выросли", "клипов выросли")} после выплаты`;
+  $("owedTotal").textContent = fmtMoney(S.total, cur());
+  const ready = S.total >= O.min;
+  $("payline").classList.toggle("ready", ready && LS.get("payoutAlert", true));
+  $("meter").classList.toggle("ok", ready);
+  $("meter").firstElementChild.style.width = Math.min(100, S.total / O.min * 100) + "%";
+  $("payMeta").innerHTML = (ready ? `<span class="chip good">Можно выводить</span> ` : `до порога ${fmtMoney(O.min - S.total, cur())} · `)
+    + `получено всего ${fmtMoney(O.received, cur())}` + (O.last ? ` · последний раз ${ago(O.last.received_at)}` : "");
+  $("hideBanner").hidden = !(ready && LS.get("payoutAlert", true));
+  $("thrNote").textContent = `Подсветка и напоминание, когда к выплате накопится ${fmtMoney(O.min, cur())} или больше`;
+
+  renderPipeline(); renderPosting(); renderChart(FG, d1, d2); renderTable(FG, d1, d2, O);
+  renderLedger(); renderQueue(); renderLearn(); renderInsights(gain); renderDecisions(); renderSystem();
+}
+
+/* ── предупреждения ──────────────────────────────── */
+function staleness() {
+  const sys = D.status.system || {}, out = [];
+  const lim = { watch: [40, "проверка Twitch"], stats: [180, "сбор статистики"], post: [180, "публикация"] };
+  for (const [k, [min, nm]] of Object.entries(lim)) {
+    const s = sys[k];
+    if (s && s.at && (Date.now() - new Date(s.at)) / 6e4 > min) out.push([k, `«${nm}» не запускалась ${ago(s.at).replace(" назад", "")}`]);
+  }
+  return out;
+}
+function renderAlerts() {
+  const out = [];
+  const L = D.status.live || {};
+  if (L.is_live && L.vod_missing) out.push(["bad", "Стрим идёт, но Twitch не сохраняет запись.", "Стример должен включить «Сохранять прошлые трансляции» в настройках Twitch."]);
+  for (const [comp, s] of Object.entries(D.status.system || {})) if (s.level === "error") out.push(["bad", `Сбой: ${esc(comp)}.`, esc(s.msg) + (s.run_url ? ` <a href="${esc(s.run_url)}" target="_blank" rel="noopener">Лог</a>` : "")]);
+  for (const [, msg] of staleness()) out.push(["warn", "GitHub давно не запускал задачу.", esc(msg) + ". Проверь вкладку Actions: не выключено ли расписание."]);
+  Object.entries(D.status.health || {}).forEach(([acc, h]) => {
+    if (h.state === "cooldown" || h.state === "pause") out.push(["warn", `${esc(accName(acc))}: ${HL[h.state][0]} до ${fmtDateTime(h.until)}.`, esc(h.reason) + ". Бот сам снизил частоту постов и выкладывает только сильные безопасные клипы."]);
+    if (h.state === "watch") out.push(["warn", `${esc(accName(acc))}: ранний сигнал.`, esc(h.reason)]);
+  });
+  Object.entries(D.status.tokens || {}).forEach(([acc, t]) => {
+    if (t.error && t.kind === "auth") out.push(["bad", `${esc(accName(acc))}: нужен повторный вход.`, esc(t.error) + ' — открой <a href="connect.html">подключение</a>.']);
+  });
+  (D.vods || []).forEach(v => (v.gaps || []).forEach(g => out.push(["bad", `Кусок ${fmtHms(g.start)}–${fmtHms(g.end)} стрима «${esc(v.title || v.id)}» не обработался.`,
+    "Запусти в Actions «2 · Process» с галочкой «Повторить пропуски». Ошибка: " + esc(g.error || "")])));
+  $("alerts").innerHTML = out.map(([cls, b, msg]) => `<div class="alert ${cls}"><div><b>${b}</b> <span class="msg">${msg}</span></div></div>`).join("");
+}
+
+function renderPipeline() {
+  const P = D.status.process || {}, state = P.state || "idle";
+  $("procChip").className = "chip " + ({ running: "acc", error: "bad", idle: "good" }[state] || "");
+  $("procChip").textContent = { running: "работает", error: "ошибка", idle: "ждёт" }[state] || state;
+  const idx = state === "running" ? STAGES.findIndex(([, k]) => (P.stage || "").startsWith(k)) : -1;
+  $("stages").innerHTML = STAGES.map(([nm], i) => `<div class="stage ${i < idx ? "done" : i === idx ? "now" : ""}"><i></i>${nm}</div>`).join("");
+  $("procStage").textContent = P.stage || "Жду стрим";
+  const rows = [];
+  if (P.vod_title) rows.push(["Стрим", esc(P.vod_title)]);
+  if (P.chunk) rows.push(["Кусок записи", `<span class="mono">${esc(P.chunk)}</span>`]);
+  if (P.progress != null && state === "running") rows.push(["Прогресс", `<div class="meter" style="margin-top:7px"><i style="width:${P.progress}%"></i></div>`]);
+  rows.push(["Обновлено", ago(P.updated_at)]);
+  const ready = D.clips.filter(c => Object.values(c.targets || {}).some(t => (t.status || "ready") === "ready")).length;
+  rows.push(["Ждут публикации", `<b class="num">${ready}</b> ${plural(ready, "клип", "клипа", "клипов")}`]);
+  $("procKv").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+}
+
+let cdTimer = null;
+function renderPosting() {
+  const S = D.status.post || {}, tz = S.timezone || (D.posting || {}).timezone || "UTC";
+  const toks = D.status.tokens || {}, hs = D.status.health || {};
+  $("modeChip").className = "chip " + (Object.values(toks).some(t => t.connected) ? "good" : "warn");
+  $("modeChip").textContent = `${Object.values(toks).filter(t => t.connected).length} из ${D.accounts.length} подключено`;
+  const nowHM = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+  let next = null;
+  const rows = D.accounts.map(a => {
+    const st = (S.accounts || {})[a.id] || {}, plan = st.plan || {}, h = hs[a.id] || {}, t = toks[a.id] || {};
+    const nx = (plan.plan_today || []).find(x => x > nowHM);
+    if (nx && t.connected && (!next || nx < next)) next = nx;
+    const hc = HL[h.state] || ["нет данных", ""];
+    const conn = t.connected ? `<span class="chip ${hc[1]}">${hc[0]}</span>` : `<a class="chip warn" href="connect.html">подключить</a>`;
+    const sub = t.connected ? [`сегодня ${plan.posts_today || 0} из ${plan.cap ?? "—"}`, plan.mode, (plan.plan_today || []).length ? "план " + plan.plan_today.join(", ") : "",
+      st.last_post_at ? "последний пост " + ago(st.last_post_at) : "постов ещё не было"].filter(Boolean).join(" · ") : "аккаунт не подключён";
+    return `<div class="acc-row">${plChip(a.platform)}<b>${esc(a.name)}</b>${conn}<div class="sub">${esc(sub)}</div>${st.last_error ? `<div class="err">${esc(st.last_error)}</div>` : ""}</div>`;
+  });
+  $("accRows").innerHTML = rows.join("");
+  $("nextLbl").textContent = next ? `Следующий пост по плану (${next} ${tz === "Europe/Moscow" ? "МСК" : tz}) через` : "Следующая проверка через";
+  const target = next ? nextTimeIn(tz, next) : (S.next_check ? new Date(S.next_check) : null);
+  const tick = () => {
+    const t = target ? target - Date.now() : NaN;
+    if (!(t > 0)) { $("countdown").textContent = target ? "сейчас" : "—"; return; }
+    $("countdown").textContent = `${Math.floor(t / 36e5)}:${String(Math.floor(t % 36e5 / 6e4)).padStart(2, "0")}:${String(Math.floor(t % 6e4 / 1e3)).padStart(2, "0")}`;
+  };
+  tick(); clearInterval(cdTimer); cdTimer = setInterval(tick, 1000);
+}
+function nextTimeIn(tz, hm) {
+  const now = new Date();
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now).map(p => [p.type, p.value]));
+  const [h, m] = hm.split(":").map(Number);
+  let diff = (h * 60 + m) - (+parts.hour * 60 + +parts.minute);
+  if (diff < 0) diff += 1440;
+  return new Date(now.getTime() + diff * 6e4 - now.getSeconds() * 1000);
+}
+
+function renderChart(FG, d1, d2) {
+  const svg = $("chart");
+  const span = daysBetween(d1, d2) + 1, show = Math.max(14, Math.min(span, 60));
+  let start = span < show ? addDays(d2, -(show - 1)) : d1;
+  if (span > 60) start = addDays(d2, -59);
+  const days = Array.from({ length: daysBetween(start, d2) + 1 }, (_, i) => addDays(start, i));
+  const vals = days.map(k => M.periodGain(FG, k, k, addDays, dayKey).total);
+  $("chartNote").textContent = (span > 60 ? "последние 60 дней · " : span < show ? "выбранный период выделен · " : "") + "считается по лучшей площадке каждого клипа";
+  const Wd = Math.max(520, svg.clientWidth || 900), Hh = 220, pl = 52, pr = 10, pt = 12, pb = 26;
+  svg.setAttribute("viewBox", `0 0 ${Wd} ${Hh}`);
+  const max = Math.max(1, ...vals), step = niceStep(max / 4), top = Math.ceil(max / step) * step;
+  const y = v => pt + (Hh - pt - pb) * (1 - v / top), bw = (Wd - pl - pr) / days.length;
+  let g = "";
+  for (let t = 0; t <= top + 1e-9; t += step) g += `<line class="grid" x1="${pl}" x2="${Wd - pr}" y1="${y(t)}" y2="${y(t)}"/><text x="${pl - 8}" y="${y(t) + 4}" text-anchor="end">${compact(t)}</text>`;
+  const every = Math.ceil(days.length / 10);
+  days.forEach((k, i) => {
+    const x = pl + i * bw, h = Math.max(vals[i] ? 2 : 0, y(0) - y(vals[i]));
+    g += `<g class="col" data-i="${i}"><rect class="b${k >= d1 && k <= d2 ? " in" : ""}" x="${x + bw * .14}" y="${y(0) - h}" width="${bw * .72}" height="${h}" rx="${Math.min(4, bw * .2)}"/><rect class="hit" x="${x}" y="${pt}" width="${bw}" height="${Hh - pt - pb}"/></g>`;
+    if (i % every === 0) g += `<text x="${x + bw / 2}" y="${Hh - 8}" text-anchor="middle">${fmtShortDate(k).replace(".", "")}</text>`;
+  });
+  svg.innerHTML = g;
+  const tip = $("tip");
+  svg.onmousemove = e => {
+    const col = e.target.closest("g.col"); if (!col) { tip.hidden = true; return; }
+    const i = +col.dataset.i;
+    tip.innerHTML = `<b>${fmtShortDate(days[i])}</b><br>${fmtInt(vals[i])} просмотров<br>${fmtMoney(vals[i] * rate() / 1000, cur())}`;
+    tip.hidden = false;
+    tip.style.left = Math.min(innerWidth - tip.offsetWidth - 8, e.clientX + 12) + "px";
+    tip.style.top = (e.clientY - tip.offsetHeight - 10) + "px";
+  };
+  svg.onmouseleave = () => tip.hidden = true;
+}
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw || 1))), n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+function compact(n) { return n >= 1e6 ? (n / 1e6).toFixed(n % 1e6 ? 1 : 0) + "M" : n >= 1e3 ? (n / 1e3).toFixed(n % 1e3 ? 1 : 0) + "k" : String(Math.round(n)); }
+const thumbHtml = (src, cat) => src ? `<img class="th" src="${esc(src)}" alt="" loading="lazy">` : `<span class="th">${esc((CATS[cat] || "клип").slice(0, 6))}</span>`;
+function linksHtml(posts, bestId) {
+  return `<div class="links">${posts.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).map(p => {
+    const inner = `${plChip(p.platform)}${fmtInt(p.views)}`;
+    return p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" class="${p.id === bestId ? "best" : ""}" title="${esc(accName(p.account))}">${inner}</a>`
+      : `<span class="l ${p.id === bestId ? "best" : ""}">${inner}</span>`;
+  }).join("")}</div>`;
+}
+
+function renderTable(FG, d1, d2, O) {
+  const owedMap = Object.fromEntries(O.lines.map(l => [l.g, l]));
+  const rows = Object.values(FG).map(x => {
+    const at = d => Math.max(0, ...x.posts.map(p => M.viewsAt(p, d, dayKey)));
+    return { x, p: Math.max(0, at(d2) - at(addDays(d1, -1))), date: x.created, owed: owedMap[x.key] };
+  });
+  const key = { date: r => r.date, pviews: r => r.p, best: r => r.x.bestViews, owed: r => r.owed ? r.owed.amount : 0 }[ui.sort];
+  rows.sort((a, b) => key(b) - key(a) || b.date - a.date);
+  document.querySelectorAll("th button[data-sort]").forEach(b => { if (b.dataset.sort === ui.sort) b.setAttribute("aria-sort", "descending"); else b.removeAttribute("aria-sort"); });
+  $("tblNote").textContent = `${rows.length} ${plural(rows.length, "клип", "клипа", "клипов")}`;
+  $("rows").innerHTML = rows.length ? rows.slice(0, 200).map(({ x, p, owed }) => `<tr>
+      <td><div class="vid">${thumbHtml(x.thumb, x.clip?.category)}<span class="tt">${esc(x.title)}</span></div></td>
+      <td>${linksHtml(x.posts, x.best.id)}</td>
+      <td class="muted num">${x.created < 9e12 ? fmtShortDate(dayKey(new Date(x.created * 1000))) : "—"}</td>
+      <td class="r">${p ? `<span class="delta">+${fmtInt(p)}</span>` : `<span class="muted">0</span>`}</td>
+      <td class="r num">${fmtInt(x.bestViews)}</td>
+      <td class="r">${owed ? `<span class="money-cell">${fmtMoney(owed.amount, cur())}</span> <span class="kind ${owed.kind}">${owed.kind === "new" ? "новый" : "доплата"}</span>` : `<span class="muted">оплачен</span>`}</td></tr>`).join("")
+    : `<tr><td colspan="6" class="muted" style="padding:28px 10px">Пока нет опубликованных роликов. Как только площадки покажут первые просмотры, они появятся здесь.</td></tr>`;
+}
+
+/* ── разбивка «новые / доплаты» по площадкам (#14) ── */
+function openBreakdown(kind) {
+  ui.bdKind = kind; ui.bdPlat = "";
+  renderBreakdown();
+  $("bdDlg").showModal();
+}
+function renderBreakdown() {
+  const O = owedNow(), kind = ui.bdKind;
+  const lines = O.lines.filter(l => l.kind === kind);
+  const total = lines.reduce((s, l) => s + l.amount, 0);
+  $("bdTitle").textContent = (kind === "new" ? "Новые клипы" : "Доплата за рост") + " — " + fmtMoney(total, cur());
+  $("bdNote").textContent = kind === "new"
+    ? "Клипы, за которые ещё не платили. Сумма считается по площадке, где у клипа больше всего просмотров."
+    : "Клипы, которые выросли после прошлой выплаты. Платится только прирост лучшего результата сверх уже оплаченного.";
+  const byP = {};
+  lines.forEach(l => { const b = (byP[l.best.platform] ||= { amount: 0, count: 0, views: 0 }); b.amount += l.amount; b.count++; b.views += l.views; });
+  const max = Math.max(0.01, ...Object.values(byP).map(b => b.amount));
+  $("bdBars").innerHTML = Object.keys(byP).length ? Object.entries(byP).sort((a, b) => b[1].amount - a[1].amount).map(([p, b]) =>
+    `<div class="bd-row"><span>${plChip(p)} ${esc(PL[p] || p)}</span><span class="bg"><i style="width:${b.amount / max * 100}%"></i></span>
+      <span class="num" style="text-align:right"><b>${fmtMoney(b.amount, cur())}</b> · ${b.count} ${plural(b.count, "клип", "клипа", "клипов")}</span></div>`).join("")
+    : `<p class="muted" style="margin:0">Сейчас здесь ничего нет.</p>`;
+  $("bdTabs").innerHTML = [["", "Все"], ...Object.keys(byP).map(p => [p, PL[p] || p])].map(([v, t]) => `<button type="button" data-bd="${v}" aria-pressed="${ui.bdPlat === v}">${esc(t)}</button>`).join("");
+  $("bdRows").innerHTML = lines.filter(l => !ui.bdPlat || l.best.platform === ui.bdPlat).map(l => `<tr>
+    <td>${esc(l.title)}</td><td>${linksHtml(l.links.map((k, i) => ({ ...k, id: "l" + i })), "l" + l.links.findIndex(k => k.platform === l.best.platform && k.views === l.best.views))}</td>
+    <td class="r num">${fmtInt(l.best.views)}</td><td class="r num muted">${fmtInt(l.prev_paid)}</td>
+    <td class="r money-cell">${fmtMoney(l.amount, cur())}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">Пусто</td></tr>`;
+}
+
+/* ── реестр ──────────────────────────────────────── */
+function entryLines(e) {
+  if (e.lines) return e.lines;
+  return (e.videos || []).map(v => ({ g: POST2G[v.id] || v.id, title: v.title, kind: "new", views: v.views, amount: v.amount,
+    best: { platform: "tiktok", url: null, views: v.views }, links: [{ platform: "tiktok", views: v.views }], prev_paid: 0, paid_amount: v.amount }));
+}
+function ledgerRange() {
+  const now = new Date(), y = +dayKey(now).slice(0, 4), m = +dayKey(now).slice(5, 7);
+  const ms = (yy, mm) => `${yy}-${String(mm).padStart(2, "0")}-01`;
+  const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+  return { all: ["0000-01-01", "9999-12-31"], month: [ms(y, m), "9999-12-31"], prev: [ms(py, pm), addDays(ms(y, m), -1)],
+           custom: [ui.lfrom || "0000-01-01", ui.lto || "9999-12-31"] }[ui.lperiod];
+}
+function renderLedger() {
+  const [a, b] = ledgerRange(), plat = ui.lplatform;
+  const list = ledger.entries.filter(e => { const k = dayKey(new Date(e.received_at)); return k >= a && k <= b; })
+    .filter(e => !plat || entryLines(e).some(l => l.best.platform === plat)).filter(e => ui.lvoid || e.status !== "void")
+    .sort((x, y) => y.received_at.localeCompare(x.received_at));
+  const amt = e => plat ? entryLines(e).filter(l => l.best.platform === plat).reduce((s, l) => s + (l.paid_amount ?? l.amount ?? 0), 0) : (+e.amount || 0);
+  const ok = list.filter(e => e.status !== "void");
+  const tot = k => ok.reduce((s, e) => s + entryLines(e).filter(l => l.kind === k && (!plat || l.best.platform === plat)).reduce((t, l) => t + (l.paid_amount ?? l.amount ?? 0), 0), 0);
+  const O = owedNow();
+  $("ledgerSum").innerHTML = `<span>Получено за выбранное<br><b>${fmtMoney(ok.reduce((s, e) => s + amt(e), 0), cur())}</b></span>
+    <span>из них за новые<br><b>${fmtMoney(tot("new"), cur())}</b></span><span>доплаты за рост<br><b>${fmtMoney(tot("topup"), cur())}</b></span>
+    <span>Записей<br><b>${ok.length}</b></span><span>Ещё не оплачено<br><b>${fmtMoney(O.sum.total, cur())}</b></span>`
+    + (ledger.error && !DEMO ? `<span style="color:var(--bad)">Реестр не загрузился: ${esc(ledger.error)}</span>` : "");
+  if (!list.length) {
+    $("entries").innerHTML = `<p class="muted" style="margin:0">Записей пока нет. Когда получишь деньги, нажми «Подтвердить получение»: бот запишет сумму, дату и какие клипы на каких площадках она закрыла.</p>`;
+    return;
+  }
+  $("entries").innerHTML = list.map(e => {
+    const L = entryLines(e), isVoid = e.status === "void", confirm = ui.confirmVoid === e.id;
+    const nNew = L.filter(l => l.kind === "new").length, nTop = L.filter(l => l.kind === "topup").length;
+    const diff = (+e.amount || 0) - (+e.computed_amount || 0);
+    const byP = {};
+    L.forEach(l => { byP[l.best.platform] = (byP[l.best.platform] || 0) + (l.paid_amount ?? l.amount ?? 0); });
+    return `<div class="entry ${isVoid ? "void" : ""}">
+      <div class="entry-top"><span class="amt">${fmtMoney(e.amount, cur())}</span>
+        <span class="when">${fmtDateTime(e.received_at)}${e.note ? " · " + esc(e.note) : ""}</span>
+        ${isVoid ? `<span class="chip bad">отменено ${e.voided_at ? ago(e.voided_at) : ""}</span>` : ""}
+        <span class="menu"><button class="mini" type="button" data-statement="${esc(e.id)}">Отчёт</button>
+          ${isVoid ? `<button class="mini" data-restore="${esc(e.id)}" type="button">Вернуть</button>` : confirm ? "" : `<button class="mini" data-void="${esc(e.id)}" type="button" aria-label="Отменить запись">⋯</button>`}</span></div>
+      ${confirm ? `<div class="confirm">Отменить запись? Она останется в реестре зачёркнутой, а сумма вернётся в «К выплате».
+        <button class="btn danger" type="button" data-void-yes="${esc(e.id)}" style="padding:6px 12px">Отменить запись</button>
+        <button class="btn ghost" type="button" data-void-no style="padding:6px 12px">Оставить</button></div>` : ""}
+      <div class="muted" style="font-size:12.5px">${nNew} ${plural(nNew, "новый клип", "новых клипа", "новых клипов")} · ${nTop} ${plural(nTop, "доплата", "доплаты", "доплат")}
+        · по ставке ${fmtMoney(e.rate, cur())}/1000 = ${fmtMoney(e.computed_amount, cur())}
+        ${Math.abs(diff) >= 0.01 ? ` · <span style="color:var(${diff < 0 ? "--bad" : "--good"})">${diff < 0 ? "недоплата" : "переплата"} ${fmtMoney(Math.abs(diff), cur())}</span>` : ""}
+        · записано ${ago(e.recorded_at)}</div>
+      <div class="links">${Object.entries(byP).map(([p, v]) => `<span class="l">${plChip(p)}${fmtMoney(v, cur())}</span>`).join("")}</div>
+    </div>`;
+  }).join("");
+}
+function statement(e) {
+  const L = entryLines(e);
+  const rows = L.map(l => ({ title: l.title || l.g, kind: l.kind === "new" ? "новый" : "доплата", best: `${PL[l.best.platform] || l.best.platform} ${fmtInt(l.best.views)}`,
+    prev: fmtInt(l.prev_paid), inc: fmtInt(l.views), sum: fmtMoney(l.paid_amount ?? l.amount, cur()), links: l.links || [] }));
+  $("stBody").innerHTML = `<div class="head"><span>Получено<br><b>${fmtMoney(e.amount, cur())}</b></span><span>Дата<br><b>${fmtDateTime(e.received_at)}</b></span>
+      <span>Ставка<br><b>${fmtMoney(e.rate, cur())} / 1000</b></span><span>По расчёту<br><b>${fmtMoney(e.computed_amount, cur())}</b></span></div>
+    ${e.note ? `<p>${esc(e.note)}</p>` : ""}
+    <p class="muted">Каждый клип оплачивается один раз по лучшей площадке. «Доплата» — только рост лучшего результата сверх ранее оплаченного.</p>
+    <div class="tbl-wrap"><table><thead><tr><th>Клип</th><th>Тип</th><th>Ссылки (просмотры на момент выплаты)</th><th class="r">Лучший</th><th class="r">Было оплачено</th><th class="r">Оплачено сейчас</th><th class="r">Сумма</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r.title)}</td><td>${r.kind}</td><td>${linksHtml(r.links.map((k, i) => ({ ...k, id: "s" + i })), "")}</td><td class="r">${esc(r.best)}</td><td class="r num">${r.prev}</td><td class="r num">${r.inc}</td><td class="r money-cell">${r.sum}</td></tr>`).join("")}
+    </tbody></table></div>`;
+  const text = [`Выплата ${fmtMoney(e.amount, cur())} · ${fmtDateTime(e.received_at)}${e.note ? " · " + e.note : ""}`,
+    `Ставка ${fmtMoney(e.rate, cur())} за 1000 просмотров лучшей площадки; по расчёту ${fmtMoney(e.computed_amount, cur())}`, "",
+    ...L.map((l, i) => `${i + 1}. ${l.title || l.g} — ${l.kind === "new" ? "новый" : "доплата"}: лучший ${PL[l.best.platform] || ""} ${fmtInt(l.best.views)}, было оплачено ${fmtInt(l.prev_paid)}, оплачено ${fmtInt(l.views)} → ${fmtMoney(l.paid_amount ?? l.amount, cur())}\n   ${(l.links || []).map(k => `${PL[k.platform] || k.platform}: ${k.url || "—"} (${fmtInt(k.views)})`).join("; ")}`)].join("\n");
+  const csv = ["clip;type;best_platform;best_views;prev_paid;paid_views;amount;links", ...L.map(l => [l.title || l.g, l.kind, l.best.platform, l.best.views, l.prev_paid, l.views, (l.paid_amount ?? l.amount), (l.links || []).map(k => k.url).join(" ")]
+    .map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";"))].join("\n");
+  $("stCopy").onclick = ev => copy(text, ev.target);
+  $("stCsv").onclick = ev => copy(csv, ev.target);
+  $("stDlg").showModal();
+}
+function openPay() {
+  const O = owedNow();
+  $("payStep1").hidden = false; $("payStep2").hidden = true; $("payErr").textContent = ""; $("payErr2").textContent = "";
+  $("payAmount").value = O.sum.total.toFixed(2);
+  document.querySelector('input[name=payWhen][value=now]').checked = true; $("payDate").hidden = true;
+  const local = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  $("payDate").value = local; $("payDate").max = local; $("payNote").value = "";
+  const S = O.sum;
+  $("payPreview").innerHTML = O.lines.length ? `<div>Запись закроет <b>${S.new.count}</b> ${plural(S.new.count, "новый клип", "новых клипа", "новых клипов")} (${fmtMoney(S.new.amount, cur())}) и
+      <b>${S.topup.count}</b> ${plural(S.topup.count, "доплату", "доплаты", "доплат")} за рост (${fmtMoney(S.topup.amount, cur())}).</div>`
+    + Object.entries(S.by_platform).map(([p, b]) => `<div class="muted">${plChip(p)} ${PL[p] || p}: ${fmtMoney(b.new.amount + b.topup.amount, cur())}</div>`).join("")
+    : `<div class="muted">Неоплаченных просмотров сейчас нет. Запись сохранит только сумму и дату.</div>`;
+  if (!DEMO && !LS.get("gh", "")) $("payErr").textContent = "Чтобы сохранить запись, добавь ключ GitHub в настройках.";
+  $("payDlg").showModal();
+}
+function payWhenIso() {
+  const custom = document.querySelector('input[name=payWhen]:checked').value === "custom";
+  return custom && $("payDate").value ? new Date($("payDate").value).toISOString() : new Date().toISOString();
+}
+
+/* ── очередь ─────────────────────────────────────── */
+function renderQueue() {
+  const order = { ready: 0, processing: 1, inbox: 2, posted: 3, failed: 4, expired: 5, broken: 6 };
+  const list = D.clips.filter(c => !ui.platform || (c.targets || {})[ui.platform])
+    .sort((a, b) => ((order[a.status] ?? 9) - (order[b.status] ?? 9)) || (a.status === "ready" ? b.score - a.score : (b.created_at || "").localeCompare(a.created_at || "")))
+    .slice(0, 12);
+  const ready = D.clips.filter(c => c.status === "ready").length;
+  $("queueNote").textContent = `${ready} ждут публикации`;
+  $("queue").innerHTML = list.length ? list.map(c => {
+    const [lbl, cls] = STATUS[c.status] || [c.status, ""];
+    const tg = Object.entries(c.targets || {}).map(([p, t]) => {
+      const post = (c.posts || {})[p];
+      const [sl, sc] = STATUS[post?.status || t.status || "ready"] || ["", ""];
+      return `<div class="tg-row">${plChip(p)}<span>«${esc(t.hook || "")}»</span><span class="chip ${sc}">${sl}</span>${post?.url ? `<a href="${esc(post.url)}" target="_blank" rel="noopener">открыть</a>` : ""}</div>`;
+    }).join("");
+    const texts = Object.entries(c.targets || {}).map(([p, t]) => {
+      const txt = p === "youtube" ? `${t.title || ""}\n\n${t.description || ""}` : `${t.caption || ""}${t.hashtags?.length ? "\n\n" + t.hashtags.join(" ") : ""}`;
+      return `<div class="copyline">${plChip(p)}<span>${esc(txt)}</span><button class="mini" type="button" data-copy="${esc(txt)}">Копировать</button></div>`;
+    }).join("");
+    const comment = Object.values(c.targets || {}).find(t => t.comment)?.comment;
+    const failed = Object.values(c.posts || {}).some(p => p.status === "failed") || Object.values(c.targets || {}).some(t => t.status === "failed");
+    return `<div class="qcard">${thumbHtml(c.thumb, c.category)}<div style="min-width:0">
+      <div class="meta" style="margin-top:0"><span class="score ${c.score >= 8 ? "hi" : ""}" title="Оценка ИИ">${c.score}/10</span><span class="chip ${cls}">${lbl}</span>${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}</div>
+      <div class="muted" style="font-size:12.5px;margin-top:4px">${esc(CATS[c.category] || "")} · ${Math.round(c.duration || 0)} с · ${ago(c.created_at)}</div>
+      <div class="tg">${tg}</div>
+      <details><summary>Подробнее</summary><div class="more">
+        ${texts}
+        ${comment ? `<div><b>Первый коммент:</b></div><div class="copyline"><span>${esc(comment)}</span><button class="mini" type="button" data-copy="${esc(comment)}">Копировать</button></div>` : ""}
+        ${c.why ? `<div><b>Почему взяли:</b> ${esc(c.why)}</div>` : ""}
+        ${c.audio?.reason ? `<div><b>Звук:</b> ${esc(c.audio.reason)}</div>` : ""}
+        ${Object.values(c.posts || {}).filter(p => p.reason).map(p => `<div><b>Почему выложен тогда:</b> ${esc(p.reason)}${(p.why || []).length ? " (" + esc(p.why.join("; ")) + ")" : ""}</div>`).join("")}
+        ${Object.values(c.posts || {}).filter(p => p.error).map(p => `<div style="color:var(--bad)">${esc(p.error)}</div>`).join("")}
+        ${failed ? `<button class="mini" type="button" data-retry="${esc(c.id)}">Повторить публикацию</button>` : ""}
+      </div></details>
+    </div></div>`;
+  }).join("") : `<p class="muted" style="margin:0">Клипов пока нет. После первого стрима сюда придут готовые нарезки с оценкой ИИ.</p>`;
+}
+
+/* ── что бот выяснил ─────────────────────────────── */
+function renderLearn() {
+  const pol = D.policy || {}, plats = [...new Set(D.accounts.map(a => a.platform))];
+  if (!plats.includes(ui.learnTab)) ui.learnTab = plats[0] || "tiktok";
+  $("learnTabs").innerHTML = plats.map(p => `<button type="button" data-learn="${p}" aria-pressed="${ui.learnTab === p}">${PL[p] || p}</button>`).join("");
+  const st = pol.stats || {};
+  $("learnNote").textContent = (pol.frozen ? "Обучение на паузе. " : "") + `Учтено роликов: ${st.with_residual || 0}. Пока данных мало, всё держится около «как обычно» — выводы появляются, когда разница устойчива (уверенность от 85% и минимум 8 роликов).`;
+  const arms = (pol.arms || {})[ui.learnTab] || {}, ev = (pol.evidence || {})[ui.learnTab] || {};
+  const boxes = Object.entries(DIMS).map(([dim, title]) => {
+    const shares = arms[dim] || {};
+    const keys = Object.keys(shares);
+    if (!keys.length) return "";
+    return `<div class="dimbox"><h3>${title}</h3>${keys.map(k => {
+      const e = (ev[dim] || {})[k] || { n: 0, mean: 0 };
+      const cls = e.n >= 8 && Math.abs(e.mean) > e.sd ? (e.mean > 0 ? "up" : "down") : "";
+      return `<div class="arm"><span>${esc(VALS[k] || k)}</span><span class="bg"><i style="width:${Math.round((shares[k] || 0) * 100)}%"></i></span>
+        <span class="eff ${cls}" title="доля новых клипов · эффект к норме · роликов">${Math.round((shares[k] || 0) * 100)}% · ${e.n ? pct(e.mean) : "—"}</span></div>`;
+    }).join("")}<span class="muted" style="font-size:12px">полоса — доля новых клипов с этим вариантом; справа — эффект к обычным просмотрам</span></div>`;
+  }).join("");
+  const hours = (pol.hours || {})[ui.learnTab];
+  const top = hours ? new Set(hours.map((v, h) => [v, h]).sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1])) : new Set();
+  const hoursBox = hours ? `<div class="dimbox"><h3>Лучшие часы (${(D.posting || {}).timezone === "Europe/Moscow" ? "МСК" : "время аудитории"})</h3>
+    <div class="hours24">${hours.map((v, h) => `<i class="${top.has(h) ? "top" : ""}" style="height:${Math.max(4, v * 100)}%" title="${h}:00"></i>`).join("")}</div>
+    <div class="hours-lbl">${hours.map((_, h) => `<span>${h % 6 === 0 ? h : ""}</span>`).join("")}</div></div>` : "";
+  const caps = Object.entries(pol.caps || {}).filter(([a]) => accPlat(a) === ui.learnTab).map(([a, c]) =>
+    `<div class="arm"><span>${esc(accName(a))}</span><span class="muted">${(pol.warmup || {})[a]?.active ? "разгон" : "потолок по данным"}</span><span class="eff">${c.cap}/сутки</span></div>`).join("");
+  const hintText = (pol.hints || {})["length"];
+  const hint = hintText ? `<div class="dimbox"><h3>Подсказка ИИ-отборщику</h3><span>${esc(hintText)}</span></div>` : "";
+  $("learnGrid").innerHTML = (boxes + hoursBox + (caps ? `<div class="dimbox"><h3>Постов в сутки</h3>${caps}</div>` : "") + hint)
+    || `<p class="muted" style="margin:0">Появится после первых публикаций.</p>`;
+}
+
+function renderInsights(gain) {
+  const byC = {};
+  Object.values(G).forEach(x => { const c = x.clip?.category; if (c && x.bestViews) (byC[c] ||= []).push(x.bestViews); });
+  const rows = Object.entries(byC).map(([k, a]) => [k, a.reduce((s, x) => s + x, 0) / a.length, a.length]).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const mx = rows[0]?.[1] || 1;
+  $("byCat").innerHTML = rows.length ? rows.map(([k, avg, n]) => `<div class="hbar"><span>${CATS[k] || k}</span><span class="bg"><i style="width:${avg / mx * 100}%"></i></span><span class="num muted" style="text-align:right" title="${n} клипов">${compact(avg)}</span></div>`).join("")
+    + `<p class="muted" style="font-size:12px;margin:10px 0 0">Средний лучший результат клипа по теме. Бот сам поднимает в очереди темы, которые заходят.</p>`
+    : `<p class="muted" style="margin:0">Появится, когда наберётся статистика.</p>`;
+  const pls = {};
+  D.posts.forEach(p => { const b = (pls[p.platform] ||= { n: 0, views: 0 }); b.n++; b.views += p.views || 0; });
+  const max = Math.max(1, ...Object.values(pls).map(b => b.views));
+  $("byPlat").innerHTML = Object.keys(pls).length ? Object.entries(pls).map(([p, b]) => `<div class="bd-row"><span>${plChip(p)} ${PL[p] || p}</span><span class="bg"><i style="width:${b.views / max * 100}%"></i></span>
+      <span class="num muted" style="text-align:right">${compact(b.views)} · ${b.n} ${plural(b.n, "ролик", "ролика", "роликов")}</span></div>`).join("")
+    + `<p class="muted" style="font-size:12px;margin:10px 0 0">Всего просмотров на площадке. За период лучшим было: ${Object.entries(gain.byPlat).map(([p, v]) => `${PL[p] || p} ${compact(v)}`).join(", ") || "—"}.</p>`
+    : `<p class="muted" style="margin:0">Появится после первых публикаций.</p>`;
+}
+
+/* ── решения и система ───────────────────────────── */
+const KIND = { arms: "вариант", boost: "темы", hours: "часы", cap: "объём", warmup: "разгон", health: "здоровье", revert: "откат", skip: "пропуск", audio: "звук", hint: "подсказка", freeze: "пауза", pause: "пауза" };
+function renderDecisions() {
+  const pol = D.policy || {};
+  $("freezeBtn").textContent = pol.frozen ? "Включить обучение" : "Поставить обучение на паузу";
+  const res = (D.commands || {}).results || {};
+  const pend = pendingUi.filter(c => !res[c.id]);
+  const list = (D.decisions || []).slice().reverse().filter(d => !ui.decOnlyRev || (d.reversible && !d.reverted)).slice(0, 40);
+  $("decisions").innerHTML = (pend.length ? `<div class="alert warn" style="margin-bottom:8px"><div><b>Ждут выполнения:</b> <span class="msg">${pend.length} ${plural(pend.length, "команда", "команды", "команд")} — бот применит их при следующем запуске.</span></div></div>` : "")
+    + (list.length ? list.map(d => {
+      const canRevert = d.reversible && !d.reverted && !pend.some(c => c.decision === d.id);
+      const confirm = ui.confirmRevert === d.id;
+      return `<div class="dec ${d.reverted ? "reverted" : ""}"><span class="chip">${KIND[d.kind] || d.kind}</span>
+        <div class="what">${esc(d.summary)}${d.reverted ? ` <span class="muted">(откачено ${esc(d.reverted_by || "")})</span>` : ""}</div>
+        <div style="display:grid;gap:4px;justify-items:end"><span class="when">${ago(d.at)}</span>${canRevert && !confirm ? `<button class="mini" type="button" data-revert="${esc(d.id)}">Откатить</button>` : ""}</div>
+        ${confirm ? `<div class="confirm" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:13px">
+          Вернуть как было и закрепить на 14 дней? <button class="btn" type="button" data-revert-yes="${esc(d.id)}" style="padding:6px 12px">Откатить</button>
+          <button class="btn ghost" type="button" data-revert-no style="padding:6px 12px">Не надо</button></div>` : ""}</div>`;
+    }).join("") : `<p class="muted" style="margin:0">Решений пока нет. Здесь появится каждое изменение поведения бота: что поменялось, почему, с какими цифрами.</p>`);
+}
+function renderSystem() {
+  const sys = D.status.system || {}, toks = D.status.tokens || {}, stg = D.status.storage || {};
+  const NAMES = { watch: "Проверка Twitch", process: "Нарезка", post: "Публикация", stats: "Статистика и обучение", doctor: "Ежедневная проверка", render: "Монтаж" };
+  const stale = Object.fromEntries(staleness());
+  const items = Object.entries(sys).filter(([k]) => !k.startsWith("auth:")).map(([k, s]) => {
+    const lvl = stale[k] ? "warn" : s.level;
+    return `<div class="sys-item"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(NAMES[k] || k)}</b><span class="chip ${lvl === "ok" ? "good" : lvl === "error" ? "bad" : "warn"}">${lvl === "ok" ? "норма" : lvl === "error" ? "сбой" : "внимание"}</span></div>
+      <span class="msg">${esc(stale[k] || s.msg)}</span><span class="msg">${ago(s.at)}${s.last_ok && lvl !== "ok" ? " · последний успех " + ago(s.last_ok) : ""}</span>${s.run_url ? `<a href="${esc(s.run_url)}" target="_blank" rel="noopener">Открыть лог</a>` : ""}</div>`;
+  });
+  D.accounts.forEach(a => {
+    const t = toks[a.id] || {};
+    const left = a.platform === "tiktok" ? t.refresh_expires_at_days : a.platform === "instagram" ? t.expires_at_days : null;
+    const lvl = !t.connected ? "warn" : t.error ? "error" : left != null && left < 14 ? "warn" : "ok";
+    items.push(`<div class="sys-item"><div style="display:flex;justify-content:space-between;gap:8px"><b>${plChip(a.platform)} ${esc(a.name)}</b><span class="chip ${lvl === "ok" ? "good" : lvl === "error" ? "bad" : "warn"}">${!t.connected ? "не подключён" : t.error ? "ошибка" : "доступ есть"}</span></div>
+      <span class="msg">${t.connected ? esc(t.user || "") + (left != null ? ` · доступ ещё ${Math.floor(left)} дн.${a.platform === "instagram" ? " (бот продлевает сам)" : ""}` : "") : '<a href="connect.html">Подключить</a>'}</span>${t.error ? `<span class="msg" style="color:var(--bad)">${esc(t.error)}</span>` : ""}</div>`);
+  });
+  $("sys").innerHTML = items.join("") || `<p class="muted" style="margin:0">Появится после первого запуска.</p>`;
+  $("sysNote").textContent = stg.assets != null ? `файлов в очереди на GitHub: ${stg.assets} (${(stg.bytes / 1048576).toFixed(0)} МБ)` : "";
+}
+
+/* ── обработчики ─────────────────────────────────── */
+let bound = false;
+function bind() {
+  const seg = (sel, attr, key, after) => document.querySelectorAll(sel + " button").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset[attr] === ui[key]));
+    b.onclick = () => { ui[key] = b.dataset[attr]; document.querySelectorAll(sel + " button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); after && after(); render(); };
+  });
+  seg("#period", "p", "period", () => { LS.set("period", ui.period); $("range").hidden = ui.period !== "custom"; if (ui.period === "custom") { const [a, z] = periodRange(); $("from").value = a; $("to").value = z; } });
+  seg("#lperiod", "l", "lperiod", () => { $("lrange").hidden = ui.lperiod !== "custom"; });
+  $("range").hidden = ui.period !== "custom";
+  $("from").onchange = () => { ui.from = $("from").value; render(); };
+  $("to").onchange = () => { ui.to = $("to").value; render(); };
+  $("lfrom").onchange = () => { ui.lfrom = $("lfrom").value; render(); };
+  $("lto").onchange = () => { ui.lto = $("lto").value; render(); };
+  const plats = [...new Set(D.accounts.map(a => a.platform))];
+  const opts = `<option value="">Все площадки</option>` + plats.map(p => `<option value="${p}">${PL[p] || p}</option>`).join("");
+  $("platform").innerHTML = opts; $("lplatform").innerHTML = opts;
+  $("platform").onchange = e => { ui.platform = e.target.value; render(); };
+  $("lplatform").onchange = e => { ui.lplatform = e.target.value; render(); };
+  $("lvoid").onchange = e => { ui.lvoid = e.target.checked; render(); };
+  $("decOnlyRev").onchange = e => { ui.decOnlyRev = e.target.checked; renderDecisions(); };
+  document.querySelectorAll("th button[data-sort]").forEach(b => b.onclick = () => { ui.sort = b.dataset.sort; LS.set("sort", ui.sort); render(); });
+  $("hideBanner").onclick = () => { LS.set("payoutAlert", false); render(); toast("Напоминание выключено, вернуть можно в настройках"); };
+  $("payBtn").onclick = openPay; $("ledgerAdd").onclick = openPay;
+  $("kpiNew").onclick = () => openBreakdown("new"); $("kpiTop").onclick = () => openBreakdown("topup");
+  $("bdClose").onclick = () => $("bdDlg").close(); $("stClose").onclick = () => $("stDlg").close();
+  $("bdTabs").onclick = e => { const b = e.target.closest("button[data-bd]"); if (b) { ui.bdPlat = b.dataset.bd; renderBreakdown(); } };
+  $("learnTabs").onclick = e => { const b = e.target.closest("button[data-learn]"); if (b) { ui.learnTab = b.dataset.learn; renderLearn(); } };
+  $("openSettings").onclick = () => { $("optAlert").checked = LS.get("payoutAlert", true); $("ghToken").value = ""; $("tokenState").textContent = LS.get("gh", "") ? "Ключ сохранён на этом устройстве." : "Ключ не задан."; $("settings").showModal(); };
+  $("closeSettings").onclick = () => $("settings").close();
+  $("optAlert").onchange = e => { LS.set("payoutAlert", e.target.checked); render(); };
+  $("saveToken").onclick = async () => {
+    const t = $("ghToken").value.trim(); if (!t) return;
+    LS.set("gh", t); $("tokenState").textContent = "Проверяю…";
+    if (DEMO) { $("tokenState").textContent = "Сохранено (в демо не проверяется)."; return; }
+    await fetchLedger();
+    $("tokenState").textContent = ledger.error ? "Не подошёл: " + ledger.error : "Ключ работает, запись доступна.";
+    render();
+  };
+  $("forget").onclick = () => { LS.del("pw"); LS.del("gh"); $("forget").textContent = "Забыто"; };
+  $("reload").onclick = () => load(true);
+  $("freezeBtn").onclick = async () => { try { await sendCommand({ cmd: (D.policy || {}).frozen ? "unfreeze" : "freeze" }, "пауза обучения"); renderDecisions(); } catch (e) { toast(e.message); } };
+  document.querySelectorAll("input[name=payWhen]").forEach(r => r.onchange = () => $("payDate").hidden = !(r.value === "custom" && r.checked));
+  $("payCancel").onclick = () => $("payDlg").close();
+  $("payNext").onclick = () => {
+    const v = parseFloat($("payAmount").value);
+    if (!(v > 0)) { $("payErr").textContent = "Укажи сумму больше нуля."; return; }
+    if (!DEMO && !LS.get("gh", "")) { $("payErr").textContent = "Сначала добавь ключ GitHub в настройках."; return; }
+    const O = owedNow();
+    $("payConfirmText").innerHTML = `Я получил <b>${fmtMoney(v, cur())}</b> ${fmtDateTime(payWhenIso())}${$("payNote").value.trim() ? ` (${esc($("payNote").value.trim())})` : ""}.<br>
+      <span class="muted" style="font-size:13.5px">Запись закроет ${O.sum.new.count} ${plural(O.sum.new.count, "новый клип", "новых клипа", "новых клипов")} и ${O.sum.topup.count} ${plural(O.sum.topup.count, "доплату", "доплаты", "доплат")}. Эти просмотры больше не попадут в выплату.</span>`;
+    $("payStep1").hidden = true; $("payStep2").hidden = false;
+  };
+  $("payBack").onclick = () => { $("payStep1").hidden = false; $("payStep2").hidden = true; };
+  $("paySave").onclick = async () => {
+    const btn = $("paySave"); btn.disabled = true; btn.textContent = "Сохраняю…"; $("payErr2").textContent = "";
+    try {
+      const O = owedNow();
+      const e = M.makeEntry(O.lines, parseFloat($("payAmount").value), rate(), cur(), payWhenIso(), $("payNote").value.trim());
+      await mutateLedger(list => list.push(e), `реестр: получено ${e.amount} ${e.currency}`);
+      $("payDlg").close(); toast(`Записано: ${fmtMoney(e.amount, cur())}`); render();
+    } catch (err) { $("payErr2").textContent = err.message; }
+    btn.disabled = false; btn.textContent = "Да, записать в реестр";
+  };
+  $("app").addEventListener("click", async ev => {
+    const t = ev.target.closest("button"); if (!t) return;
+    if (t.dataset.copy !== undefined) return copy(t.dataset.copy, t);
+    if (t.dataset.statement) { const e = ledger.entries.find(x => x.id === t.dataset.statement); if (e) statement(e); return; }
+    if (t.dataset.void) { ui.confirmVoid = t.dataset.void; return renderLedger(); }
+    if (t.dataset.voidNo !== undefined) { ui.confirmVoid = null; return renderLedger(); }
+    if (t.dataset.revert) { ui.confirmRevert = t.dataset.revert; return renderDecisions(); }
+    if (t.dataset.revertNo !== undefined) { ui.confirmRevert = null; return renderDecisions(); }
+    if (t.dataset.revertYes) { t.disabled = true; try { await sendCommand({ cmd: "revert", decision: t.dataset.revertYes }, "откат решения"); ui.confirmRevert = null; renderDecisions(); } catch (e) { toast(e.message); t.disabled = false; } return; }
+    if (t.dataset.retry) { t.disabled = true; try { await sendCommand({ cmd: "retry_clip", clip: t.dataset.retry }, "повтор публикации"); } catch (e) { toast(e.message); t.disabled = false; } return; }
+    const setStatus = async (id, status, msg) => {
+      t.disabled = true;
+      try { await mutateLedger(list => { const e = list.find(x => x.id === id); if (e) { e.status = status; e.voided_at = status === "void" ? new Date().toISOString() : null; } }, msg); ui.confirmVoid = null; render(); }
+      catch (err) { toast(err.message); t.disabled = false; }
+    };
+    if (t.dataset.voidYes) return setStatus(t.dataset.voidYes, "void", "реестр: запись отменена").then(() => toast("Запись отменена"));
+    if (t.dataset.restore) return setStatus(t.dataset.restore, "ok", "реестр: запись возвращена").then(() => toast("Запись возвращена"));
+  });
+  let rs; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(render, 150); });
+}
+
+async function load(manual) {
+  try {
+    if (DEMO) { D = demoData(); if (!ledger.loaded) { rebuildGroups(); ledger.entries = demoLedger(); ledger.loaded = true; } }
+    else { D = await fetchData(); await fetchLedger(); }
+  } catch (e) { if (manual) { $("fresh").textContent = e.message; return; } throw e; }
+  TZ = D.timezone || "UTC";
+  D.posts ||= D.videos || [];
+  $("gate").hidden = true; $("dash").hidden = false; $("demoNote").hidden = !DEMO;
+  if (!bound) { bind(); bound = true; }
+  render();
+}
+async function start() {
+  if (DEMO) return load();
+  password = LS.get("pw", null);
+  if (password) { try { await load(); setInterval(() => load(true), 120000); return; } catch { LS.del("pw"); } }
+  $("gate").hidden = false;
+  $("gateForm").onsubmit = async e => {
+    e.preventDefault(); $("gateErr").textContent = ""; password = $("pw").value;
+    try { await load(); if ($("remember").checked) LS.set("pw", password); setInterval(() => load(true), 120000); }
+    catch (err) { $("gateErr").textContent = err.name === "OperationError" ? "Неверный пароль." : err.message; }
+  };
+}
+
+/* ── демо (только если страница открыта не с GitHub Pages) ── */
+function demoData() {
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const now = Date.now(), day = 864e5; TZ = "America/Chicago";
+  const hooks = [["Заезд на Тесле по центру ЛА", "road"], ["Чаевые в Беверли-Хиллз", "money"], ["Охранник против курьера", "conflict"],
+    ["$3 за 40 минут езды", "money"], ["Чат поспорил на адрес", "chat"], ["“Ты вообще русский?”", "america"], ["Клиент открыл дверь, а там…", "customer"],
+    ["Тесла чуть не въехала в меня", "road"], ["Сколько поднял за 10 часов", "money"], ["Собака не отдавала пакет", "funny"],
+    ["Клиентка оставила $100", "emotional"], ["Ресторан забыл ползаказа", "customer"], ["В ЛА это нормально?", "america"], ["Курьер против парковщика", "conflict"]];
+  const accounts = [{ id: "tt_main", name: "TikTok", platform: "tiktok" }, { id: "yt_main", name: "YouTube Shorts", platform: "youtube" }, { id: "ig_main", name: "Instagram Reels", platform: "instagram" }];
+  const posts = [], clips = [];
+  for (let i = 0; i < 40; i++) {
+    const age = i * 0.45 + rnd() * 0.3, created = now - age * day, [title, cat] = hooks[i % hooks.length];
+    const viral = rnd() < 0.08 ? 22 : rnd() < 0.3 ? 4 : 1, id = "c" + i;
+    const targets = {}, cposts = {};
+    for (const [p, mult, delay] of [["tiktok", 1, 0], ["youtube", 0.7 + rnd(), 0.2], ["instagram", 0.4 + rnd() * 0.6, 0.35]]) {
+      if (p !== "tiktok" && rnd() < 0.25) continue;
+      const ct = created + delay * day; if (ct > now) continue;
+      const pa = (now - ct) / day, final = Math.round((900 + rnd() * 6500) * viral * mult * (cat === "money" ? 1.4 : 1));
+      const history = {};
+      for (let d = 0; d <= Math.ceil(pa) + 1; d++) { const t = ct + d * day; if (t > now + day) break; history[dayKey(new Date(Math.min(t, now)))] = Math.round(final * (1 - Math.exp(-Math.min(pa, d + 0.5) * 1.3))); }
+      const views = Object.values(history).pop() || 0, vid = p + i;
+      posts.push({ id: vid, platform: p, account: p === "tiktok" ? "tt_main" : p === "youtube" ? "yt_main" : "ig_main", title: title.toLowerCase(), create_time: Math.floor(ct / 1000),
+        url: p === "youtube" ? "https://youtube.com/shorts/demo" : p === "instagram" ? "https://www.instagram.com/reel/demo" : "https://www.tiktok.com/@albert1million", views, history, clip_id: id, category: cat });
+      targets[p] = { hook: title, status: "used", variant: {} };
+      cposts[p] = { account: p + "_main", status: "posted", posted_at: new Date(ct).toISOString(), url: "#", reason: i % 4 ? "лучший час по плану" : "горячий клип во время эфира" };
+    }
+    clips.push({ id, overlay: title, category: cat, score: 5 + Math.round(rnd() * 4), duration: 16 + rnd() * 24, status: "posted", created_at: new Date(created - 2 * 36e5).toISOString(), targets, posts: cposts });
+  }
+  [["Чат заказал пиццу… клиенту", "chat", 9], ["Клиентка заговорила по-украински", "customer", 8], ["Перекрыли улицу, полиция везде", "road", 7], ["Обед в Санта-Монике за $40", "money", 6]].forEach(([ov, cat, sc], k) =>
+    clips.push({ id: "q" + k, overlay: ov, category: cat, score: sc, duration: 18 + k * 4, status: "ready", created_at: new Date(now - (k + 1) * 50 * 6e4).toISOString(), why: "сильная реакция чата и понятно без контекста",
+      targets: { tiktok: { hook: ov, caption: "курьер в америке и такое бывает", hashtags: ["#доставкавсша", "#albert1million"], comment: "а у вас клиенты так делали?", status: "ready" },
+                 youtube: { hook: ov.replace("…", ""), title: ov + " | доставка в ЛА", description: "ночная смена\n\nСтримы: twitch.tv/albert1million\n#shorts", status: "ready" },
+                 instagram: { hook: ov, caption: "а вы бы так смогли?", hashtags: ["#лосанджелес", "#курьер"], status: "ready" } }, posts: {} }));
+  const msk = +new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Moscow", hour: "2-digit", hour12: false }).format(new Date());
+  const plan = [12, 15, 18, 20, 22].filter(h => h > msk).map(h => `${String(h).padStart(2, "0")}:07`);
+  const ago_ = m => new Date(now - m * 6e4).toISOString();
+  const shares = (o) => o;
+  return {
+    generated_at: ago_(3), title: "Нарезки albert1million", timezone: "America/Chicago", streamer: { display_name: "albert1million" }, accounts,
+    money: { rate_per_1000: 1, currency: "USD", payout_min: 20 }, posting: { timezone: "Europe/Moscow" },
+    status: {
+      live: { is_live: true, title: "Доставка по ЛА, ночная смена", started_at: ago_(202), viewers: 1840 },
+      process: { state: "running", stage: "Монтирую клип 3/6", vod_title: "Доставка по ЛА, ночная смена", chunk: "2:00:00–4:00:00", progress: 82, updated_at: ago_(2) },
+      post: { timezone: "Europe/Moscow", next_check: new Date(now + 23 * 6e4).toISOString(), accounts: {
+        tt_main: { last_post_at: ago_(130), plan: { cap: 6, posts_today: 3, mode: "потолок подобран по данным", plan_today: plan } },
+        yt_main: { last_post_at: ago_(300), plan: { cap: 4, posts_today: 1, mode: "обычный режим", plan_today: plan.slice(0, 2) } },
+        ig_main: { last_post_at: ago_(500), plan: { cap: 3, posts_today: 1, mode: "разгон аккаунта, день 4", plan_today: plan.slice(-1) } } } },
+      health: { tt_main: { state: "ok" }, yt_main: { state: "ok" }, ig_main: { state: "watch", reason: "последние ролики в первые 2 часа отстают от нормы — ранний сигнал" } },
+      system: { watch: { level: "ok", msg: "эфир идёт", at: ago_(4) }, process: { level: "ok", msg: "обработано кусков: 1", at: ago_(70) },
+        post: { level: "ok", msg: "публикации в норме", at: ago_(31) }, stats: { level: "ok", msg: "статистика собрана", at: ago_(1) }, doctor: { level: "ok", msg: "всё проверено", at: ago_(600) } },
+      tokens: { tt_main: { connected: true, user: "albert1million", refresh_expires_at_days: 340 }, yt_main: { connected: true, user: "albert1million" }, ig_main: { connected: true, user: "@albert1million", expires_at_days: 52 } },
+      storage: { assets: 9, bytes: 214e6 },
+    },
+    policy: { stats: { with_residual: 96 }, frozen: false,
+      arms: { tiktok: { hook_style: shares({ tease: .18, conflict: .2, number: .47, quote: .15 }), cold_open: { True: .62, False: .38 }, subtitles: { ru: .5, both: .5 }, progress_bar: { False: .5, True: .5 } },
+              youtube: { hook_style: { tease: .25, conflict: .25, number: .25, quote: .25 }, cold_open: { True: .5, False: .5 }, subtitles: { ru: .5, both: .5 }, progress_bar: { False: .5, True: .5 } },
+              instagram: { hook_style: { tease: .25, conflict: .25, number: .25, quote: .25 }, cold_open: { True: .5, False: .5 }, subtitles: { ru: .5, both: .5 }, progress_bar: { False: .5, True: .5 } } },
+      evidence: { tiktok: { hook_style: { tease: { n: 14, mean: -.08, sd: .15 }, conflict: { n: 12, mean: .02, sd: .16 }, number: { n: 15, mean: .34, sd: .14 }, quote: { n: 11, mean: -.12, sd: .17 } },
+        cold_open: { True: { n: 28, mean: .12, sd: .11 }, False: { n: 24, mean: -.1, sd: .12 } }, subtitles: { ru: { n: 27, mean: .01, sd: .12 }, both: { n: 25, mean: -.01, sd: .12 } } } },
+      hours: { tiktok: [.2, .12, .06, .04, .04, .07, .18, .4, .55, .5, .48, .52, .66, .7, .62, .58, .63, .78, .92, 1, .97, .9, .74, .44] },
+      caps: { tt_main: { cap: 6 }, yt_main: { cap: 4 }, ig_main: { cap: 3 } }, warmup: { ig_main: { active: true } } },
+    decisions: [
+      { id: "d1", at: ago_(60 * 24 * 6), kind: "warmup", summary: "ig_main: режим разгона — первые дни только сильные безопасные клипы, 2→6 постов в день по нарастающей", reversible: false },
+      { id: "d2", at: ago_(60 * 24 * 3), kind: "arms", summary: "TikTok: стиль заголовка «цифра» заходит лучше (+40% к норме, n=15, уверенность 91%) — его доля 25% → 47%", reversible: true },
+      { id: "d3", at: ago_(60 * 30), kind: "cap", summary: "tt_main: на 5 постах в сутки каждый ролик держит уровень (0.94 типичного), клипов хватает — пробую 6 в сутки", reversible: true },
+      { id: "d4", at: ago_(60 * 5), kind: "audio", summary: "Клип 3:12:40: в фоне музыка (34% энергии), оставлен только голос", reversible: false },
+      { id: "d5", at: ago_(60 * 2), kind: "health", summary: "ig_main: режим «норма» → «присмотреться». Последние ролики в первые 2 часа отстают от нормы", reversible: false }],
+    commands: { results: {} }, clips, posts, vods: [],
+  };
+}
+function demoLedger() {
+  const lines = M.owed(G, {}, 1).filter((_, i) => i % 2 === 0).map(l => ({ ...l, views: Math.round(l.views * .6), paid_to: Math.round(l.paid_to * .6), amount: Math.round(l.views * .6) / 1000 }));
+  const pick = lines.slice(0, 12), sum = M.summarize(pick).total;
+  return [M.makeEntry(pick, Math.round(sum), 1, "USD", new Date(Date.now() - 9 * 864e5).toISOString(), "PayPal")];
+}
+
+start().catch(e => { $("gate").hidden = false; $("gateErr").textContent = e.message; });
+})();
+</script>
+</body>
+</html>
