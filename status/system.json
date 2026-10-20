@@ -24,5 +24,13 @@
   "since": "2026-10-20T08:25:19Z",
   "fails": 0,
   "last_ok": "2026-10-20T14:15:51Z"
+ },
+ "doctor": {
+  "level": "error",
+  "msg": "не задан секрет TWITCH_CLIENT_ID; не задан секрет TWITCH_CLIENT_SECRET; не задан секрет DASHBOARD_PASSWORD; не задан секрет TOKEN_KEY",
+  "at": "2026-10-20T14:19:20Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39438099221",
+  "since": "2026-10-20T14:19:20Z",
+  "fails": 1
  }
 }
