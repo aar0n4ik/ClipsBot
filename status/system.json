@@ -36,10 +36,10 @@
  },
  "process": {
   "level": "error",
-  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-21T05:31:57Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39549219042",
+  "msg": "кусок 1:58:00–4:00:00: Все ИИ-провайдеры недоступны: 404 [{\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (ht",
+  "at": "2026-10-21T05:58:41Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39550879061",
   "since": "2026-10-21T00:32:32Z",
-  "fails": 4
+  "fails": 5
  }
 }
