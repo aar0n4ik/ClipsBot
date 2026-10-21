@@ -9,21 +9,40 @@
   },
   "yt_main": {
    "platform": "youtube",
-   "connected": false,
+   "connected": true,
    "plan": {
-    "mode": "не подключён"
+    "cap": 4,
+    "gap_min": 80,
+    "mode": "обычный режим",
+    "posts_today": 0,
+    "plan_today": [
+     "13:07",
+     "17:07",
+     "19:07",
+     "21:07"
+    ],
+    "health": "ok"
    }
   },
   "ig_main": {
    "platform": "instagram",
-   "connected": false,
+   "connected": true,
    "plan": {
-    "mode": "не подключён"
+    "cap": 3,
+    "gap_min": 80,
+    "mode": "обычный режим",
+    "posts_today": 0,
+    "plan_today": [
+     "13:07",
+     "19:07",
+     "21:07"
+    ],
+    "health": "ok"
    }
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-21T04:32:50Z",
+ "updated_at": "2026-10-21T10:01:58Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -104,5 +123,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-21T05:07:00+00:00"
+ "next_check": "2026-10-21T11:07:00+00:00"
 }

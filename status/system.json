@@ -20,11 +20,11 @@
  "post": {
   "level": "ok",
   "msg": "публикации в норме",
-  "at": "2026-10-21T04:32:50Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39544607305",
+  "at": "2026-10-21T10:01:58Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39581502324",
   "since": "2026-10-20T08:25:19Z",
   "fails": 0,
-  "last_ok": "2026-10-21T04:32:50Z"
+  "last_ok": "2026-10-21T10:01:58Z"
  },
  "doctor": {
   "level": "error",
