@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь 7/14",
+ "stage": "Расшифровываю речь 8/14",
  "vod_id": "2906042925",
  "vod_title": "🇺🇸 LOS ANGELES IRL | ДОСТАВКА НА TESLA 🚗 | ЕЗДИМ ПО ЗАКАЗАМ И ОБЩАЕМСЯ [Новый ТГ в описании]",
  "chunk": "0:00:00–2:00:00",
- "progress": 40,
- "updated_at": "2026-10-21T05:29:34Z",
+ "progress": 42,
+ "updated_at": "2026-10-21T05:29:50Z",
  "detail": "open() got an unexpected keyword argument 'metadata_errors'"
 }
