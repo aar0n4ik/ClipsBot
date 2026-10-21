@@ -99,7 +99,7 @@ llm:
   providers:
     - {name: github-models, base_url: "https://models.github.ai/inference", model: openai/gpt-4.1-mini, key_env: GITHUB_TOKEN}
     - {name: github-models-backup, base_url: "https://models.github.ai/inference", model: openai/gpt-4o-mini, key_env: GITHUB_TOKEN}
-    - {name: gemini, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-2.5-flash, key_env: GEMINI_API_KEY}
+    - {name: gemini, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY}
 
 posting:
   timezone: Europe/Moscow            # время аудитории: по нему ночь, лучшие часы, «сегодня» для лимитов
