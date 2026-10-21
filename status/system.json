@@ -9,12 +9,13 @@
   "last_ok": "2026-10-20T22:34:30Z"
  },
  "watch": {
-  "level": "error",
-  "msg": "запуск «watch» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-20T21:50:48Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39503583934",
-  "since": "2026-10-20T07:55:39Z",
-  "fails": 5
+  "level": "ok",
+  "msg": "эфир идёт, нарезка запущена",
+  "at": "2026-10-21T00:07:49Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39519370079",
+  "since": "2026-10-21T00:07:49Z",
+  "fails": 0,
+  "last_ok": "2026-10-21T00:07:49Z"
  },
  "post": {
   "level": "ok",
