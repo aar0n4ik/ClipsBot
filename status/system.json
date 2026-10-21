@@ -36,12 +36,13 @@
   "last_ok": "2026-10-21T14:30:16Z"
  },
  "process": {
-  "level": "error",
-  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-21T19:12:37Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39657757977",
-  "since": "2026-10-21T00:32:32Z",
-  "fails": 16
+  "level": "ok",
+  "msg": "обработано кусков: 0",
+  "at": "2026-10-21T22:31:22Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39685350430",
+  "since": "2026-10-21T22:31:22Z",
+  "fails": 0,
+  "last_ok": "2026-10-21T22:31:22Z"
  },
  "auth:yt_main": {
   "level": "ok",
