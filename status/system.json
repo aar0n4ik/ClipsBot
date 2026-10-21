@@ -36,11 +36,11 @@
  },
  "process": {
   "level": "error",
-  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-21T07:55:36Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39557943948",
+  "msg": "кусок 3:58:00–6:00:00: Все ИИ-провайдеры недоступны: bad response: OK\r\n",
+  "at": "2026-10-21T10:01:38Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39579070589",
   "since": "2026-10-21T00:32:32Z",
-  "fails": 10
+  "fails": 11
  },
  "auth:yt_main": {
   "level": "ok",
