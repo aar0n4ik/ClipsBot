@@ -59,7 +59,10 @@ class LLM:
             raise LLMError(f"network {e}") from e
         if r.status_code != 200:
             raise LLMError(f"{r.status_code} {r.text[:400]}")
-        text = r.json()["choices"][0]["message"]["content"] or ""
+        try:
+            text = r.json()["choices"][0]["message"]["content"] or ""
+        except (ValueError, KeyError, IndexError, TypeError) as e:
+            raise LLMError(f"bad response: {r.text[:400]}") from e
         return parse_json_loose(text)
 
 
