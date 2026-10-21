@@ -23,7 +23,7 @@
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-20T23:08:36Z",
+ "updated_at": "2026-10-21T04:32:50Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -104,5 +104,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-21T00:07:00+00:00"
+ "next_check": "2026-10-21T05:07:00+00:00"
 }
