@@ -33,5 +33,13 @@
   "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39438099221",
   "since": "2026-10-20T14:19:20Z",
   "fails": 1
+ },
+ "process": {
+  "level": "error",
+  "msg": "кусок 0:00:00–2:00:00: open() got an unexpected keyword argument 'metadata_errors'",
+  "at": "2026-10-21T00:32:32Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39519409298",
+  "since": "2026-10-21T00:32:32Z",
+  "fails": 1
  }
 }
