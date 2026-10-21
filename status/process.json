@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь 4/14",
+ "stage": "Расшифровываю речь 5/14",
  "vod_id": "2906042925",
  "vod_title": "🇺🇸 LOS ANGELES IRL | ДОСТАВКА НА TESLA 🚗 | ЕЗДИМ ПО ЗАКАЗАМ И ОБЩАЕМСЯ [Новый ТГ в описании]",
  "chunk": "3:58:00–6:00:00",
- "progress": 32,
- "updated_at": "2026-10-21T07:40:01Z",
+ "progress": 35,
+ "updated_at": "2026-10-21T07:40:32Z",
  "detail": "Все ИИ-провайдеры недоступны: 503 [{\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\n    \"status\": \"UNAVAILABLE\"\n  }\n}\n]"
 }
