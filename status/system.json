@@ -36,10 +36,10 @@
  },
  "process": {
   "level": "error",
-  "msg": "кусок 0:00:00–2:00:00: Expecting value: line 1 column 1 (char 0)",
-  "at": "2026-10-21T05:31:56Z",
+  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
+  "at": "2026-10-21T05:31:57Z",
   "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39549219042",
   "since": "2026-10-21T00:32:32Z",
-  "fails": 3
+  "fails": 4
  }
 }
