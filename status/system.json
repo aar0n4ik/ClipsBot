@@ -50,5 +50,14 @@
   "since": "2026-10-21T07:16:48Z",
   "fails": 0,
   "last_ok": "2026-10-21T07:16:48Z"
+ },
+ "auth:ig_main": {
+  "level": "ok",
+  "msg": "ig_main (instagram) подключён",
+  "at": "2026-10-21T07:30:24Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39562402443",
+  "since": "2026-10-21T07:30:24Z",
+  "fails": 0,
+  "last_ok": "2026-10-21T07:30:24Z"
  }
 }
