@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updated_at": "2026-10-21T06:29:34Z",
+ "updated_at": "2026-10-21T12:15:46Z",
  "frozen": true,
  "pins": {},
  "paused": {},
@@ -168,8 +168,8 @@
  "hints": {},
  "last_change": {},
  "stats": {
-  "rows": 0,
-  "with_residual": 0,
+  "rows": 12,
+  "with_residual": 12,
   "noise": 0.8
  },
  "evidence": {

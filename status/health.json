@@ -1,1 +1,34 @@
-{}
+{
+ "yt_main": {
+  "early_baseline": null,
+  "cusum": 0.0,
+  "recent_low": 0,
+  "last5_median": 733,
+  "baseline_median": 278,
+  "stuck": 0,
+  "n_early": 6,
+  "n_mature": 6,
+  "state": "ok",
+  "reason": "всё в норме",
+  "until": null,
+  "checked_at": "2026-10-21T12:15:46Z",
+  "since": "2026-10-21T12:15:46Z",
+  "spam_errors": 0
+ },
+ "ig_main": {
+  "early_baseline": null,
+  "cusum": 0.0,
+  "recent_low": 0,
+  "last5_median": 0,
+  "baseline_median": 0,
+  "stuck": 0,
+  "n_early": 6,
+  "n_mature": 6,
+  "state": "ok",
+  "reason": "всё в норме",
+  "until": null,
+  "checked_at": "2026-10-21T12:15:46Z",
+  "since": "2026-10-21T12:15:46Z",
+  "spam_errors": 0
+ }
+}
