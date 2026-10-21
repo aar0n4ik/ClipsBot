@@ -36,11 +36,11 @@
  },
  "process": {
   "level": "error",
-  "msg": "кусок 3:58:00–6:00:00: Все ИИ-провайдеры недоступны: 429 [{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: http",
-  "at": "2026-10-21T07:55:34Z",
+  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
+  "at": "2026-10-21T07:55:36Z",
   "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39557943948",
   "since": "2026-10-21T00:32:32Z",
-  "fails": 9
+  "fails": 10
  },
  "auth:yt_main": {
   "level": "ok",
