@@ -36,10 +36,10 @@
  },
  "process": {
   "level": "error",
-  "msg": "кусок 0:00:00–2:00:00: open() got an unexpected keyword argument 'metadata_errors'",
-  "at": "2026-10-21T00:32:32Z",
+  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
+  "at": "2026-10-21T00:32:34Z",
   "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39519409298",
   "since": "2026-10-21T00:32:32Z",
-  "fails": 1
+  "fails": 2
  }
 }
