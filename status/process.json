@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь 11/14",
+ "stage": "Расшифровываю речь 12/14",
  "vod_id": "2906042925",
  "vod_title": "🇺🇸 LOS ANGELES IRL | ДОСТАВКА НА TESLA 🚗 | ЕЗДИМ ПО ЗАКАЗАМ И ОБЩАЕМСЯ [Новый ТГ в описании]",
  "chunk": "0:00:00–2:00:00",
- "progress": 50,
- "updated_at": "2026-10-21T05:45:06Z",
+ "progress": 52,
+ "updated_at": "2026-10-21T05:45:20Z",
  "detail": "Expecting value: line 1 column 1 (char 0)"
 }
