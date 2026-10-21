@@ -1,10 +1,10 @@
 {
  "stats": {
-  "level": "ok",
-  "msg": "статистика собрана",
-  "at": "2026-10-21T17:36:17Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39645223380",
-  "since": "2026-10-20T07:53:43Z",
+  "level": "warn",
+  "msg": "ig_main: Instagram: API access blocked. (200/None)",
+  "at": "2026-10-21T20:52:18Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39673993189",
+  "since": "2026-10-21T20:52:18Z",
   "fails": 0,
   "last_ok": "2026-10-21T17:36:17Z"
  },
