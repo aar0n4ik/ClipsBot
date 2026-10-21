@@ -10,12 +10,12 @@
  },
  "watch": {
   "level": "ok",
-  "msg": "эфира нет, нарезка запущена",
-  "at": "2026-10-21T19:00:08Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39657698741",
+  "msg": "эфир идёт, нарезка запущена",
+  "at": "2026-10-21T22:17:02Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39685311394",
   "since": "2026-10-21T00:07:49Z",
   "fails": 0,
-  "last_ok": "2026-10-21T19:00:08Z"
+  "last_ok": "2026-10-21T22:17:02Z"
  },
  "post": {
   "level": "ok",
