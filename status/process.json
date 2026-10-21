@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Скачиваю звук",
+ "stage": "Читаю чат и клипы зрителей",
  "vod_id": "2906042925",
  "vod_title": "🇺🇸 LOS ANGELES IRL | ДОСТАВКА НА TESLA 🚗 | ЕЗДИМ ПО ЗАКАЗАМ И ОБЩАЕМСЯ [Новый ТГ в описании]",
  "chunk": "0:00:00–2:00:00",
- "progress": 5,
- "updated_at": "2026-10-21T05:23:43Z",
+ "progress": 15,
+ "updated_at": "2026-10-21T05:27:14Z",
  "detail": "open() got an unexpected keyword argument 'metadata_errors'"
 }
