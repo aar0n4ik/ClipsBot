@@ -2,9 +2,16 @@
  "accounts": {
   "tt_main": {
    "platform": "tiktok",
-   "connected": false,
+   "connected": true,
    "plan": {
-    "mode": "не подключён"
+    "cap": 6,
+    "gap_min": 80,
+    "mode": "обычный режим",
+    "posts_today": 0,
+    "plan_today": [
+     "22:07"
+    ],
+    "health": "ok"
    }
   },
   "yt_main": {
@@ -16,9 +23,7 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "19:07",
-     "21:07",
-     "23:07"
+     "22:07"
     ],
     "health": "ok"
    }
@@ -32,16 +37,14 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "19:07",
-     "21:07",
-     "23:07"
+     "22:07"
     ],
     "health": "ok"
    }
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-21T15:06:19Z",
+ "updated_at": "2026-10-21T19:16:57Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -122,5 +125,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-21T16:07:00+00:00"
+ "next_check": "2026-10-21T20:07:00+00:00"
 }
