@@ -82,5 +82,19 @@
   "account": null,
   "platform": null,
   "reverted": false
+ },
+ {
+  "id": "0692144809",
+  "at": "2026-10-22T07:33:12Z",
+  "kind": "audio",
+  "summary": "Клип 0:06:56: в фоне слышна музыка — звук оставлен как есть, клип помечен",
+  "path": null,
+  "before": null,
+  "after": null,
+  "evidence": {},
+  "reversible": false,
+  "account": null,
+  "platform": null,
+  "reverted": false
  }
 ]
