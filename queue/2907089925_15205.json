@@ -1,0 +1,161 @@
+{
+ "id": "2907089925_15205",
+ "vod_id": "2907089925",
+ "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
+ "vod_time": 15206.0,
+ "duration": 24.0,
+ "score": 6,
+ "subscores": {
+  "hook": 5,
+  "payoff": 6,
+  "clarity": 8,
+  "emotion": 5,
+  "relate": 6
+ },
+ "category": "road",
+ "risk": {
+  "level": 0,
+  "flags": [
+   "music"
+  ]
+ },
+ "why": "Краткое описание живописного маршрута в США, понятный момент без контекста, интерес для аудитории «Америка глазами русского», подходит по длине и эмоциям.",
+ "overlay": "13 минут живописного пути",
+ "signal": 18.44,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.04,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.798,
+   "stability": 0.612,
+   "tonal": 0.0,
+   "beat": 0.142
+  },
+  "action": "flag",
+  "reason": "в фоне слышна музыка — звук оставлен как есть, клип помечен"
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 3.5,
+   "text": "Там обрыв, там горы"
+  }
+ ],
+ "transcript": "Какая -то киношная локация. Там обрыв, там горы. Купер ведет по такому маршруту. Ладно, я не против.",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "13 минут живописного пути",
+   "hook_style": "number",
+   "caption": "Америка глазами русского: живописный маршрут через горы и обрывы",
+   "hashtags": [
+    "#путешествия",
+    "#калифорния",
+    "#русскийвсша",
+    "#драйв",
+    "#дороги"
+   ],
+   "hook_alts": [
+    "13 минут живописного пути",
+    "Маршрут, будто из фильма",
+    "Горы vs городская суета",
+    "Там обрыв, там горы"
+   ],
+   "asset": "2907089925_15205_tiktok.mp4",
+   "size": 6923907,
+   "duration": 24.0,
+   "variant": {
+    "hook_style": "number",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Какой ваш любимый живописный путь в США? Делитесь!",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "Маршрут, будто из фильма",
+   "hook_style": "tease",
+   "caption": "Кто мечтает проехать такой маршрут? Оставьте лайк, если хотите больше таких видов!",
+   "hashtags": [
+    "#калифорния",
+    "#пейзажи",
+    "#дорожныепутешествия",
+    "#русскийвамерике",
+    "#автопутешествия"
+   ],
+   "hook_alts": [
+    "Маршрут, будто из фильма",
+    "Горы vs городская суета",
+    "13 минут живописного пути",
+    "Там обрыв, там горы"
+   ],
+   "asset": "2907089925_15205_instagram.mp4",
+   "size": 6923907,
+   "duration": 24.0,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Какой ваш любимый живописный путь в США? Делитесь!",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "Маршрут, будто из фильма",
+   "hook_style": "tease",
+   "title": "Красивый маршрут в США: горы, обрывы и калифорнийские дороги",
+   "description": "Краткий обзор живописного пути, который покажет, почему Америка выглядит как кино. Смотрите!\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "красивый маршрут США",
+    "горы калифорния",
+    "русский в америке",
+    "дорожные влоги",
+    "пейзажи США",
+    "обрывы",
+    "калифорнийские дороги"
+   ],
+   "caption": "Красивый маршрут в США: горы, обрывы и калифорнийские дороги",
+   "hook_alts": [
+    "Маршрут, будто из фильма",
+    "Горы vs городская суета",
+    "13 минут живописного пути",
+    "Там обрыв, там горы"
+   ],
+   "asset": "2907089925_15205_youtube.mp4",
+   "size": 6923907,
+   "duration": 24.0,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Какой ваш любимый живописный путь в США? Делитесь!",
+   "cover_ms": 600
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-22T23:31:31Z",
+ "live_when_made": true,
+ "uid": "10f81c1e"
+}
