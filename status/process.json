@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Монтирую клип 2/2",
+ "stage": "Скачиваю звук",
  "vod_id": "2907089925",
  "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
- "chunk": "3:58:00–6:00:00",
- "progress": 84,
- "updated_at": "2026-10-22T23:30:09Z",
+ "chunk": "5:58:00–8:00:00",
+ "progress": 5,
+ "updated_at": "2026-10-22T23:31:34Z",
  "detail": "Все ИИ-провайдеры недоступны: 404 {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n"
 }
