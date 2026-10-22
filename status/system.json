@@ -27,11 +27,11 @@
   "last_ok": "2026-10-22T04:31:24Z"
  },
  "doctor": {
-  "level": "ok",
-  "msg": "всё проверено, проблем нет",
-  "at": "2026-10-21T14:30:16Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39617297310",
-  "since": "2026-10-21T14:30:16Z",
+  "level": "warn",
+  "msg": "ig_main: Instagram: API access blocked. (200/None)",
+  "at": "2026-10-22T14:31:31Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39796333501",
+  "since": "2026-10-22T14:31:31Z",
   "fails": 0,
   "last_ok": "2026-10-21T14:30:16Z"
  },
