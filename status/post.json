@@ -9,15 +9,32 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "08:07",
      "13:07",
      "15:07",
      "17:07",
      "19:07",
-     "21:07"
+     "21:07",
+     "23:07"
     ],
-    "health": "ok"
-   }
+    "health": "ok",
+    "why": []
+   },
+   "last_post_at": "2026-10-22T10:03:45Z",
+   "last_clip": "2906042925_1862",
+   "last_error": null,
+   "count_by_day": {
+    "2026-10-22": 1
+   },
+   "recent": [
+    {
+     "clip": "2906042925_1862",
+     "category": "money",
+     "vod_id": "2906042925",
+     "vod_time": 1862.9,
+     "hook_style": "conflict"
+    }
+   ],
+   "first_post_at": "2026-10-22T10:03:45Z"
   },
   "yt_main": {
    "platform": "youtube",
@@ -33,8 +50,25 @@
      "19:07",
      "21:07"
     ],
-    "health": "ok"
-   }
+    "health": "ok",
+    "why": []
+   },
+   "last_post_at": "2026-10-22T10:03:50Z",
+   "last_clip": "2906042925_1862",
+   "last_error": null,
+   "count_by_day": {
+    "2026-10-22": 1
+   },
+   "recent": [
+    {
+     "clip": "2906042925_1862",
+     "category": "money",
+     "vod_id": "2906042925",
+     "vod_time": 1862.9,
+     "hook_style": "number"
+    }
+   ],
+   "first_post_at": "2026-10-22T10:03:50Z"
   },
   "ig_main": {
    "platform": "instagram",
@@ -49,12 +83,15 @@
      "19:07",
      "21:07"
     ],
-    "health": "ok"
-   }
+    "health": "ok",
+    "why": []
+   },
+   "last_error": "Instagram: API access blocked. (200/None) [temp]",
+   "last_error_at": "2026-10-22T10:03:51Z"
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-22T04:31:24Z",
+ "updated_at": "2026-10-22T10:03:51Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -135,5 +172,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-22T05:07:00+00:00"
+ "next_check": "2026-10-22T11:07:00+00:00"
 }

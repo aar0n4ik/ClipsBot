@@ -69,7 +69,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "",
    "cover_ms": 600
   },
@@ -121,12 +121,40 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "",
    "cover_ms": 600
   }
  },
- "posts": {},
+ "posts": {
+  "tiktok": {
+   "publish_id": "v_inbox_file~v2.7699430144901154847",
+   "privacy": "DRAFT",
+   "status": "inbox",
+   "video_id": null,
+   "account": "tt_main",
+   "posted_at": "2026-10-22T10:03:44Z",
+   "reason": "лучший час по плану",
+   "why": []
+  },
+  "youtube": {
+   "status": "posted",
+   "video_id": "p_I7Uc_nRZ8",
+   "url": "https://youtube.com/shorts/p_I7Uc_nRZ8",
+   "privacy": "public",
+   "account": "yt_main",
+   "posted_at": "2026-10-22T10:03:49Z",
+   "reason": "лучший час по плану",
+   "why": []
+  },
+  "instagram": {
+   "tries": 1,
+   "account": "ig_main",
+   "error": "Instagram: API access blocked. (200/None)",
+   "last_try": "2026-10-22T10:03:51Z",
+   "status": "retry"
+  }
+ },
  "created_at": "2026-10-22T07:26:32Z",
  "live_when_made": false,
  "uid": "9f406b6f"
