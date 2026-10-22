@@ -9,19 +9,25 @@
     "mode": "обычный режим",
     "posts_today": 1,
     "plan_today": [
-     "19:07",
-     "21:07",
-     "23:07"
+     "22:07"
     ],
-    "health": "ok"
+    "health": "ok",
+    "why": []
    },
-   "last_post_at": "2026-10-22T10:03:45Z",
-   "last_clip": "2906042925_1862",
+   "last_post_at": "2026-10-22T19:59:41Z",
+   "last_clip": "2906042925_6996",
    "last_error": null,
    "count_by_day": {
-    "2026-10-22": 1
+    "2026-10-22": 2
    },
    "recent": [
+    {
+     "clip": "2906042925_6996",
+     "category": "funny",
+     "vod_id": "2906042925",
+     "vod_time": 6996.7,
+     "hook_style": "tease"
+    },
     {
      "clip": "2906042925_1862",
      "category": "money",
@@ -41,19 +47,25 @@
     "mode": "обычный режим",
     "posts_today": 1,
     "plan_today": [
-     "19:07",
-     "21:07",
-     "23:07"
+     "22:07"
     ],
-    "health": "ok"
+    "health": "ok",
+    "why": []
    },
-   "last_post_at": "2026-10-22T10:03:50Z",
-   "last_clip": "2906042925_1862",
+   "last_post_at": "2026-10-22T19:59:46Z",
+   "last_clip": "2906042925_6996",
    "last_error": null,
    "count_by_day": {
-    "2026-10-22": 1
+    "2026-10-22": 2
    },
    "recent": [
+    {
+     "clip": "2906042925_6996",
+     "category": "funny",
+     "vod_id": "2906042925",
+     "vod_time": 6996.7,
+     "hook_style": "number"
+    },
     {
      "clip": "2906042925_1862",
      "category": "money",
@@ -73,18 +85,17 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "19:07",
-     "21:07",
-     "23:07"
+     "22:07"
     ],
-    "health": "ok"
+    "health": "ok",
+    "why": []
    },
    "last_error": "Instagram: API access blocked. (200/None) [temp]",
-   "last_error_at": "2026-10-22T10:03:51Z"
+   "last_error_at": "2026-10-22T19:59:48Z"
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-22T15:08:03Z",
+ "updated_at": "2026-10-22T19:59:48Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -165,5 +176,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-22T16:07:00+00:00"
+ "next_check": "2026-10-22T20:07:00+00:00"
 }
