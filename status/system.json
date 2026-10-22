@@ -37,11 +37,11 @@
  },
  "process": {
   "level": "error",
-  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-22T17:38:04Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39744152639",
+  "msg": "кусок 3:58:00–6:00:00: Все ИИ-провайдеры недоступны: 404 {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n",
+  "at": "2026-10-22T19:59:05Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39836599706",
   "since": "2026-10-22T01:46:21Z",
-  "fails": 16,
+  "fails": 17,
   "last_ok": "2026-10-21T22:31:22Z"
  },
  "auth:yt_main": {
