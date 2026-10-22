@@ -44,6 +44,7 @@ class LLM:
                     if "413" in msg or "too large" in msg.lower() or "tokens_limit" in msg:
                         log(f"⚠️ {p['name']}: запрос слишком большой, пробую следующего")
                         break
+                    log(f"⚠️ {p['name']}: ошибка ({msg[:120]}), попытка {attempt+1}/3")
                     time.sleep(4 * (attempt + 1))
         raise LLMError(f"Все ИИ-провайдеры недоступны: {last_err}")
 
