@@ -65,9 +65,9 @@
     "at": "2026-10-22T19:47:05Z"
    }
   ],
-  "processed_until": 28800,
+  "processed_until": 30506,
   "duration": 30506,
-  "finished": false,
+  "finished": true,
   "candidate_times": [
    14576,
    15114,
@@ -96,9 +96,13 @@
    25835,
    26264,
    26744,
-   27613
+   27613,
+   29123,
+   29574,
+   29797,
+   30288
   ],
-  "clips": 3,
-  "updated_at": "2026-10-22T23:45:10Z"
+  "clips": 4,
+  "updated_at": "2026-10-22T23:52:43Z"
  }
 }
