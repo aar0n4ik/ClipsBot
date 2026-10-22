@@ -1,0 +1,162 @@
+{
+ "id": "2907089925_26692",
+ "vod_id": "2907089925",
+ "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
+ "vod_time": 26692.2,
+ "duration": 13.7,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 8,
+  "clarity": 8,
+  "emotion": 6,
+  "relate": 7
+ },
+ "category": "money",
+ "risk": {
+  "level": 2,
+  "flags": [
+   "heavy_profanity",
+   "music"
+  ]
+ },
+ "why": "Яркий хук о $35 за напиток сразу привлекает внимание, тема «Америка глазами русского» релевантна, эмоций достаточно, а уровень ненормативной лексики умеренный и не блокирует публикацию.",
+ "overlay": "Курьер vs дорогой заказ",
+ "signal": 18.42,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.07,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.58,
+   "stability": 0.468,
+   "tonal": 0.0,
+   "beat": 0.175
+  },
+  "action": "flag",
+  "reason": "в фоне слышна музыка — звук оставлен как есть, клип помечен"
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 3.2,
+   "text": "$35 за напиток"
+  }
+ ],
+ "transcript": "Ещё и с напитком, прикиньте. Два блюда плюс напиток, 35 баксов. Охуенно. Это гибискус. Какой -то там, чё -то там. Гибискус это типа каркаде. Блядь, типа с соком, с сиропом. Ну, понялись,",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Курьер vs дорогой заказ",
+   "hook_style": "conflict",
+   "caption": "доставка в сша: когда клиент заказывает гибискус за $35 😅",
+   "hashtags": [
+    "#доставка",
+    "#лосанджелес",
+    "#русскийвсша",
+    "#гибискус",
+    "#курьер"
+   ],
+   "hook_alts": [
+    "Курьер vs дорогой заказ",
+    "За $35 напиток?",
+    "$35 за гибискус",
+    "Это гибискус, о*****о"
+   ],
+   "asset": "2907089925_26692_tiktok.mp4",
+   "size": 9651832,
+   "duration": 13.7,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А какой самый дорогой заказ у вас был?",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "Это гибискус, о*****о",
+   "hook_style": "quote",
+   "caption": "Клиент попросил гибискус за $35. Как вы думаете, это нормально? 🤔",
+   "hashtags": [
+    "#доставка",
+    "#лосанджелес",
+    "#русскийвамерике",
+    "#гибискус",
+    "#курьер"
+   ],
+   "hook_alts": [
+    "Это гибискус, о*****о",
+    "За $35 напиток?",
+    "Курьер vs дорогой заказ",
+    "$35 за гибискус"
+   ],
+   "asset": "2907089925_26692_instagram.mp4",
+   "size": 9660152,
+   "duration": 13.7,
+   "variant": {
+    "hook_style": "quote",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А какой самый дорогой заказ у вас был?",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "За $35 напиток?",
+   "hook_style": "tease",
+   "title": "За $35 в ЛА: гибискус от курьера",
+   "description": "Я рассказываю, как в Лос‑Анджелесе один напиток может стоить 35 долларов. Реакция и детали\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "доставка в США",
+    "Лос-Анджелес",
+    "русский в США",
+    "гибискус",
+    "курьер в ЛА",
+    "дорогие заказы",
+    "америка глазами русского"
+   ],
+   "caption": "За $35 в ЛА: гибискус от курьера",
+   "hook_alts": [
+    "За $35 напиток?",
+    "Курьер vs дорогой заказ",
+    "$35 за гибискус",
+    "Это гибискус, о*****о"
+   ],
+   "asset": "2907089925_26692_youtube.mp4",
+   "size": 9637045,
+   "duration": 13.7,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А какой самый дорогой заказ у вас был?",
+   "cover_ms": 600
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-22T23:45:08Z",
+ "live_when_made": true,
+ "uid": "ec1ed955"
+}
