@@ -1,0 +1,160 @@
+{
+ "id": "2907089925_29519",
+ "vod_id": "2907089925",
+ "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
+ "vod_time": 29519.4,
+ "duration": 57.7,
+ "score": 6,
+ "subscores": {
+  "hook": 6,
+  "payoff": 6,
+  "clarity": 5,
+  "emotion": 3,
+  "relate": 5
+ },
+ "category": "money",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Начинается вопросом‑хуком о стейкинге, далее даёт конкретную информацию о доходности и процентах, понятный без контекста, интересен аудитории, интерес к деньгам.",
+ "overlay": "Крипта vs займы в США",
+ "signal": 18.45,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.04,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.163,
+   "stability": 0.243,
+   "tonal": 0.0,
+   "beat": 0.124
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 24.3,
+   "text": "Ищу классные доходности"
+  }
+ ],
+ "transcript": "Стейкаю? Я не стейкаю, у меня что -то на GMX лежит в пулах, если шарик, что -то на GMX в пулах лежит, что -то на Uniswap в пулах, что -то на Fluid в стейблкоинах лежит. Короче, ищу доходности классные. Вообще у меня битки заложены на лендинг маркете, под залог своих битков эфиров я беру заем и на уже на эти свободные стейблкоины, ну типа распределяю, как -то фармлю. либо покупаю там больше битков, больше эфиров и тоже формлю в пулах ликвидности тем самым не упускаю доходность, которую даст рост битка и крипты но при этом еще и проценты годовых получаю на капитана",
+ "thumb": "data:image/jpeg;base64,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VVVA+SxHiubjt4DwvDhmbI+zLMGOsscQTpf53IRXkoQoX/ZvikccEjoW6ch8ccX5WMlzpfhFB1jzvl4qsdwjOZnewGE+0EgaAQeY1XqvTprcm6C3Lg53DoouBY7sqANgEmROS8UyTpnS139rXIdv7KtMP7S8JyMyGdwjhyJGSRzzSW1scUZcWNa52xMhLTt4c+QQGkZOA8QiZkSOjbpxpGxSkSMNPdppo39R9beXdV+bwzK4fktxp2ASuDSGtc13xGhu0kWVuePieDJi47XZMLXZXFXZWQC8eiNsr5Br7WGRgX3UTiEfD8jjUXEHcUxHs9ohPSDt2sjaDu66q2/UqlNR5nDMrAyW4szAJnBtNa5rvjNN3aSLKuW/Zvijst2IIQZWMa99PZoY111qfekE1sOZ7LYedFw+fjcXEHcUxHsORCekHbsZE293XVWz6lTzxfA4j+mcR2WzFdkTDpZB+B8bGsZWrbY6DzIsP2QGqMz7PcSwZYI5IgfaHtjicxzXMc9xoN1eB/arbdB9nuJnMfh9ECaOLrOBewN6ew1B96SLNbHnfZbXxs/heKeF8OGYyZmLK/IlyXemMOa2QsYwnb437UTQHNWMn2mwMnBz5dUUeUxmRjxb+qSNxPTczxI5EjwIJQH5oREUIEREAREQBERAEREAX0CWkEEgjcEcwV8ogNlQcYx8lo9qJhm/FKGF0Un9pzW+pjz+LSHNJ3oKc/N4fGLdlCT+zDHIXH5yNjaPmfktTovrU8f4ilcVZdE2k2vuehbt0okvOIcQdnPb6enFGCI4wb03zc47anu/E6hyAAACo0RfLbdm23LerbOHIREWSBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQH//2Q==",
+ "targets": {
+  "tiktok": {
+   "hook": "Крипта vs займы в США",
+   "hook_style": "conflict",
+   "caption": "криптовалютный доход в США: как я получаю 30% годовых на стейкинге",
+   "hashtags": [
+    "#крипта",
+    "#стейкинг",
+    "#доходность",
+    "#финансы",
+    "#cryptocurrency"
+   ],
+   "hook_alts": [
+    "Крипта vs займы в США",
+    "Стейкаю? А что будет",
+    "30% годовых на пулах",
+    "Я беру заем под битки"
+   ],
+   "asset": "2907089925_29519_tiktok.mp4",
+   "size": 22376845,
+   "duration": 57.7,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Кто еще ставит на стейкинг в США? Делитесь опытом!",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "Стейкаю? А что будет",
+   "hook_style": "tease",
+   "caption": "Крипта в США: делюсь, как получаю 30% годовых. А вы инвестируете в стейкинг?",
+   "hashtags": [
+    "#крипта",
+    "#инвестиции",
+    "#стейкинг",
+    "#usa",
+    "#финансы"
+   ],
+   "hook_alts": [
+    "Стейкаю? А что будет",
+    "Крипта vs займы в США",
+    "30% годовых на пулах",
+    "Я беру заем под битки"
+   ],
+   "asset": "2907089925_29519_instagram.mp4",
+   "size": 22403597,
+   "duration": 57.7,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Кто еще ставит на стейкинг в США? Делитесь опытом!",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "Я беру заем под битки",
+   "hook_style": "quote",
+   "title": "Как я получаю 30% годовых на стейкинге в США",
+   "description": "В этом ролике я рассказываю, где храню свои крипто‑активы и как получаю высокий доход. Делюсь схемой с займами под биткойн\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "криптовалюта",
+    "стейкинг",
+    "доходность",
+    "займы под биткойн",
+    "пулы ликвидности",
+    "US crypto",
+    "инвестиции",
+    "годовые проценты"
+   ],
+   "caption": "Как я получаю 30% годовых на стейкинге в США",
+   "hook_alts": [
+    "Я беру заем под битки",
+    "Стейкаю? А что будет",
+    "Крипта vs займы в США",
+    "30% годовых на пулах"
+   ],
+   "asset": "2907089925_29519_youtube.mp4",
+   "size": 22350865,
+   "duration": 57.7,
+   "variant": {
+    "hook_style": "quote",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Кто еще ставит на стейкинг в США? Делитесь опытом!",
+   "cover_ms": 600
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-22T23:52:41Z",
+ "live_when_made": true,
+ "uid": "2409b678"
+}
