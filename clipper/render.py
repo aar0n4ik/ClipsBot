@@ -90,6 +90,10 @@ def _esc(s: str) -> str:
     return re.sub(r"\s+", " ", s.replace("\\", "").replace("{", "(").replace("}", ")")).strip()
 
 
+def _no_dot(s: str) -> str:
+    return re.sub(r"(?<!\.)\.$", "", s)
+
+
 PROFANITY = re.compile(r"(?i)\b([а-яё]*?)(ху[йеёияюл]|пизд|[её]б[аеёиоуы]|[её]бл|бля|муд[аио]|пид[оа]р|залуп|сук[аи]\b|шлюх|г[ао]вн)([а-яё]*)")
 
 
@@ -201,7 +205,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         for ci, ch in enumerate(chunks):
             nxt = chunks[ci + 1][0]["s"] if ci + 1 < len(chunks) else dur
             ch_end = min(nxt, ch[-1]["e"] + 0.3, dur)
-            disp = [_esc(mask_profanity(w["w"])).upper() if caps else _esc(mask_profanity(w["w"])) for w in ch]
+            disp = [_esc(w["w"]).upper() if caps else _esc(w["w"]) for w in ch]
             for wi, w in enumerate(ch):
                 s = w["s"] if wi else max(0.0, w["s"] - 0.05)
                 e = ch[wi + 1]["s"] if wi + 1 < len(ch) else ch_end
