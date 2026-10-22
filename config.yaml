@@ -90,7 +90,7 @@ judge:
   learn_from_stats: true
 
 learning:
-  arms: [hook_style, cold_open, subtitles, progress_bar]   # что бот тестирует и подстраивает сам
+  arms: [hook_style, cold_open]   # что бот тестирует и подстраивает сам
 
 health:
   cusum_alarm: 3.0                   # чувствительность ранней тревоги о просадке
