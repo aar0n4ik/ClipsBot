@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь 4/4",
+ "stage": "ИИ выбирает лучшие моменты",
  "vod_id": "2907089925",
  "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
  "chunk": "7:58:00–8:28:26",
- "progress": 51,
- "updated_at": "2026-10-22T23:47:35Z",
+ "progress": 62,
+ "updated_at": "2026-10-22T23:48:04Z",
  "detail": "Все ИИ-провайдеры недоступны: 404 {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n"
 }
