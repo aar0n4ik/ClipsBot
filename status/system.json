@@ -36,12 +36,12 @@
   "last_ok": "2026-10-21T14:30:16Z"
  },
  "process": {
-  "level": "ok",
-  "msg": "обработано кусков: 0",
-  "at": "2026-10-21T22:31:22Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39685350430",
-  "since": "2026-10-21T22:31:22Z",
-  "fails": 0,
+  "level": "error",
+  "msg": "кусок 0:00:00–2:00:00: Command '['yt-dlp', '-q', '--no-warnings', '--no-part', '-f', 'Audio_Only/audio_only/bestaudio/worst', '--download-sections', '*0.00-7200.00', '--force-keyframes-at-cuts', '-o', '/home/runner/work/ClipsBot/ClipsBot/work/2907089925/0/audio.%(ext)s', 'https://www.twitch.tv/videos/2907089925']' timed o",
+  "at": "2026-10-22T01:46:21Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39701592583",
+  "since": "2026-10-22T01:46:21Z",
+  "fails": 1,
   "last_ok": "2026-10-21T22:31:22Z"
  },
  "auth:yt_main": {
