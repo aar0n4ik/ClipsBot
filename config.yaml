@@ -97,9 +97,8 @@ health:
 
 llm:
   providers:
+      providers:
     - {name: groq, base_url: "https://api.groq.com/openai/v1", model: llama-3.3-70b-versatile, key_env: GROQ_API_KEY}
-    - {name: github-models, base_url: "https://models.github.ai/inference", model: openai/gpt-4.1-mini, key_env: GITHUB_TOKEN}
-    - {name: github-models-backup, base_url: "https://models.github.ai/inference", model: openai/gpt-4o-mini, key_env: GITHUB_TOKEN}
     - {name: gemini, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY}
 
 posting:
