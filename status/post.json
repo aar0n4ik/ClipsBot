@@ -7,12 +7,16 @@
     "cap": 6,
     "gap_min": 80,
     "mode": "обычный режим",
-    "posts_today": 1,
+    "posts_today": 0,
     "plan_today": [
-     "22:07"
+     "08:07",
+     "13:07",
+     "15:07",
+     "17:07",
+     "19:07",
+     "21:07"
     ],
-    "health": "ok",
-    "why": []
+    "health": "ok"
    },
    "last_post_at": "2026-10-22T19:59:41Z",
    "last_clip": "2906042925_6996",
@@ -45,12 +49,14 @@
     "cap": 4,
     "gap_min": 80,
     "mode": "обычный режим",
-    "posts_today": 1,
+    "posts_today": 0,
     "plan_today": [
-     "22:07"
+     "13:07",
+     "17:07",
+     "19:07",
+     "21:07"
     ],
-    "health": "ok",
-    "why": []
+    "health": "ok"
    },
    "last_post_at": "2026-10-22T19:59:46Z",
    "last_clip": "2906042925_6996",
@@ -85,17 +91,18 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "22:07"
+     "13:07",
+     "19:07",
+     "21:07"
     ],
-    "health": "ok",
-    "why": []
+    "health": "ok"
    },
    "last_error": "Instagram: API access blocked. (200/None) [temp]",
    "last_error_at": "2026-10-22T19:59:48Z"
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-22T19:59:48Z",
+ "updated_at": "2026-10-22T23:15:39Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -176,5 +183,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-22T20:07:00+00:00"
+ "next_check": "2026-10-23T00:07:00+00:00"
 }
