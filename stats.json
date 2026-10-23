@@ -18,7 +18,7 @@
        71
       ],
       [
-       1792763131,
+       1792780772,
        71
       ]
      ],
@@ -51,7 +51,7 @@
        1343
       ],
       [
-       1792763131,
+       1792780772,
        1343
       ]
      ],
@@ -84,7 +84,7 @@
        737
       ],
       [
-       1792763131,
+       1792780772,
        737
       ]
      ],
@@ -117,7 +117,7 @@
        130
       ],
       [
-       1792763131,
+       1792780772,
        130
       ]
      ],
@@ -150,7 +150,7 @@
        792
       ],
       [
-       1792763131,
+       1792780772,
        792
       ]
      ],
@@ -183,7 +183,7 @@
        282
       ],
       [
-       1792763131,
+       1792780772,
        282
       ]
      ],
@@ -251,6 +251,10 @@
       [
        1792763131,
        4
+      ],
+      [
+       1792780772,
+       4
       ]
      ],
      "id": "gwmLsw-CZIM",
@@ -266,12 +270,16 @@
     },
     "dRyHGHPX0sU": {
      "history": {
-      "2026-10-23": 21
+      "2026-10-23": 53
      },
      "ts": [
       [
        1792763131,
        21
+      ],
+      [
+       1792780772,
+       53
       ]
      ],
      "id": "dRyHGHPX0sU",
@@ -280,14 +288,35 @@
      "create_time": 1792749470,
      "url": "https://youtube.com/shorts/dRyHGHPX0sU",
      "cover": "https://i.ytimg.com/vi/dRyHGHPX0sU/mqdefault.jpg",
-     "views": 21,
+     "views": 53,
      "likes": 1,
+     "comments": 0,
+     "shares": 0
+    },
+    "vboYf5QaPB8": {
+     "history": {
+      "2026-10-23": 0
+     },
+     "ts": [
+      [
+       1792780772,
+       0
+      ]
+     ],
+     "id": "vboYf5QaPB8",
+     "title": "Инстаграм звонит даже при отключенных уведомлениях | Русский в США",
+     "description": "Смотрим, как странные звонки через Инстаграм могут испортить день курьера в Лос‑Анджелесе. Подписывайтесь!\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+     "create_time": 1792767491,
+     "url": "https://youtube.com/shorts/vboYf5QaPB8",
+     "cover": "https://i.ytimg.com/vi/vboYf5QaPB8/mqdefault.jpg",
+     "views": 0,
+     "likes": 0,
      "comments": 0,
      "shares": 0
     }
    },
    "platform": "youtube",
-   "updated_at": "2026-10-23T13:45:32Z"
+   "updated_at": "2026-10-23T18:39:34Z"
   },
   "ig_main": {
    "videos": {
@@ -439,7 +468,7 @@
        672
       ],
       [
-       1792763131,
+       1792780772,
        672
       ]
      ],
@@ -448,7 +477,7 @@
      "description": "#IRL #Twitch #Stream #LosAngeles",
      "create_time": 1780440508,
      "url": "https://www.tiktok.com/@twitch.albert1million/video/7646933688332061965?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
-     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-85c255-tx/o0UPwpoXQTrICR3gI5Jf2HJaCDLb9keMPAeGtI~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=8d529569&x-expires=1792846800&x-signature=ZZ2edCfhwCEmDghMrzXKufBbAfc%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
+     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-85c255-tx/o0UPwpoXQTrICR3gI5Jf2HJaCDLb9keMPAeGtI~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=996281a4&x-expires=1792864800&x-signature=M7aQRev1xPOgTtu1e2c6AbBP1HA%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
      "duration": 20,
      "views": 672,
      "likes": 22,
@@ -471,7 +500,7 @@
        38
       ],
       [
-       1792763131,
+       1792780772,
        38
       ]
      ],
@@ -480,7 +509,7 @@
      "description": "ТАКСИ В АМЕРИКЕ #IRL #twitch #losangeles #taxi #usa ",
      "create_time": 1780355658,
      "url": "https://www.tiktok.com/@twitch.albert1million/video/7646569239758884127?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
-     "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/ooAjMQAVIAUAOUIIQE8AxqWAfPeqJI8CkeAXSF~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=6fd7a457&x-expires=1792846800&x-signature=vf3KuALTDTqPFjSFwAbTdImsu9k%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
+     "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/ooAjMQAVIAUAOUIIQE8AxqWAfPeqJI8CkeAXSF~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=b1c5229a&x-expires=1792864800&x-signature=HGI5ZNKxsyCJNHRlAR6KTz22FJ0%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
      "duration": 17,
      "views": 38,
      "likes": 1,
@@ -503,7 +532,7 @@
        960
       ],
       [
-       1792763131,
+       1792780772,
        960
       ]
      ],
@@ -512,7 +541,7 @@
      "description": "twitch.tv/albert1million #IRL #twitch #losangeles #tesla #usa ",
      "create_time": 1780250783,
      "url": "https://www.tiktok.com/@twitch.albert1million/video/7646118789708401951?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
-     "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o0l2E4COAfpjAIWJUbQYJ6FEIrI4qOfeCGBQDh~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=e7d7cc75&x-expires=1792846800&x-signature=OYio5yB2BtzoS8d39jUzHnLsjmA%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
+     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o0l2E4COAfpjAIWJUbQYJ6FEIrI4qOfeCGBQDh~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=987cd44e&x-expires=1792864800&x-signature=Ma1aK2IJmc%2Fr2wcQfOuLiYKTX7A%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
      "duration": 17,
      "views": 960,
      "likes": 10,
@@ -535,7 +564,7 @@
        326
       ],
       [
-       1792763131,
+       1792780772,
        326
       ]
      ],
@@ -544,7 +573,7 @@
      "description": "twitch.tv/albert1million #IRL #twitch #stream #usa #losangeles ",
      "create_time": 1780087278,
      "url": "https://www.tiktok.com/@twitch.albert1million/video/7645416571115982111?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
-     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/osIyAUfEdUnEIgFjWhQAHYAqB8Af6mlzAAMIeD~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=111d69cf&x-expires=1792846800&x-signature=Oum8ZBA2TrAhLdtoo%2FdOBzHkcjc%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
+     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/osIyAUfEdUnEIgFjWhQAHYAqB8Af6mlzAAMIeD~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=6e02d7e5&x-expires=1792864800&x-signature=2W%2BulcbFUO0vH78psB7isDxnST0%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
      "duration": 19,
      "views": 326,
      "likes": 2,
@@ -567,7 +596,7 @@
        49
       ],
       [
-       1792763131,
+       1792780772,
        49
       ]
      ],
@@ -576,7 +605,7 @@
      "description": "twitch.tv/albert1million #IRL #stream #twitch #pokemon #usa ",
      "create_time": 1779307808,
      "url": "https://www.tiktok.com/@twitch.albert1million/video/7642068751378173215?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
-     "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o0AEUQDhFAdIDFOzARONACjEw8eEIVAfAqhRME~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=ab7db641&x-expires=1792846800&x-signature=Xv%2FrI4mZlDzZwyu3QI9nIoPtZ3M%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&sc=cover&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER",
+     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o0AEUQDhFAdIDFOzARONACjEw8eEIVAfAqhRME~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=4c01a7fa&x-expires=1792864800&x-signature=%2Fb1Nef8b2qUCbg4qkCWtavZoSbE%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
      "duration": 64,
      "views": 49,
      "likes": 1,
@@ -599,7 +628,7 @@
        165
       ],
       [
-       1792763131,
+       1792780772,
        165
       ]
      ],
@@ -608,7 +637,7 @@
      "description": "twitch.tv/albert1million #IRL #streamer #twitch #losangeles #usa ",
      "create_time": 1779155993,
      "url": "https://www.tiktok.com/@twitch.albert1million/video/7641416756006898975?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
-     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/ooxNgvDJ9dPAiLAAOERAaB9ElOAIA2rBiwayv~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=6994eadd&x-expires=1792846800&x-signature=XAq7%2B5dGhyySRRrzOcCfc81mSQI%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&s=TIKTOK_FOR_DEVELOPER&sc=cover&biz_tag=tt_video",
+     "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/ooxNgvDJ9dPAiLAAOERAaB9ElOAIA2rBiwayv~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=c3494bb3&x-expires=1792864800&x-signature=cewlstxe1zuYzQa0lUi%2F4xY5dto%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
      "duration": 92,
      "views": 165,
      "likes": 3,
@@ -631,7 +660,7 @@
        91
       ],
       [
-       1792763131,
+       1792780772,
        91
       ]
      ],
@@ -640,7 +669,7 @@
      "description": "twitch.tv/albert1million #IRL #twitch #usa #streamer #losangeles ",
      "create_time": 1778802469,
      "url": "https://www.tiktok.com/@twitch.albert1million/video/7639898380793122078?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
-     "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/oojCrWIMNGt8AQDFKUfDAxqye2BIA6hSMLfnQA~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=67395055&x-expires=1792846800&x-signature=6BCQ0PaaIzBTBuQMBFQ3l7rnS7A%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
+     "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/oojCrWIMNGt8AQDFKUfDAxqye2BIA6hSMLfnQA~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=fc9e03ae&x-expires=1792864800&x-signature=Yg4O5EKBeL37CjVYjSQMFFxETuk%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=8aecc5ac&idc=useast8&biz_tag=tt_video&s=TIKTOK_FOR_DEVELOPER&sc=cover",
      "duration": 55,
      "views": 91,
      "likes": 2,
@@ -649,8 +678,8 @@
     }
    },
    "platform": "tiktok",
-   "updated_at": "2026-10-23T13:45:31Z"
+   "updated_at": "2026-10-23T18:39:33Z"
   }
  },
- "updated_at": "2026-10-23T13:45:32Z"
+ "updated_at": "2026-10-23T18:39:34Z"
 }
