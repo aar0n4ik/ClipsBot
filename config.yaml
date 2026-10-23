@@ -97,8 +97,14 @@ health:
 
 llm:
   providers:
-    - {name: groq, base_url: "https://api.groq.com/openai/v1", model: openai/gpt-oss-120b, key_env: GROQ_API_KEY}
-    - {name: gemini, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY}
+    - {name: gemini-3.8-flash-1, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_1_BOHDANREVA00, tpm: 250000}
+    - {name: gemini-3.8-flash-2, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_2_A82075245, tpm: 250000}
+    - {name: gemini-3.8-flash-3, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_3_ANDREYBORUSENKO11, tpm: 250000}
+    - {name: gemini-3.8-flash-4, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_4_BOHDANREVA5, tpm: 250000}
+    - {name: gemini-3.8-flash-5, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_5_PROFITABLE_PROP_TRADING, tpm: 250000}
+    - {name: gemini-3.8-flash-6, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_6_AARONLEVIT322, tpm: 250000}
+    - {name: gemini-3.8-flash-7, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_7_ANONYMOUSGMAIL322, tpm: 250000}
+    - {name: gemini-3.8-flash-8, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY_8_GAMERAAARON037, tpm: 250000}
 
 posting:
   timezone: Europe/Moscow            # время аудитории: по нему ночь, лучшие часы, «сегодня» для лимитов
