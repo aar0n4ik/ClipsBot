@@ -32,4 +32,8 @@ assert(M.paidTo([v1], { t1: "c1" }).c1 === 5000, "совместимость с�
 const pp = [P("a", "tiktok", "c9", 0, { "2026-10-01": 100, "2026-10-02": 1000 }), P("b", "youtube", "c9", 0, { "2026-10-01": 50, "2026-10-02": 1500 })];
 const g = M.periodGain(M.groups(pp, []), "2026-10-02", "2026-10-02", addDays, dayKey);
 assert(g.total === 1400 && g.byPlat.youtube === 1400, "доход дня = прирост максимума (1500−100): " + JSON.stringify(g));
+// исключение клипа из расчёта (удалённый клип)
+const exG = M.groups([P("q1", "tiktok", "cX", 4000), P("q2", "tiktok", "cY", 1000)], []);
+assert(M.owed(exG, {}, 1, ["cX"]).every(l => l.g !== "cX") && M.owed(exG, {}, 1, ["cX"]).length === 1, "исключённый клип не попадает в расчёт");
+assert(M.owed(exG, {}, 1).length === 2, "без исключений всё на месте");
 console.log("✅ money: все проверки пройдены");

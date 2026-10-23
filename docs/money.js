@@ -60,9 +60,10 @@
     return m;
   }
 
-  function owed(G, paid, rate) {
-    const lines = [];
+  function owed(G, paid, rate, excluded) {
+    const lines = [], skip = new Set(excluded || []);
     for (const x of Object.values(G)) {
+      if (skip.has(x.key)) continue;          // исключённые из расчёта клипы (MONEY_CONFIG → excluded)
       const was = paid[x.key] || 0;
       const inc = Math.max(0, x.bestViews - was);
       if (!inc) continue;

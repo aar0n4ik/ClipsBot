@@ -711,7 +711,7 @@ function rebuildGroups() {
 }
 const activeEntries = () => ledger.entries.filter(e => e.status !== "void");
 function owedNow() {
-  const lines = M.owed(G, M.paidTo(ledger.entries, POST2G), rate());
+  const lines = M.owed(G, M.paidTo(ledger.entries, POST2G), rate(), (D.money || {}).excluded || []);
   return { lines, sum: M.summarize(lines), received: activeEntries().reduce((s, e) => s + (+e.amount || 0), 0),
            min: +(D.money || {}).payout_min || 20, last: activeEntries().sort((a, b) => b.received_at.localeCompare(a.received_at))[0] };
 }
