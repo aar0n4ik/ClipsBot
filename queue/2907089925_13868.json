@@ -1,0 +1,159 @@
+{
+ "id": "2907089925_13868",
+ "vod_id": "2907089925",
+ "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
+ "vod_time": 13868.8,
+ "duration": 19.9,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 6,
+  "clarity": 7,
+  "emotion": 5,
+  "relate": 6
+ },
+ "category": "funny",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Яркий шутливый старт «можно бухать на автопилоте», понятный без контекста, вызывает смех, подходит под формат коротких роликов, нет рисков нарушения правил.",
+ "overlay": "Ты че не сдал?",
+ "signal": 18.53,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.17,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.297,
+   "stability": 0.337,
+   "tonal": 0.0,
+   "beat": 0.13
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 0.2,
+   "text": "Начало шутки про автопилот"
+  }
+ ],
+ "transcript": "можно бухать на автопилоте ты че не сдал? можно бухать, бухаешь, у тебя сам ты говоришь у меня автопилот и все пиво конечно, всегда так",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Ты че не сдал?",
+   "hook_style": "quote",
+   "caption": "жизнь в лос-анджелесе: можно бухать на автопилоте, пока едем к клиенту 😂",
+   "hashtags": [
+    "#лосанджелес",
+    "#курьер",
+    "#шутка",
+    "#доставка",
+    "#русскийвса"
+   ],
+   "hook_alts": [
+    "Ты че не сдал?",
+    "Можно бухать на автопилоте?",
+    "Тест драйв vs алкоголь",
+    "0$ за автопилот"
+   ],
+   "asset": "2907089925_13868_tiktok.mp4",
+   "size": 11437640,
+   "duration": 19.9,
+   "variant": {
+    "hook_style": "quote",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Кто ещё шутит про автопилот в пути?",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "Можно бухать на автопилоте?",
+   "hook_style": "tease",
+   "caption": "Съезжаешь по ЛА, шутки про автопилот летят. Как вам такие приколы?",
+   "hashtags": [
+    "#лосанджелес",
+    "#курьер",
+    "#юмор",
+    "#русскийвсша",
+    "#доставка"
+   ],
+   "hook_alts": [
+    "Можно бухать на автопилоте?",
+    "Тест драйв vs алкоголь",
+    "0$ за автопилот",
+    "Ты че не сдал?"
+   ],
+   "asset": "2907089925_13868_instagram.mp4",
+   "size": 11394921,
+   "duration": 19.9,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Кто ещё шутит про автопилот в пути?",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "Тест драйв vs алкоголь",
+   "hook_style": "conflict",
+   "title": "Можно бухать на автопилоте? Курьерский юмор из ЛА",
+   "description": "Смешной момент, когда я шутил про автопилот и пиво в пути. Смотрите, как реагирует чат\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "доставка",
+    "курьер",
+    "Лос-Анджелес",
+    "автопилот",
+    "юмор",
+    "русский в США",
+    "шутка"
+   ],
+   "caption": "Можно бухать на автопилоте? Курьерский юмор из ЛА",
+   "hook_alts": [
+    "Тест драйв vs алкоголь",
+    "Можно бухать на автопилоте?",
+    "0$ за автопилот",
+    "Ты че не сдал?"
+   ],
+   "asset": "2907089925_13868_youtube.mp4",
+   "size": 11438675,
+   "duration": 19.9,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Кто ещё шутит про автопилот в пути?",
+   "cover_ms": 600
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-23T05:20:21Z",
+ "live_when_made": false,
+ "uid": "18ce625a"
+}
