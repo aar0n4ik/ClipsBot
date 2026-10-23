@@ -63,7 +63,8 @@ class Instagram(Platform):
             e = js["error"]
             code = e.get("code")
             kind = "auth" if code in (190, 102) else "rate" if code in (4, 17, 32, 613) else \
-                "quota" if code == 9 else "content" if code in (100, 352, 2207026) else "temp"
+                "quota" if code == 9 else "content" if code in (100, 352, 2207026) else \
+                "blocked" if (code == 200 or "blocked" in str(e.get("message", "")).lower()) else "temp"
             raise PlatformError(f"Instagram: {e.get('message')} ({code}/{e.get('error_subcode')})", kind)
         return js
 

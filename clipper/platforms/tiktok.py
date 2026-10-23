@@ -82,9 +82,16 @@ class TikTok(Platform):
                     raise PlatformError(f"TikTok upload {r.status_code}: {r.text[:200]}", "temp")
 
     def publish(self, path: Path, target: dict, cfg: dict, clip: dict) -> dict:
+        from ..util import ffprobe_json, log as _log
         posting = cfg["posting"]
         mode = (posting.get("tiktok") or {}).get("mode", posting.get("mode", "inbox"))
         size = path.stat().st_size
+        info = ffprobe_json(path)
+        kinds = {s.get("codec_type") for s in info.get("streams", [])}
+        if "video" not in kinds or "audio" not in kinds:
+            raise PlatformError(f"в файле нет {'звука' if 'audio' not in kinds else 'видео'} — перерендерю", "content")
+        dur = float((info.get("format") or {}).get("duration", 0) or 0)
+        _log(f"TikTok: файл {size // 1024} КБ, {dur:.1f} с, видео+звук — загружаю в черновики")
         if size <= 64 * 1024 * 1024:
             chunk, total = size, 1
         else:
