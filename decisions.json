@@ -124,5 +124,19 @@
   "account": null,
   "platform": null,
   "reverted": false
+ },
+ {
+  "id": "a740acad03",
+  "at": "2026-10-23T04:25:30Z",
+  "kind": "audio",
+  "summary": "Клип 4:52:27: в фоне слышна музыка — звук оставлен как есть, клип помечен",
+  "path": null,
+  "before": null,
+  "after": null,
+  "evidence": {},
+  "reversible": false,
+  "account": null,
+  "platform": null,
+  "reverted": false
  }
 ]
