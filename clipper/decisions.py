@@ -90,6 +90,22 @@ def apply_commands(store: Store, policy: dict) -> bool:
                    account=c["account"], reversible=False)
             mark_done(store, c["id"], "ок")
             changed = True
+        elif cmd == "cancel_clip" and c.get("clip"):
+            from .releases import delete as _del_asset
+            q = store.read_json(f"queue/{c['clip']}.json")
+            if q:
+                cancelled = []
+                for plat, t in (q.get("targets") or {}).items():
+                    if t.get("status", "ready") == "ready" and not (q.get("posts") or {}).get(plat):
+                        t["status"] = "skipped"  # до публикации: ролик просто не выкладываем
+                        if t.get("asset"):
+                            _del_asset(t["asset"])
+                        cancelled.append(plat)
+                store.write_json(f"queue/{c['clip']}.json", q)
+                record(store, "skip", f"Публикация клипа {c['clip']} отменена вручную"
+                       + (f" ({', '.join(cancelled)})" if cancelled else " — уже выложено, удалите в приложении"),
+                       reversible=False)
+            mark_done(store, c["id"], "отменено")
         elif cmd == "retry_clip" and c.get("clip"):
             q = store.read_json(f"queue/{c['clip']}.json")
             if q:

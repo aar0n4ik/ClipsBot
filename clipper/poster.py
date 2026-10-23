@@ -26,6 +26,22 @@ from .store import Store
 from .util import log, now_iso, now_utc, parse_iso
 
 MAX_AGE_H = {"tiktok": 72, "youtube": 168, "instagram": 120}
+# ошибка на уровне аккаунта: ролик не сгорает, аккаунт отдыхает (часы)
+ACCOUNT_COOLDOWN_H = {"rate": 1, "quota": 6, "spam": 24, "blocked": 24, "auth": 168}
+
+
+def pick_threshold(ranked: list, remaining: int) -> int:
+    """Сколько сейчас качества, а сколько количества.
+
+    Хороших (7+) хватает на сутки — берём только их. Очередь большая, хороших мало — берём от 6.
+    Очередь пустая — берём от 5. Клипы ниже 5 не публикуем никогда.
+    """
+    strong = sum(1 for _, c, _ in ranked if int(c.get("score", 0)) >= 7)
+    if remaining and strong >= remaining:
+        return 7
+    if len(ranked) >= 2 * max(1, remaining):
+        return 6
+    return 5
 
 
 def plan_hours(now_local: dt.datetime, remaining: int, weights: list[float], quiet: set[int], gap_h: float,
@@ -152,6 +168,11 @@ def decide(acc: dict, cfg: dict, policy: dict, a: dict, hstate: dict, queue: lis
     ranked = rank(queue, plat, policy, recent, limits, stats, posting)
     if not ranked:
         return None, None, info
+    thr = pick_threshold(ranked, remaining)
+    ranked = [x for x in ranked if int(x[1].get("score", 0)) >= max(thr, limits.get("min_score", 0))]
+    info["threshold"] = thr
+    if not ranked:
+        return None, None, info
     hot = next(((k, c, why) for k, c, why in ranked if is_hot(c, posting)), None)
     if hot and since >= max(45, gap // 2) and local.hour not in quiet and st in ("ok", "watch") and not w:
         return "горячий клип во время эфира", hot[1], {**info, "why": hot[2]}
@@ -195,6 +216,18 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         if changed:
             store.write_json(f"queue/{c['id']}.json", c)
 
+    # очередь раздулась: слабые клипы (меньше 6) снимаем, чтобы не копились и не портили выбор
+    from .learn import hard_cap
+    for plat in ("tiktok", "youtube", "instagram"):
+        pend = [c for c in queue if pending_for(c, plat)]
+        if len(pend) > 3 * hard_cap(cfg):
+            for c in pend:
+                if int(c.get("score", 0)) < 6:
+                    t = c["targets"][plat]
+                    t["status"] = "skipped"
+                    if t.get("asset"):
+                        releases.delete(t["asset"])
+                    store.write_json(f"queue/{c['id']}.json", c)
     for acc in list_accounts(cfg):
         plat = acc["platform"]
         a = accs.setdefault(acc["id"], {"platform": plat})
@@ -211,6 +244,10 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
                     store.write_json(f"queue/{c['id']}.json", c)
                 except PlatformError as e:
                     log(f"проверка публикации {c['id']}: {e}")
+        cd = a.get("cooldown_until")
+        if cd and parse_iso(cd) > now:
+            a["plan"] = {"mode": f"пауза до {cd[:16]}: {a.get('cooldown_reason', '')}"}
+            continue
         reason, clip, info = decide(acc, cfg, policy, a, hs.get(acc["id"], {}), queue, stats, now)
         a["plan"] = info
         if force and not clip:
@@ -228,6 +265,18 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         except PlatformError as e:
             log(f"❌ {acc['id']}: {e}")
             health.note_platform_error(store, acc["id"], e.kind)
+            from .diagnose import advice_for
+            a["diagnosis"] = advice_for(plat, e.kind, str(e))  # понятно: что не так и что делать
+            if e.kind in ACCOUNT_COOLDOWN_H:  # беда аккаунта, а не ролика: ролик ждёт, попытки не тратятся
+                hrs = ACCOUNT_COOLDOWN_H[e.kind]
+                a.update(cooldown_until=(now + dt.timedelta(hours=hrs)).isoformat(),
+                         cooldown_reason=str(e)[:160], last_error=f"{e} [{e.kind}]"[:300], last_error_at=now_iso())
+                clip["posts"][plat] = {**(clip["posts"].get(plat) or {}), "account": acc["id"], "status": "retry",
+                                       "error": str(e)[:300], "last_try": now_iso()}
+                store.write_json(f"queue/{clip['id']}.json", clip)
+                log(f"⏸ {acc['id']}: пауза {hrs} ч ({e.kind}), ролики не сгорают")
+                errors.append(f"{acc['id']}: {e}")
+                continue
             post = clip["posts"].get(plat) or {"tries": 0}
             post.update(account=acc["id"], error=str(e)[:300], last_try=now_iso(), tries=post.get("tries", 0) + 1)
             if e.kind == "content" or post["tries"] >= 3:

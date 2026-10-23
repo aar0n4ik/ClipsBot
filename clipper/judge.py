@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 
 from .llm import LLM, LLMError
-from .render import mask_profanity
+from .render import PROFANITY, mask_profanity
 from .transcribe import words_to_timed_text
 from .util import log
 
@@ -67,6 +67,7 @@ EDITOR = """Ты — редактор каналов с нарезками ру�
    quote — прямая речь из ролика («Ты вообще русский?»).
    Правила: 2–6 слов, до 28 символов, байтово, но правдиво, без спойлера концовки, без эмодзи,
    без слов «шок», «невероятно», «вы не поверите», «эпично», «до конца». Без мата.
+   Если в ролике сравнение двух вещей или людей — пиши заголовок в формате «X vs Y» (2–3 слова с каждой стороны).
 2. pick — индекс лучшего (0–3).
 3. notes — 0–2 коротких подписи-контекста поверх видео, только если без них момент непонятен:
    {{"t": секунда от начала клипа, "text": "до 32 символов"}} («Заказ на $3 через весь город»).
@@ -92,6 +93,20 @@ _BANNED = re.compile(r"\b(вы не поверите|невероятн\w*|шо�
 _BAD_TAGS = {"#fyp", "#foryou", "#foryoupage", "#рекомендации", "#viral", "#тренды", "#рек", "#хочуврек", "#xyzbca"}
 
 
+_TOK = re.compile(r"[а-яёa-z0-9]+", re.I)
+
+
+def grounded(text: str, transcript: str) -> float:
+    """Доля значимых слов текста, которые реально прозвучали в речи. 1.0 — всё подтверждено.
+
+    Сравниваем по первым 5 буквам, чтобы не спотыкаться об окончания («курьер» / «курьера»)."""
+    stems = {w.lower()[:5] for w in _TOK.findall(transcript or "") if len(w) >= 3}
+    toks = [w.lower()[:5] for w in _TOK.findall(text or "") if len(w) >= 4]
+    if not toks:
+        return 1.0
+    return sum(1 for t in toks if t in stems) / len(toks)
+
+
 def humanize(text: str, keep_emoji: int = 1, kind: str = "caption") -> str:
     t = (text or "").strip()
     t = t.replace("«", "").replace("»", "").replace("„", "").replace("“", "\"").replace("”", "\"")
@@ -104,7 +119,7 @@ def humanize(text: str, keep_emoji: int = 1, kind: str = "caption") -> str:
             t = t.rstrip() + " " + emojis[0]
     t = re.sub(r"!{2,}", "!", t)
     t = re.sub(r"\?{3,}", "??", t)
-    t = " ".join(mask_profanity(w) for w in t.split())
+    t = " ".join(w for w in t.split() if not PROFANITY.search(w))  # мат — не пишем вообще (ни маской, ни целиком)
     t = re.sub(r"\s{2,}", " ", t).strip(" ,.")
     if kind == "hook":
         t = t.rstrip(".").replace("\"", "")

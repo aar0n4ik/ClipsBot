@@ -22,7 +22,9 @@ from .config import FONTS_DIR
 from .util import ffprobe_json, run
 
 W, H = 1080, 1920
-TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 228, 880, (100, 92, 84, 78, 72)
+TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 228, 880, (92, 85, 77, 72, 66)
+VS_RE = re.compile(r"^(.+?)\s+vs\.?\s+(.+)$", re.I)
+VS_SIZES = (80, 74, 68, 62)  # три строки (A / VS / B) должны уместиться над панелью
 PANEL_Y, PANEL_H = 480, 960
 SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1312, 78, 760
 BRAND_CENTER, BRAND_LOGO, BRAND_TEXT = 1512, 100, 58
@@ -120,7 +122,17 @@ def balanced_lines(text: str, size: float, max_w: float, role: str = "display", 
 
 
 def fit_title(*candidates: str) -> tuple[str, list[str], int]:
-    """(текст, строки, кегль): первый вариант, который влезает в 2 строки, с самым крупным кеглем."""
+    """(текст, строки, кегль): первый вариант, который влезает в 2 строки, с самым крупным кеглем.
+
+    «X vs Y» — особый случай: X сверху, VS посередине, Y снизу, всё по центру.
+    """
+    for c in candidates:
+        m = VS_RE.match(_esc(c or ""))
+        if m:
+            a, b = m.group(1).upper(), m.group(2).upper()
+            for size in VS_SIZES:
+                if max(text_width(x, size, spacing=1) for x in (a, b)) <= TITLE_MAX_W - 30:
+                    return f"{a} VS {b}", [a, "VS", b], size
     for size in TITLE_SIZES:
         for c in candidates:
             c = _esc(c or "").upper()

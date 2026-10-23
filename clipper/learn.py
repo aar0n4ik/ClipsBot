@@ -405,7 +405,8 @@ def warmup_state(policy: dict, acc_id: str, cfg: dict) -> dict | None:
         return None
     ramp = (cfg["posting"].get("warmup") or {}).get("ramp", [2, 2, 3, 3, 3, 4, 4, 5, 5, 6])
     day = (now_utc() - parse_iso(w["started"])).days
-    return {"day": day + 1, "cap": ramp[min(day, len(ramp) - 1)], "min_score": 7 if day < 5 else 6, "max_risk": 0}
+    return {"day": day + 1, "cap": min(ramp[min(day, len(ramp) - 1)], hard_cap(cfg)),
+            "min_score": 7 if day < 5 else 6, "max_risk": 0}
 
 
 def _cap_controller(store, policy, cfg, acc, rows):
@@ -455,14 +456,20 @@ def _cap_controller(store, policy, cfg, acc, rows):
                 f"клипов хватает — пробую {cap + 1} в сутки", {"levels": st["levels"]}, account=aid)
 
 
+def hard_cap(cfg: dict) -> int:
+    """Жёсткий потолок постов в сутки на аккаунт: ни разгон, ни автоконтроль его не поднимут."""
+    return int(cfg["posting"].get("hard_cap", 4))
+
+
 def daily_cap(policy: dict, acc: dict, cfg: dict) -> int:
     st = _get(policy, f"caps.{acc['id']}") or {}
     pinned = (policy.get("pins") or {}).get(f"caps.{acc['id']}.cap")
     if pinned:
-        return int(pinned["value"])
+        return min(int(pinned["value"]), hard_cap(cfg))
     plat = acc.get("platform", "tiktok")
-    return int(st.get("cap") or acc.get("daily_cap") or (cfg["posting"].get(plat) or {}).get("daily_cap")
-               or cfg["posting"].get("daily_cap", 6))
+    cap = int(st.get("cap") or acc.get("daily_cap") or (cfg["posting"].get(plat) or {}).get("daily_cap")
+              or cfg["posting"].get("daily_cap", 4))
+    return min(cap, hard_cap(cfg))
 
 
 def _auto_revert(store, policy, rows):

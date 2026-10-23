@@ -46,6 +46,31 @@ def merge_videos(A: dict, vids: list[dict], tz: str, now_ts: int):
 
 
 LIST_SAFE_MAX = 150  # если список короче — он полный, по нему можно судить об удалениях
+GONE_AFTER_MIN = 30  # видео пропало из полного списка дольше этого — считаем, что удалили сами
+
+
+def prune_deleted(A: dict, owner: dict[str, str], platform: str, paid_keys: set[str], now_ts: float) -> list[str]:
+    """Удалённые вручную видео убираем из статистики целиком.
+
+    Исключение: TikTok-клип, за который уже заплатили, остаётся только с просмотрами (для выплат).
+    owner: video_id → id клипа в очереди. Возвращает id клипов, у которых публикацию сняли.
+    """
+    removed_clips = []
+    for vid in list(A["videos"]):
+        rec = A["videos"][vid]
+        if not rec.get("deleted_at"):
+            continue
+        if now_ts - parse_iso(rec["deleted_at"]).timestamp() < GONE_AFTER_MIN * 60:
+            continue  # может быть сбой API — подождём подтверждения
+        cid = owner.get(str(vid))
+        if platform == "tiktok" and cid and cid in paid_keys:
+            A["videos"][vid] = {"paid_only": True, "clip_id": cid, "views": rec.get("views", 0),
+                                "history": rec.get("history", {})}
+        else:
+            del A["videos"][vid]
+        if cid:
+            removed_clips.append(cid)
+    return removed_clips
 
 
 def mark_deleted(A: dict, seen: set[str], ts: str):
@@ -111,6 +136,20 @@ def cmd_stats(cfg: dict, store: Store):
         link_clips(store, acc["id"], acc["platform"], A, queue)
         tokens[acc["id"]]["last_ok"] = now_iso()
         log(f"{acc['id']}: {len(vids)} видео, всего {sum(x.get('views', 0) for x in A['videos'].values()):,} просмотров")
+    paid_keys = {line.get("g") for p in ((cfg.get("money") or {}).get("payouts") or [])
+                 for line in (p.get("lines") or []) if line.get("g")}
+    for acc in list_accounts(cfg):
+        A = stats["accounts"].get(acc["id"])
+        if not A:
+            continue
+        owner = {str(p.get("video_id")): c["id"] for c in queue for pl2, p in c["posts"].items()
+                 if p.get("video_id") and pl2 == acc["platform"]}
+        for cid in prune_deleted(A, owner, acc["platform"], paid_keys, now_ts):
+            c = store.read_json(f"queue/{cid}.json", None)
+            if c and c.get("posts", {}).get(acc["platform"]):
+                c["posts"][acc["platform"]]["status"] = "removed_by_user"
+                store.write_json(f"queue/{cid}.json", c)
+                log(f"🗑 {acc['id']}: видео удалено в приложении — убрал из статистики ({cid})")
     stats["updated_at"] = now_iso()
     store.write_json("stats.json", stats)
     store.write_json("status/tokens.json", {**(store.read_json("status/tokens.json", {}) or {}), **tokens})

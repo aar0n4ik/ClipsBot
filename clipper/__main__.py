@@ -8,6 +8,7 @@
   auth --platform tiktok|youtube|instagram --account ID --code XXX — подключить аккаунт
   fail --job NAME  — записать в дашборд, что запуск упал (вызывается из workflow при ошибке)
   dashboard        — пересобрать data.enc
+  diagnose         — проверить каждую площадку и сказать, что не так и что делать
 """
 from __future__ import annotations
 
@@ -23,7 +24,8 @@ from .util import log, now_iso
 
 def main():
     ap = argparse.ArgumentParser(prog="clipper")
-    ap.add_argument("cmd", choices=["watch", "process", "post", "stats", "doctor", "auth", "fail", "dashboard"])
+    ap.add_argument("cmd", choices=["watch", "process", "post", "stats", "doctor", "auth", "fail", "dashboard",
+                                    "diagnose"])
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--account", default="")
     ap.add_argument("--platform", default="")
@@ -56,6 +58,9 @@ def main():
         health.report(store, a.job or "unknown", "error",
                       f"запуск «{a.job}» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова")
         store.sync(f"fail: {a.job}")
+    elif a.cmd == "diagnose":
+        from .diagnose import run_all
+        run_all(store, cfg)
     elif a.cmd == "dashboard":
         store.write_json("status/watch.json", (store.read_json("status/watch.json", {}) or {}) | {"rebuilt_at": now_iso()})
         store.sync("dashboard rebuild")

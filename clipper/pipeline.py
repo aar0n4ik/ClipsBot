@@ -17,7 +17,7 @@ from .bundles import record_moment
 from .cuts import speech_runs
 from .clips import normalize
 from .config import WORK_DIR, env
-from .judge import edit_clips, fallback_texts, judge_candidates, snap_bounds, target_texts, translate_lines
+from .judge import edit_clips, fallback_texts, grounded, judge_candidates, snap_bounds, target_texts, translate_lines
 from .llm import LLM
 from .platforms import connected_platforms
 from .qa import hook_quality, plan_opening, validate_render
@@ -450,6 +450,18 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
     crop_frac = min(1.0, (sh * panel_asp) / sw) if sw else 1.0
     pan = (plan_pan(detect_subject(src, main[0], main[1]), main[0], main[1], crop_frac)
            if cl.get("follow_subject", True) and crop_frac < 0.98 and sh <= sw * 1.2 else None)
+    # хук и тексты должны опираться на то, что реально сказано: иначе ролик врёт про стримера
+    tr = " ".join(w["w"] for w in pl["words"])
+    hooks_ok = [h for h in (ed.get("hooks") or []) if isinstance(h, dict) and grounded(h.get("text", ""), tr) >= 0.6]
+    if not hooks_ok:
+        decisions.record(store, "skip", f"Клип {fmt_hms(abs_s)} не выложен: хуки не совпадают с речью стримера",
+                         reversible=False)
+        return False
+    ed = {**ed, "hooks": hooks_ok}
+    for key, field in (("tiktok", "caption"), ("youtube", "title"), ("instagram", "caption")):
+        p = ed.get(key) or {}
+        if grounded(p.get(field, ""), tr) < 0.5:
+            ed[key] = {**p, field: hooks_ok[0]["text"]}
     rng = random.Random(clip_id)
     targets, thumb, en_cache = {}, None, {}
     for plat in platforms:
@@ -512,6 +524,7 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
         "thumb": thumb, "targets": targets, "posts": {}, "created_at": now_iso(),
         "live_when_made": bool((store.read_json("status/live.json", {}) or {}).get("is_live")),
         "uid": uuid.uuid4().hex[:8],
+        "vod_url": f"https://www.twitch.tv/videos/{vod['id']}?t={_hms(src_off + segs_main[0][0])}",
     })
     # для связок: где в записи лежат куски и какие в них слова (абсолютное время VOD)
     record_moment(store, {
@@ -525,6 +538,11 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
     hooks = ", ".join(p + ": «" + t["hook"] + "»" for p, t in targets.items())
     log(f"✅ {clip_id} score={v.get('score')} {kept:.0f}с → {hooks}")
     return True
+
+
+def _hms(sec: float) -> str:
+    s = int(max(0, sec))
+    return f"{s // 3600}h{s % 3600 // 60}m{s % 60}s"
 
 
 def humanize_comment(text: str) -> str:
