@@ -134,10 +134,11 @@ def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
     return out.with_suffix(".ts")
 
 
-def download_video(vod_id: str, start: float, end: float, out: Path, max_height: int = 1080) -> Path:
+def download_video(vod_id: str, start: float, end: float, out: Path, max_height: int | None = None) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     tmpl = str(out.with_suffix("")) + ".%(ext)s"
-    fmt = f"best[height<={max_height}][fps<=60]/best[height<={max_height}]/best"
+    fmt = (f"best[height<={max_height}][fps<=60]/best[height<={max_height}]/best" if max_height
+           else "best[fps<=60]/best")  # без потолка: исходное качество записи
     run(["yt-dlp", "-q", "--no-warnings", "--no-part", "-f", fmt, "--download-sections", _section(start, end),
          "--force-keyframes-at-cuts", "--merge-output-format", "mp4", "-o", tmpl, f"https://www.twitch.tv/videos/{vod_id}"], timeout=1800)
     got = [p for p in out.parent.glob(out.stem + ".*") if p.suffix in (".mp4", ".ts", ".mkv")]
