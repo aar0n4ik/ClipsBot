@@ -70,12 +70,6 @@
   "fails": {},
   "gaps": [
    {
-    "start": 0,
-    "end": 7200,
-    "error": "Все ИИ-провайдеры недоступны: 429 [{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: http",
-    "at": "2026-10-22T10:56:02Z"
-   },
-   {
     "start": 7080,
     "end": 14400,
     "error": "Все ИИ-провайдеры недоступны: 404 {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n",
@@ -117,10 +111,24 @@
    29123,
    29574,
    29797,
-   30288
+   30288,
+   920,
+   1252,
+   2197,
+   2364,
+   2518,
+   2622,
+   2726,
+   3003,
+   3192,
+   3410,
+   3700,
+   4064,
+   6355,
+   6537
   ],
-  "clips": 4,
-  "updated_at": "2026-10-22T23:52:43Z"
+  "clips": 6,
+  "updated_at": "2026-10-23T05:09:39Z"
  },
  "2907926987": {
   "title": "ЛОС-АНДЖЕЛЕС | РАБОТАЕМ НА TESLA И ОБЩАЕМСЯ",
