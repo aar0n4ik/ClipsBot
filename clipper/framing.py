@@ -80,12 +80,24 @@ def detect_subject(src: Path, start: float, end: float, step: float = 0.5) -> li
     frames = _frames(src, start, end, step)
     if not len(frames):
         return []
-    return _yunet(frames, start, step) or _skin(frames, start, step)
+    if MODEL.exists():
+        return _yunet(frames, start, step)  # лица не нашли — пусть камера стоит, а не цепляется за предметы
+    return _skin(frames, start, step)
+
+
+HOLD_S = 3.0     # стример должен устойчиво быть далеко от центра столько секунд, иначе камеру не трогаем
+MOVE_AT = 0.32   # насколько далеко от текущей позиции (доля ширины кадра) считаем сдвигом
+MAX_MOVES = 2    # больше двух переездов за клип — уже не «умный оператор», а дёрганье
 
 
 def plan_pan(dets: list[tuple[float, float, float]], start: float, end: float, crop_frac: float,
-             move_at: float = 0.26, max_moves: int = 3, ease: float = 1.2) -> list[tuple[float, float]]:
-    """Ключевые точки положения кадра [(время исходника, центр 0..1)]: держим позицию, редкие плавные переезды."""
+             move_at: float = MOVE_AT, max_moves: int = MAX_MOVES, ease: float = 1.6,
+             hold: float = HOLD_S, smooth: int = 9) -> list[tuple[float, float]]:
+    """Ключевые точки положения кадра [(время исходника, центр 0..1)].
+
+    Камера стоит на месте. Переезд только если человек устойчиво (hold секунд подряд) ушёл далеко,
+    короткий взгляд в сторону (птица, телефон, чат) её не трогает. Сглаживание окном smooth.
+    """
     lo, hi = crop_frac / 2, 1 - crop_frac / 2
     clamp = lambda v: float(min(hi, max(lo, v)))
     need = max(3, 0.25 * (end - start) / step_of(dets, start))
@@ -93,16 +105,15 @@ def plan_pan(dets: list[tuple[float, float, float]], start: float, end: float, c
         return [(start, clamp(float(np.median([d[1] for d in dets])) if len(dets) >= 2 else 0.5))]
     t = np.array([d[0] for d in dets])
     x = np.array([d[1] for d in dets])
-    k = 5  # медиана по 5 соседним: одно ложное срабатывание камеру не сдвинет
-    xs = np.array([np.median(x[max(0, i - k // 2): i + k // 2 + 1]) for i in range(len(x))])
+    xs = np.array([np.median(x[max(0, i - smooth // 2): i + smooth // 2 + 1]) for i in range(len(x))])
     pos = clamp(float(np.median(xs[t < start + 2.5])) if (t < start + 2.5).any() else float(xs[0]))
     keys, moves, i = [(start, pos)], 0, 0
     while i < len(t) and moves < max_moves:
         if abs(xs[i] - pos) / crop_frac > move_at:
             j = i
-            while j < len(t) and abs(xs[j] - pos) / crop_frac > move_at and t[j] - t[i] < 1.5:
+            while j < len(t) and abs(xs[j] - pos) / crop_frac > move_at and t[j] - t[i] < hold:
                 j += 1
-            held = (t[min(j, len(t) - 1)] - t[i]) >= 1.5
+            held = (t[min(j, len(t) - 1)] - t[i]) >= hold
             if held:
                 target = clamp(float(np.median(xs[i:max(j, i + 1)])))
                 t0 = float(t[i])

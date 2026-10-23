@@ -161,6 +161,22 @@ def candidate_block(c: dict) -> list[dict]:
     return parts
 
 
+def _judge_messages(system: str, batch: list[dict], frames: bool) -> list[dict]:
+    content = [p for c in batch for p in candidate_block(c if frames else {**c, "frames": []})]
+    return [{"role": "system", "content": system}, {"role": "user", "content": content}]
+
+
+def _judge_batch(llm: LLM, system: str, batch: list[dict]) -> dict:
+    has_frames = any(c.get("frames") for c in batch)
+    try:
+        return llm.chat_json(_judge_messages(system, batch, True), temperature=0.3, max_tokens=1500)
+    except LLMError as e:
+        if not has_frames:
+            raise
+        log(f"повтор без кадров: {str(e)[:120]}")
+        return llm.chat_json(_judge_messages(system, batch, False), temperature=0.3, max_tokens=1500)
+
+
 def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | None = None,
                      hints: str = "") -> dict[str, dict]:
     st, cl = cfg["streamer"], cfg["clips"]
@@ -168,24 +184,26 @@ def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | Non
                            min_s=cl["min_seconds"], max_s=cl["max_seconds"],
                            hints=(hints + "\n") if hints else "",
                            learned=learned_block(learned) if cfg["judge"].get("learn_from_stats") else "")
-    bs = int(cfg["judge"].get("batch_size", 3))
+    bs = max(1, int(cfg["judge"].get("batch_size", 1)))
     results: dict[str, dict] = {}
-    for i in range(0, len(cands), bs):
+    batches = list(range(0, len(cands), bs))
+    failed = 0
+    for i in batches:
         batch = cands[i:i + bs]
-        content = [p for c in batch for p in candidate_block(c)]
         try:
-            js = llm.chat_json([{"role": "system", "content": system}, {"role": "user", "content": content}], temperature=0.3)
+            js = _judge_batch(llm, system, batch)
         except LLMError as e:
-            if not any(c.get("frames") for c in batch):
-                raise
-            log(f"повтор без кадров: {str(e)[:120]}")
-            content = [p for c in batch for p in candidate_block({**c, "frames": []})]
-            js = llm.chat_json([{"role": "system", "content": system}, {"role": "user", "content": content}], temperature=0.3)
+            # одна пачка не ответила — пропускаем только её, остальные кандидаты не теряем
+            failed += 1
+            log(f"пачка {i + 1}–{i + len(batch)} пропущена: {str(e)[:160]}")
+            continue
         ids = {c["id"] for c in batch}
         for r in js.get("clips", []):
             if str(r.get("id")) in ids:
                 results[str(r["id"])] = r
         log(f"отборщик: {min(i + bs, len(cands))}/{len(cands)}")
+    if batches and failed == len(batches):
+        raise LLMError("ИИ-отборщик не ответил ни на одну пачку кандидатов")
     return results
 
 
