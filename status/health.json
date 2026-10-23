@@ -5,13 +5,13 @@
   "recent_low": 0,
   "last5_median": 737,
   "baseline_median": 282,
-  "stuck": 1,
+  "stuck": 0,
   "n_early": 8,
   "n_mature": 6,
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-23T01:49:55Z",
+  "checked_at": "2026-10-23T07:53:20Z",
   "since": "2026-10-21T12:15:46Z",
   "spam_errors": 0
  },
@@ -27,7 +27,7 @@
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-23T01:49:55Z",
+  "checked_at": "2026-10-23T07:53:20Z",
   "since": "2026-10-21T12:15:46Z",
   "spam_errors": 0
  },
@@ -43,7 +43,7 @@
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-23T01:49:55Z",
+  "checked_at": "2026-10-23T07:53:20Z",
   "since": "2026-10-21T17:36:17Z",
   "spam_errors": 0
  }
