@@ -152,5 +152,19 @@
   "account": null,
   "platform": null,
   "reverted": false
+ },
+ {
+  "id": "1ea4df0e98",
+  "at": "2026-10-23T05:21:16Z",
+  "kind": "audio",
+  "summary": "Клип 2:43:06: в фоне слышна музыка — звук оставлен как есть, клип помечен",
+  "path": null,
+  "before": null,
+  "after": null,
+  "evidence": {},
+  "reversible": false,
+  "account": null,
+  "platform": null,
+  "reverted": false
  }
 ]
