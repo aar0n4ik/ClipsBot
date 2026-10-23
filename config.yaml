@@ -108,11 +108,12 @@ llm:
 
 posting:
   timezone: Europe/Moscow            # время аудитории: по нему ночь, лучшие часы, «сегодня» для лимитов
-  daily_cap: 6                       # СТАРТОВЫЙ потолок постов в сутки на аккаунт; дальше подбирается по данным
-  min_gap_minutes: 80
+  hard_cap: 4                        # жёсткий потолок постов в сутки на аккаунт (ни разгон, ни автоконтроль его не поднимут)
+  daily_cap: 4                       # СТАРТОВЫЙ потолок постов в сутки на аккаунт
+  min_gap_minutes: 150                # между постами 2.5 ч: 4 ролика расходятся по активным часам аудитории и не съедают друг друга
   quiet_hours: [2, 3, 4, 5, 6]
   hot_score: 8                       # такой клип, сделанный во время эфира, уходит сразу
-  warmup: {ramp: [2, 2, 3, 3, 3, 4, 4, 5, 5, 6]}
+  warmup: {ramp: [2, 2, 3, 3, 4]}   # разгон до 4 в сутки (не выше hard_cap)
   fixed_hashtags: ["#albert1million"]
   disable_duet: false
   disable_stitch: false
@@ -120,17 +121,17 @@ posting:
   tiktok:
     mode: inbox                      # inbox = в черновики (без аудита) | direct = сразу публично (после аудита)
     max_age_hours: 72
-    max_cap: 12
+    max_cap: 4
   youtube:
     privacy: public
     category_id: "24"                # Entertainment
     max_age_hours: 168               # на Shorts клип живёт дольше — можно выкладывать позже
-    max_cap: 10
+    max_cap: 4
     daily_cap: 4
   instagram:
     max_age_hours: 120
-    max_cap: 8
-    daily_cap: 3
+    max_cap: 4
+    daily_cap: 4
 
 bundles:                             # связки: несколько моментов одного стрима в один ролик
   enabled: true
