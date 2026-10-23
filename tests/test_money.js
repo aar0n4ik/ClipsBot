@@ -36,4 +36,13 @@ assert(g.total === 1400 && g.byPlat.youtube === 1400, "доход дня = пр�
 const exG = M.groups([P("q1", "tiktok", "cX", 4000), P("q2", "tiktok", "cY", 1000)], []);
 assert(M.owed(exG, {}, 1, ["cX"]).every(l => l.g !== "cX") && M.owed(exG, {}, 1, ["cX"]).length === 1, "исключённый клип не попадает в расчёт");
 assert(M.owed(exG, {}, 1).length === 2, "без исключений всё на месте");
+// удалённые видео: без выплаты — убираем, с выплатой — оставляем
+const dp = [P("d1", "tiktok", "cA", 3000), P("d2", "tiktok", "cB", 2000), P("d3", "tiktok", "cC", 900)];
+dp[1].deleted_at = "2026-10-20T00:00:00Z";      // удалён, не выплачен
+dp[2].deleted_at = "2026-10-20T00:00:00Z";      // удалён, но выплачен
+const paidC = M.makeEntry(M.owed(M.groups([dp[2]], []), {}, 1), 0.9, 1, "USD", "2026-10-21T10:00:00Z", "");
+const lp = M.livePosts(dp, [paidC]);
+assert(!lp.find(p => p.id === "d2"), "удалённый невыплаченный убран");
+assert(lp.find(p => p.id === "d3"), "удалённый выплаченный остался");
+assert(lp.find(p => p.id === "d1"), "живой остался");
 console.log("✅ money: все проверки пройдены");

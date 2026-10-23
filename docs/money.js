@@ -120,6 +120,15 @@
     return { total, byPlat };
   }
 
-  root.Money = { viewsAt, groups, paidTo, owed, summarize, makeEntry, periodGain };
+  /* Удалённые видео: если за клип ничего не выплачено — убираем совсем (и из денег, и из аналитики).
+   * Если выплата уже была — оставляем, чтобы история выплат сходилась. */
+  function livePosts(posts, entries) {
+    const postToG = {};
+    for (const x of Object.values(groups(posts, []))) for (const p of x.posts) postToG[p.id] = x.key;
+    const paid = paidTo(entries || [], postToG);
+    return posts.filter(p => !p.deleted_at || (paid[p.clip_id || `ext:${p.platform}:${p.id}`] || 0) > 0);
+  }
+
+  root.Money = { viewsAt, groups, paidTo, owed, summarize, makeEntry, periodGain, livePosts };
   if (typeof module !== "undefined") module.exports = root.Money;
 })(typeof window !== "undefined" ? window : globalThis);

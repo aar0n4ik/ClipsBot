@@ -705,6 +705,8 @@ const rate = () => +(D.money || {}).rate_per_1000 || 0;
 const cur = () => (D.money || {}).currency || "USD";
 let G = {}, POST2G = {};
 function rebuildGroups() {
+  D.allPosts ||= D.posts || [];
+  D.posts = M.livePosts(D.allPosts, ledger.entries);
   G = M.groups(D.posts, D.clips);
   POST2G = {};
   for (const x of Object.values(G)) for (const p of x.posts) POST2G[p.id] = x.key;

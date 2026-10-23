@@ -45,6 +45,18 @@ def merge_videos(A: dict, vids: list[dict], tz: str, now_ts: int):
         rec["history"], rec["ts"] = hist, _thin_ts(ts, v.get("create_time") or now_ts)
 
 
+LIST_SAFE_MAX = 150  # если список короче — он полный, по нему можно судить об удалениях
+
+
+def mark_deleted(A: dict, seen: set[str], ts: str):
+    """Видео, которого нет в полном списке площадки, помечаем удалённым. Вернулось — снимаем пометку."""
+    for vid, rec in A["videos"].items():
+        if vid in seen:
+            rec.pop("deleted_at", None)
+        else:
+            rec.setdefault("deleted_at", ts)
+
+
 def link_clips(store: Store, acc_id: str, platform: str, A: dict, queue: list[dict]):
     """TikTok в режиме «черновики» не возвращает id ролика — находим его по тексту описания."""
     claimed = {str(p.get("video_id")) for c in queue for p in c["posts"].values() if p.get("video_id")}
@@ -91,6 +103,10 @@ def cmd_stats(cfg: dict, store: Store):
         A = stats["accounts"].setdefault(acc["id"], {"videos": {}})
         A["platform"] = acc["platform"]
         merge_videos(A, vids, tz, now_ts)
+        if len(vids) < LIST_SAFE_MAX:
+            mark_deleted(A, {str(v["id"]) for v in vids}, now_iso())
+        else:
+            log(f"{acc['id']}: видео больше {LIST_SAFE_MAX}, проверку удалений пропускаю")
         A["updated_at"] = now_iso()
         link_clips(store, acc["id"], acc["platform"], A, queue)
         tokens[acc["id"]]["last_ok"] = now_iso()

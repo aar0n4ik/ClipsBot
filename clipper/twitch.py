@@ -4,7 +4,9 @@ from __future__ import annotations
 import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.parse import urljoin
 
 import requests
 
@@ -86,16 +88,50 @@ def _section(start: float, end: float) -> str:
 
 
 def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
-    """Только звук куска VOD (дёшево: ~70 МБ/час). Если audio-only нет — берём самое лёгкое видео."""
+    """Звук куска VOD. Сегменты HLS качаются параллельно напрямую (без ffmpeg-потока, который идёт
+    в темпе эфира), склеиваются в один файл и обрезаются локально по точному старту (-c copy, без перекодирования)."""
     out.parent.mkdir(parents=True, exist_ok=True)
-    tmpl = str(out.with_suffix("")) + ".%(ext)s"
-    run(["yt-dlp", "-q", "--no-warnings", "--no-part", "-f", "Audio_Only/audio_only/bestaudio/worst",
-         "--download-sections", _section(start, end), "--force-keyframes-at-cuts", "-o", tmpl,
-         f"https://www.twitch.tv/videos/{vod_id}"], timeout=3600)
-    got = sorted(out.parent.glob(out.stem + ".*"), key=lambda p: p.stat().st_size, reverse=True)
-    if not got:
-        raise RuntimeError("yt-dlp ничего не скачал")
-    return got[0]
+    raw = out.with_suffix(".raw.ts")
+    url = run(["yt-dlp", "-g", "-f", "Audio_Only/audio_only/bestaudio/worst",
+               f"https://www.twitch.tv/videos/{vod_id}"], timeout=300).stdout.strip().splitlines()[0]
+    s = requests.Session()
+    pl = s.get(url, timeout=30).text
+    if "#EXT-X-MAP" in pl:
+        raise RuntimeError("fMP4-плейлист: склейка сегментов не поддержана")
+    segs, pos, dur, first_start = [], 0.0, None, None
+    for line in pl.splitlines():
+        line = line.strip()
+        if line.startswith("#EXTINF:"):
+            dur = float(line[len("#EXTINF:"):].split(",")[0])
+        elif line and not line.startswith("#") and dur is not None:
+            if pos + dur > start and pos < end:
+                if first_start is None:
+                    first_start = pos
+                segs.append(urljoin(url, line))
+            pos += dur
+            dur = None
+            if pos >= end:
+                break
+    if not segs:
+        raise RuntimeError(f"в плейлисте нет сегментов для {start:.0f}-{end:.0f} с")
+
+    def fetch(u):
+        for _ in range(3):
+            r = s.get(u, timeout=60)
+            if r.status_code == 200:
+                return r.content
+            time.sleep(1)
+        raise RuntimeError(f"сегмент не скачался ({r.status_code})")
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        parts = list(ex.map(fetch, segs))
+    with open(raw, "wb") as f:
+        for p in parts:
+            f.write(p)
+    run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{max(0.0, start - first_start):.3f}", "-i", str(raw),
+         "-t", f"{end - start:.3f}", "-c", "copy", str(out.with_suffix(".ts"))], timeout=600)
+    raw.unlink(missing_ok=True)
+    return out.with_suffix(".ts")
 
 
 def download_video(vod_id: str, start: float, end: float, out: Path, max_height: int = 1080) -> Path:
