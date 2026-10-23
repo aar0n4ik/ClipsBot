@@ -1071,6 +1071,7 @@ function renderQueue() {
       <div class="meta" style="margin-top:0"><span class="score ${c.score >= 8 ? "hi" : ""}" title="Оценка ИИ">${c.score}/10</span><span class="chip ${cls}">${lbl}</span>${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}</div>
       <div class="muted" style="font-size:12.5px;margin-top:4px">${esc(CATS[c.category] || "")} · ${Math.round(c.duration || 0)} с · ${ago(c.created_at)}</div>
       <div class="tg">${tg}</div>
+      <div class="qbtns" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${c.vod_url ? `<a class="mini" href="${esc(c.vod_url)}" target="_blank" rel="noopener">Смотреть полный стрим</a>` : ""}${Object.values(c.targets || {}).some(t => t.status === "ready") && !Object.values(c.posts || {}).some(p => ["posted", "inbox"].includes(p.status)) ? `<button class="mini" type="button" data-cancel-clip="${esc(c.id)}">Отменить публикацию</button>` : ""}</div>
       <details><summary>Подробнее</summary><div class="more">
         ${texts}
         ${comment ? `<div><b>Первый коммент:</b></div><div class="copyline"><span>${esc(comment)}</span><button class="mini" type="button" data-copy="${esc(comment)}">Копировать</button></div>` : ""}
@@ -1246,6 +1247,7 @@ function bind() {
     if (t.dataset.revert) { ui.confirmRevert = t.dataset.revert; return renderDecisions(); }
     if (t.dataset.revertNo !== undefined) { ui.confirmRevert = null; return renderDecisions(); }
     if (t.dataset.revertYes) { t.disabled = true; try { await sendCommand({ cmd: "revert", decision: t.dataset.revertYes }, "откат решения"); ui.confirmRevert = null; renderDecisions(); } catch (e) { toast(e.message); t.disabled = false; } return; }
+    if (t.dataset.cancelClip) { if (!confirm("Отменить публикацию этого клипа? Потом можно будет сделать новый, похожий.")) return; t.disabled = true; try { await sendCommand({ cmd: "cancel_clip", clip: t.dataset.cancelClip }, "отмена публикации"); } catch (e) { toast(e.message); t.disabled = false; } return; }
     if (t.dataset.retry) { t.disabled = true; try { await sendCommand({ cmd: "retry_clip", clip: t.dataset.retry }, "повтор публикации"); } catch (e) { toast(e.message); t.disabled = false; } return; }
     const setStatus = async (id, status, msg) => {
       t.disabled = true;
