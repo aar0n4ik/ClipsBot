@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Монтирую клип 2/2",
+ "stage": "Скачиваю звук",
  "vod_id": "2907089925",
  "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
- "chunk": "0:00:00–2:00:00",
- "progress": 84,
- "updated_at": "2026-10-23T05:08:24Z",
+ "chunk": "1:58:00–4:00:00",
+ "progress": 5,
+ "updated_at": "2026-10-23T05:09:41Z",
  "detail": "Command '['yt-dlp', '-q', '--no-warnings', '--no-part', '-f', 'Audio_Only/audio_only/bestaudio/worst', '--download-sections', '*0.00-7200.00', '--force-keyframes-at-cuts', '-o', '/home/runner/work/ClipsBot/ClipsBot/work/2907926987/0/audio.%(ext)s', 'https://www.twitch.tv/videos/2907926987']' timed out after 3600 seconds"
 }

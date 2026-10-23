@@ -1,8 +1,5 @@
 {
- "is_live": true,
- "title": "ЛОС-АНДЖЕЛЕС | РАБОТАЕМ НА TESLA И ОБЩАЕМСЯ",
- "started_at": "2026-10-22T20:31:10Z",
- "viewers": 91,
- "game": "IRL",
- "updated_at": "2026-10-23T04:43:00Z"
+ "is_live": false,
+ "last_seen_live": "2026-10-22T20:31:10Z",
+ "updated_at": "2026-10-23T05:09:41Z"
 }
