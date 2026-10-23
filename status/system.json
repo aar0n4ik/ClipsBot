@@ -37,11 +37,11 @@
  },
  "process": {
   "level": "error",
-  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-23T00:52:55Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39870511583",
+  "msg": "кусок 0:00:00–2:00:00: Все ИИ-провайдеры недоступны: 429 {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01ktt9db4af0e828ab8130bk4a` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3036, Requested 4970. Please try again in 45ms. Need more tokens? Upgrade t",
+  "at": "2026-10-23T05:29:05Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39897356741",
   "since": "2026-10-22T01:46:21Z",
-  "fails": 20,
+  "fails": 21,
   "last_ok": "2026-10-21T22:31:22Z"
  },
  "auth:yt_main": {
