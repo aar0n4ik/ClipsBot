@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь 12/14",
+ "stage": "Расшифровываю речь 13/14",
  "vod_id": "2907926987",
  "vod_title": "ЛОС-АНДЖЕЛЕС | РАБОТАЕМ НА TESLA И ОБЩАЕМСЯ",
  "chunk": "0:00:00–2:00:00",
- "progress": 52,
- "updated_at": "2026-10-23T05:27:27Z",
+ "progress": 55,
+ "updated_at": "2026-10-23T05:27:44Z",
  "detail": "Command '['yt-dlp', '-q', '--no-warnings', '--no-part', '-f', 'Audio_Only/audio_only/bestaudio/worst', '--download-sections', '*0.00-7200.00', '--force-keyframes-at-cuts', '-o', '/home/runner/work/ClipsBot/ClipsBot/work/2907926987/0/audio.%(ext)s', 'https://www.twitch.tv/videos/2907926987']' timed out after 3600 seconds"
 }
