@@ -13,6 +13,8 @@ import random
 
 from . import decisions, health, learn, releases
 from .audio import inspect_clip_audio
+from .bundles import record_moment
+from .cuts import speech_runs
 from .clips import normalize
 from .config import WORK_DIR, env
 from .judge import edit_clips, fallback_texts, judge_candidates, snap_bounds, target_texts, translate_lines
@@ -205,6 +207,14 @@ def cmd_process(cfg: dict, store: Store):
             health.report(store, "process", "error", f"кусок {fmt_hms(start)}–{fmt_hms(end)}: {str(e)[:300]}")
             store.set_status("process", state="error", stage="Ошибка, повторю через 10 минут", detail=str(e)[:500])
             raise
+    try:  # связки — после всех кусков и только если осталось время; сбой связок не валит процесс
+        if time.time() - t0 < PROCESS_BUDGET_SEC - 40 * 60:
+            from .bundles import run_pass
+            made = run_pass(cfg, store, llm, targets_for(cfg, store))
+            if made:
+                log(f"связок собрано: {made}")
+    except Exception as e:  # noqa: BLE001
+        log(f"связки пропущены: {str(e)[:200]}")
     health.report(store, "process", "ok", f"обработано кусков: {n}")
     store.set_status("process", state="idle", stage="Жду новый стрим" if n == 0 else "Готово, жду новые куски",
                      detail=f"обработано кусков: {n}", progress=None)
@@ -291,6 +301,7 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
     except Exception as e:  # noqa: BLE001
         log(f"примеры из статистики недоступны: {e}")
         learned = {}
+    u0 = llm.totals()
     verdicts = judge_candidates(llm, cfg, alive, learned, (policy.get("hints") or {}).get("length", "")) if alive else {}
     scored = []
     for c in alive:
@@ -326,14 +337,24 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
     made = 0
     for k, pl in enumerate(plans):
         st(f"Монтирую клип {k + 1}/{len(plans)}", 70 + int(28 * k / max(1, len(plans))))
+        ed = edits.get(pl["id"])
+        if not ed and not cfg["clips"].get("allow_fallback_texts", False):
+            log(f"клип {pl['id']} отложен: ИИ-редактор не ответил, а тексты без него не выпускаю")
+            health.report(store, "render", "warn", f"клип {pl['id']} отложен: редактор не ответил")
+            continue
         try:
-            ed = edits.get(pl["id"]) or fallback_texts(pl["v"], pl["words"])
+            ed = ed or fallback_texts(pl["v"], pl["words"])
             made += bool(make_clip(cfg, store, llm, policy, vod, pl, ed, platforms, work))
         except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
             log(f"⚠️ клип не собран: {str(e)[:400]}")
             health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
 
+    spent = llm.delta(u0)
+    if spent["by_model"]:
+        log(f"ИИ за кусок: {sum(x['calls'] for x in spent['by_model'].values())} запросов, ≈${spent['usd']:.4f}, "
+            + ", ".join(f"{k} {v['in']}+{v['out']} ток." for k, v in spent["by_model"].items()))
     rec.update(title=vod.get("title"), created_at=vod["created_at"], duration=vod["duration_sec"],
+               llm=spent,
                processed_until=max(int(rec.get("processed_until", 0)), int(end)), finished=bool(final),
                candidate_times=(rec.get("candidate_times", []) + [c["peak_abs"] for c in cands])[-300:],
                clips=int(rec.get("clips", 0)) + made, updated_at=now_iso())
@@ -375,10 +396,12 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
               work: Path) -> bool:
     c, v = pl["c"], pl["v"]
     s, e = pl["s"], pl["e"]
+    cl = cfg["clips"]
     abs_s, dur = c["ctx_start"] + s, e - s
     clip_id = f"{vod['id']}_{int(abs_s)}"
     pad = min(3.0, abs_s)
-    src = download_video(vod["id"], abs_s - pad, abs_s + dur + 2, work / f"{clip_id}_src.mp4")
+    src_off = abs_s - pad  # время в записи VOD, с которого начинается скачанный исходник
+    src = download_video(vod["id"], src_off, abs_s + dur + 2, work / f"{clip_id}_src.mp4")
 
     # звук: заглушка Twitch / музыка в фоне
     au = inspect_clip_audio(src, pad, dur, work, cfg)
@@ -392,7 +415,18 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
         risk["flags"] = sorted(set(risk.get("flags", [])) | {"music"})
 
     words_src = [{"w": w["w"], "s": w["s"] + pad, "e": w["e"] + pad} for w in pl["words"]]
-    main = (pad, pad + dur)
+
+    # обрезка пауз: длинное молчание и пустые секунды вырезаются, короткие паузы остаются
+    mn = float(cl["min_seconds"])
+    if cl.get("trim_silence", True):
+        segs_main = speech_runs(words_src, pad, pad + dur, max_gap=float(cl.get("trim_gap_seconds", 1.2)))
+        if sum(b - a for a, b in segs_main) < 0.8 * mn:
+            segs_main = [(pad, pad + dur)]
+    else:
+        segs_main = [(pad, pad + dur)]
+    kept = sum(b - a for a, b in segs_main)
+    main = (segs_main[0][0], segs_main[-1][1])
+
     co = ed.get("cold_open") or {}
     co_seg = None
     try:
@@ -405,7 +439,9 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
         pa = float(v["payoff_at"]) - s  # в начале нет речи — показываем развязку первой
         if 5 <= pa <= dur - 1:
             co_seg = (pad + pa - 0.3, pad + min(dur, pa + 2.0))
-    notes = [n for n in (ed.get("notes") or []) if isinstance(n, dict)][:2]
+    # контекстные подписи сверху (белые, временные) по умолчанию выключены
+    notes = ([n for n in (ed.get("notes") or []) if isinstance(n, dict)][:2]
+             if cl.get("context_notes", False) else [])
     out_dir = work / "out"
     out_dir.mkdir(exist_ok=True)
     from .framing import detect_subject, plan_pan
@@ -413,25 +449,27 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
     sw, sh, _ = probe(src)
     crop_frac = min(1.0, (sh * panel_asp) / sw) if sw else 1.0
     pan = (plan_pan(detect_subject(src, main[0], main[1]), main[0], main[1], crop_frac)
-           if cfg["clips"].get("follow_subject", True) and crop_frac < 0.98 and sh <= sw * 1.2 else None)
+           if cl.get("follow_subject", True) and crop_frac < 0.98 and sh <= sw * 1.2 else None)
     rng = random.Random(clip_id)
     targets, thumb, en_cache = {}, None, {}
     for plat in platforms:
         variant = learn.choose_variant(policy, plat, cfg, rng)
         tx = target_texts(ed, plat, variant.get("hook_style"), cfg)
-        segs = [co_seg, main] if (co_seg and variant.get("cold_open", True)) else [main]
-        variant["cold_open"] = len(segs) > 1
-        lag = (segs[0][1] - segs[0][0]) if len(segs) > 1 else 0.0
+        use_cold = bool(co_seg and variant.get("cold_open", True))
+        segs = ([co_seg] if use_cold else []) + segs_main
+        variant["cold_open"] = use_cold
+        lag = (co_seg[1] - co_seg[0]) if use_cold else 0.0
         pnotes = [{"t": float(n.get("t", 0)) + lag, "text": n.get("text", "")} for n in notes]
         en = None
         if variant.get("subtitles") == "both" and pl["words"]:
-            if "x" not in en_cache:
+            if "en" not in en_cache:
                 try:
-                    en_cache["x"] = translate_lines(llm, [" ".join(x["w"] for x in ch) for ch in chunk_words(pl["words"])])
+                    en_cache["en"] = translate_lines(llm, [" ".join(x["w"] for x in ch)
+                                                           for ch in chunk_words(pl["words"])])
                 except Exception as ex:  # noqa: BLE001
                     log(f"перевод недоступен: {ex}")
-                    en_cache["x"] = None
-            en = en_cache["x"]
+                    en_cache["en"] = None
+            en = en_cache["en"]
             if not en:
                 variant["subtitles"] = "ru"
         title = fit_title(*tx["hook_alts"])
@@ -454,7 +492,7 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
             continue
         if thumb is None:
             thumb = thumb_b64(out, at=min(1.0, total / 2))
-        hq = hook_quality(pl["opening"], len(segs) > 1, title[0])
+        hq = hook_quality(pl["opening"], use_cold, title[0])
         targets[plat] = {**{k: val for k, val in tx.items() if k != "hook_alts"}, "hook_alts": tx["hook_alts"][:4],
                          "asset": releases.upload(out), "size": out.stat().st_size, "duration": round(total, 1),
                          "variant": variant, "hook_quality": hq, "status": "ready",
@@ -465,7 +503,7 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
         return False
     store.write_json(f"queue/{clip_id}.json", {
         "id": clip_id, "vod_id": vod["id"], "vod_title": vod.get("title"), "vod_time": round(abs_s, 1),
-        "duration": round(dur, 1), "score": int(v.get("score", 0)),
+        "duration": round(kept, 1), "score": int(v.get("score", 0)),
         "subscores": {k: v.get(k) for k in ("hook", "payoff", "clarity", "emotion", "relate")},
         "category": v.get("category", "other"), "risk": risk, "why": v.get("why", ""),
         "overlay": next(iter(targets.values()))["hook"], "signal": c["signal"], "breakdown": c["breakdown"],
@@ -475,9 +513,17 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
         "live_when_made": bool((store.read_json("status/live.json", {}) or {}).get("is_live")),
         "uid": uuid.uuid4().hex[:8],
     })
+    # для связок: где в записи лежат куски и какие в них слова (абсолютное время VOD)
+    record_moment(store, {
+        "id": clip_id, "vod_id": vod["id"], "vod_title": vod.get("title"), "created_at": now_iso(),
+        "t": round(src_off + segs_main[0][0], 2), "category": v.get("category", "other"),
+        "score": int(v.get("score", 0)), "text": " ".join(w["w"] for w in pl["words"])[:400],
+        "segments": [[round(src_off + a, 2), round(src_off + b, 2)] for a, b in segs_main],
+        "words": [[w["w"], round(src_off + w["s"], 2), round(src_off + w["e"], 2)] for w in words_src][:120],
+    })
     store.sync(f"клип {clip_id} готов (score {v.get('score')}, площадки: {', '.join(targets)})")
     hooks = ", ".join(p + ": «" + t["hook"] + "»" for p, t in targets.items())
-    log(f"✅ {clip_id} score={v.get('score')} {dur:.0f}с → {hooks}")
+    log(f"✅ {clip_id} score={v.get('score')} {kept:.0f}с → {hooks}")
     return True
 
 
