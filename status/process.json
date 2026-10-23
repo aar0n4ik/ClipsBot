@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь 3/10",
+ "stage": "Расшифровываю речь 4/10",
  "vod_id": "2906042925",
  "vod_title": "🇺🇸 LOS ANGELES IRL | ДОСТАВКА НА TESLA 🚗 | ЕЗДИМ ПО ЗАКАЗАМ И ОБЩАЕМСЯ [Новый ТГ в описании]",
  "chunk": "5:58:00–7:19:29",
- "progress": 32,
- "updated_at": "2026-10-23T04:35:03Z",
+ "progress": 35,
+ "updated_at": "2026-10-23T04:35:11Z",
  "detail": "Command '['yt-dlp', '-q', '--no-warnings', '--no-part', '-f', 'Audio_Only/audio_only/bestaudio/worst', '--download-sections', '*0.00-7200.00', '--force-keyframes-at-cuts', '-o', '/home/runner/work/ClipsBot/ClipsBot/work/2907926987/0/audio.%(ext)s', 'https://www.twitch.tv/videos/2907926987']' timed out after 3600 seconds"
 }
