@@ -23,9 +23,9 @@ from .util import ffprobe_json, run
 
 W, H = 1080, 1920
 TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 228, 880, (100, 92, 84, 78, 72)
-PANEL_Y, PANEL_H = 480, 920
-SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1312, 84, 760
-BRAND_CENTER, BRAND_LOGO, BRAND_TEXT = 1488, 100, 58
+PANEL_Y, PANEL_H = 480, 960
+SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1312, 78, 760
+BRAND_CENTER, BRAND_LOGO, BRAND_TEXT = 1512, 100, 58
 BRAND_MAX_W = 700
 NOTE_Y = PANEL_Y + 44
 UI_BOTTOM = 1650          # отсюда начинается подпись TikTok
@@ -336,15 +336,27 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         keys = plan_pan(detect_subject(src, segments[-1][0], segments[-1][1]), segments[-1][0], segments[-1][1], crop_frac)
     from .framing import x_expr
     fc = []
-    asrc = "1:a" if audio_override else "0:a"
     audio = has_audio or audio_override is not None
+    # каждый кусок — отдельный вход (-ss/-t): ffmpeg не копит кадры одного куска, пока ждёт очереди
+    inputs, seg_in = [], []
+    for a, b in segments:
+        inputs.append({"path": src.resolve(), "ss": a, "t": b - a})
+        vi = len(inputs) - 1
+        if audio_override:
+            inputs.append({"path": audio_override.resolve(), "ss": a, "t": b - a})
+            ai = len(inputs) - 1
+        else:
+            ai = vi if has_audio else None
+        seg_in.append((vi, ai))
     for i, (a, b) in enumerate(segments):
-        xe = x_expr(keys, a, crop_frac) if keys else "(iw-ow)/2"
-        fc.append(f"[0:v]trim=start={a:.3f}:end={b:.3f},setpts=PTS-STARTPTS,fps=30,"
+        vi, ai = seg_in[i]
+        keys_local = [(ta - a, va) for ta, va in keys] if keys else None  # ключи — во времени куска
+        xe = x_expr(keys_local, 0.0, crop_frac) if keys_local else "(iw-ow)/2"
+        fc.append(f"[{vi}:v]setpts=PTS-STARTPTS,fps=30,"
                   f"crop=w='min(iw\\,ih*{asp:.4f})':h='min(ih\\,iw/{asp:.4f})':x='{xe}':y='(ih-oh)/2',"
                   f"scale={fw}:{fh},setsar=1,format=yuv420p[v{i}]")
-        if audio:
-            fc.append(f"[{asrc}]atrim=start={a:.3f}:end={b:.3f},asetpts=PTS-STARTPTS[a{i}]")
+        if audio and ai is not None:
+            fc.append(f"[{ai}:a]asetpts=PTS-STARTPTS[a{i}]")
     n = len(segments)
     fc.append("".join(f"[v{i}]" + (f"[a{i}]" if audio else "") for i in range(n))
               + f"concat=n={n}:v=1:a={1 if audio else 0}[fgc]" + ("[ac]" if audio else ""))
@@ -352,7 +364,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     fc.append("[ba]scale=270:480:force_original_aspect_ratio=increase,crop=270:480,boxblur=16:3,"
               f"scale={W}:{H},eq=brightness=-0.22:saturation=1.1[bg]")
     fc.append(f"[bg][fg]overlay=x=0:y={fg_y}[v0]")
-    last, inputs = "v0", [src.resolve()] + ([audio_override.resolve()] if audio_override else [])
+    last = "v0"
     if variant.get("progress_bar") and layout != "vertical":
         purple = (cfg.get("branding") or {}).get("color", "#9146FF").lstrip("#")
         fc.append(f"color=c=0x{purple}:s={W}x8:r=30,format=yuv420p[bar]")
@@ -360,7 +372,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         last = "vp"
     if badge:
         bidx = len(inputs)
-        inputs.append(badge.resolve())
+        inputs.append({"path": badge.resolve(), "ss": None, "t": None})
         fc.append(f"[{last}][{bidx}:v]overlay=x=(W-w)/2:y={BRAND_CENTER}-h/2[vb]")
         last = "vb"
     fc.append(f"[{last}]ass={ass.name}:fontsdir={FONTS_DIR.as_posix()},format=yuv420p[vout]")
@@ -368,13 +380,15 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         fc.append("[ac]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=44100[aout]")
 
     cmd = ["ffmpeg", "-v", "error", "-y"]
-    for p in inputs:
-        cmd += ["-i", p]
+    for inp in inputs:
+        if inp["ss"] is not None:
+            cmd += ["-ss", f"{inp['ss']:.3f}", "-t", f"{inp['t']:.3f}"]
+        cmd += ["-i", inp["path"]]
     cmd += ["-filter_complex", ";".join(fc), "-map", "[vout]"]
     if audio:
-        cmd += ["-map", "[aout]", "-c:a", "aac", "-b:a", "160k"]
-    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-maxrate", "8M",
-            "-bufsize", "16M", "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
+        cmd += ["-map", "[aout]", "-c:a", "aac", "-b:a", "192k"]
+    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-maxrate", "14M",
+            "-bufsize", "28M", "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
     prev = os.getcwd()
     os.chdir(work)  # ass-фильтр читает файл относительно текущей папки
     try:
