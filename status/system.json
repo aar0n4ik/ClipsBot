@@ -37,11 +37,11 @@
  },
  "process": {
   "level": "error",
-  "msg": "кусок 0:00:00–2:00:00: Command '['yt-dlp', '-q', '--no-warnings', '--no-part', '-f', 'Audio_Only/audio_only/bestaudio/worst', '--download-sections', '*0.00-7200.00', '--force-keyframes-at-cuts', '-o', '/home/runner/work/ClipsBot/ClipsBot/work/2907926987/0/audio.%(ext)s', 'https://www.twitch.tv/videos/2907926987']' timed o",
-  "at": "2026-10-23T00:52:51Z",
+  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
+  "at": "2026-10-23T00:52:55Z",
   "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39870511583",
   "since": "2026-10-22T01:46:21Z",
-  "fails": 19,
+  "fails": 20,
   "last_ok": "2026-10-21T22:31:22Z"
  },
  "auth:yt_main": {
