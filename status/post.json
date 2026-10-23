@@ -7,24 +7,28 @@
     "cap": 6,
     "gap_min": 80,
     "mode": "обычный режим",
-    "posts_today": 0,
+    "posts_today": 1,
     "plan_today": [
-     "17:07",
-     "19:07",
-     "21:07",
-     "23:07"
+     "22:07"
     ],
     "health": "ok",
     "why": []
    },
-   "last_post_at": "2026-10-23T14:57:45Z",
-   "last_clip": "2907089925_4016",
+   "last_post_at": "2026-10-23T19:06:50Z",
+   "last_clip": "2907089925_15487",
    "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
-    "2026-10-23": 1
+    "2026-10-23": 2
    },
    "recent": [
+    {
+     "clip": "2907089925_15487",
+     "category": "funny",
+     "vod_id": "2907089925",
+     "vod_time": 15487.8,
+     "hook_style": "conflict"
+    },
     {
      "clip": "2907089925_4016",
      "category": "road",
@@ -56,23 +60,28 @@
     "cap": 4,
     "gap_min": 80,
     "mode": "обычный режим",
-    "posts_today": 1,
+    "posts_today": 2,
     "plan_today": [
-     "17:07",
-     "19:07",
-     "21:07"
+     "22:07"
     ],
     "health": "ok",
     "why": []
    },
-   "last_post_at": "2026-10-23T14:57:48Z",
-   "last_clip": "2907089925_15487",
+   "last_post_at": "2026-10-23T19:06:53Z",
+   "last_clip": "2907089925_9786",
    "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
-    "2026-10-23": 2
+    "2026-10-23": 3
    },
    "recent": [
+    {
+     "clip": "2907089925_9786",
+     "category": "money",
+     "vod_id": "2907089925",
+     "vod_time": 9786.8,
+     "hook_style": "tease"
+    },
     {
      "clip": "2907089925_15487",
      "category": "funny",
@@ -113,19 +122,17 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "17:07",
-     "19:07",
-     "21:07"
+     "22:07"
     ],
     "health": "ok",
     "why": []
    },
    "last_error": "Instagram: API access blocked. (200/None) [temp]",
-   "last_error_at": "2026-10-23T14:57:49Z"
+   "last_error_at": "2026-10-23T19:06:54Z"
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-23T14:57:49Z",
+ "updated_at": "2026-10-23T19:06:54Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -206,5 +213,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-23T15:07:00+00:00"
+ "next_check": "2026-10-23T20:07:00+00:00"
 }

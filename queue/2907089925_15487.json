@@ -81,7 +81,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Кто ещё получал звонки из Инсты, когда всё выключено? Делитесь!",
    "cover_ms": 600
   },
@@ -113,7 +113,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "failed",
    "comment": "Кто ещё получал звонки из Инсты, когда всё выключено? Делитесь!",
    "cover_ms": 600
   },
@@ -156,11 +156,11 @@
  },
  "posts": {
   "instagram": {
-   "tries": 2,
+   "tries": 3,
    "account": "ig_main",
    "error": "Instagram: API access blocked. (200/None)",
-   "last_try": "2026-10-23T14:57:49Z",
-   "status": "retry"
+   "last_try": "2026-10-23T19:06:54Z",
+   "status": "failed"
   },
   "youtube": {
    "status": "posted",
@@ -169,6 +169,16 @@
    "privacy": "public",
    "account": "yt_main",
    "posted_at": "2026-10-23T14:57:47Z",
+   "reason": "лучший час по плану",
+   "why": []
+  },
+  "tiktok": {
+   "publish_id": "v_inbox_file~v2.7699941473118324766",
+   "privacy": "DRAFT",
+   "status": "inbox",
+   "video_id": null,
+   "account": "tt_main",
+   "posted_at": "2026-10-23T19:06:49Z",
    "reason": "лучший час по плану",
    "why": []
   }
