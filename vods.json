@@ -68,14 +68,7 @@
   "title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
   "created_at": "2026-10-21T21:07:40Z",
   "fails": {},
-  "gaps": [
-   {
-    "start": 7080,
-    "end": 14400,
-    "error": "Все ИИ-провайдеры недоступны: 404 {\"error\":{\"message\":\"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n",
-    "at": "2026-10-22T19:47:05Z"
-   }
-  ],
+  "gaps": [],
   "processed_until": 30506,
   "duration": 30506,
   "finished": true,
@@ -125,10 +118,24 @@
    3700,
    4064,
    6355,
-   6537
+   6537,
+   7447,
+   9016,
+   9802,
+   10984,
+   11129,
+   11304,
+   11757,
+   11901,
+   12019,
+   12224,
+   12663,
+   13002,
+   13210,
+   13868
   ],
-  "clips": 6,
-  "updated_at": "2026-10-23T05:09:39Z"
+  "clips": 8,
+  "updated_at": "2026-10-23T05:23:15Z"
  },
  "2907926987": {
   "title": "ЛОС-АНДЖЕЛЕС | РАБОТАЕМ НА TESLA И ОБЩАЕМСЯ",
