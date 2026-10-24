@@ -59,7 +59,9 @@ class LLM:
         self.providers = active
         if not self.providers:
             raise SystemExit("Нет ни одного ключа для ИИ (GROQ_API_KEY или GEMINI_API_KEY в Secrets)")
-        self.dead: set[str] = set()
+        self.dead: set[str] = set()          # дневная квота исчерпана — до конца запуска
+        self.cool: dict[str, float] = {}     # имя -> время, до которого ключ на паузе (таймаут, 503, минутный лимит)
+        self._rr = 0                         # порядок ключей по кругу: нагрузка уходит на все ключи по очереди
         self.usage: dict[str, list[int]] = {}  # имя -> [запросы, токены входа, токены выхода]
         self._sent: dict[str, list[tuple[float, int]]] = {}  # имя -> [(время, токены)] за последнюю минуту
         msg = "ИИ-провайдеры: " + ", ".join(p["name"] for p in self.providers)
@@ -67,35 +69,62 @@ class LLM:
             msg += f" (без ключа пропущены: {', '.join(skipped)})"
         log(msg)
 
+    def _available(self, skip: set[str]) -> list[dict]:
+        """Ключи, которые можно сейчас дёрнуть, в порядке по кругу. Если все на паузе — ждём, пока какой-то оттает."""
+        while True:
+            names = [p for p in self.providers if p["name"] not in self.dead and p["name"] not in skip]
+            if not names:
+                return []
+            now = time.time()
+            ready = [p for p in names if self.cool.get(p["name"], 0) <= now]
+            if ready:
+                k = self._rr % len(ready)
+                self._rr += 1
+                return ready[k:] + ready[:k]
+            wait = min(max(1.0, min(self.cool[p["name"]] for p in names) - now), 150.0)
+            log(f"⏳ все ключи ИИ на паузе, жду {wait:.0f} с")
+            time.sleep(wait)
+
     def chat_json(self, messages: list[dict], max_tokens: int = 2500, temperature: float = 0.6) -> dict:
-        last_err = None
-        for p in self.providers:
-            if p["name"] in self.dead:
-                continue
-            for attempt in range(4):
-                est = _estimate_tokens(messages, max_tokens)
-                try:
-                    self._wait_for_budget(p, est)
-                    self._sent.setdefault(p["name"], []).append((time.time(), est))
-                    return self._call(p, messages, max_tokens, temperature)
-                except LLMError as e:
-                    last_err = e
-                    msg = str(e)
-                    low = msg.lower()
-                    if "413" in msg or "too large" in low or "tokens_limit" in low or "больше лимита" in low:
-                        log(f"⚠️ {p['name']}: запрос слишком большой, пробую следующего провайдера")
-                        break
-                    if "429" in msg or "rate limit" in low or "ratelimit" in low or "quota" in low:
-                        if re.search(r"per ?day|perday|\btpd\b|daily", low):
-                            log(f"⚠️ {p['name']}: дневная квота исчерпана, отключаю до конца запуска")
-                            self.dead.add(p["name"])
-                            break
-                        wait = max(1.0, min(_retry_after(msg, 65.0), 90.0))
-                        log(f"⚠️ {p['name']}: лимит в минуту, жду {wait:.0f} с (попытка {attempt + 1}/4)")
-                        time.sleep(wait)
-                        continue
-                    log(f"⚠️ {p['name']}: ошибка ({msg[:120]}), попытка {attempt + 1}/4")
-                    time.sleep(4 * (attempt + 1))
+        """Сразу переходим на следующий ключ при любой ошибке: таймаут, 503, минутный лимит, слишком большой запрос.
+        Ключ, который подвёл, ставим на паузу, и он снова вступает в круг, когда пауза кончится."""
+        last_err, skip = None, set()
+        for _ in range(len(self.providers) * 4):
+            order = self._available(skip)
+            if not order:
+                break
+            p = order[0]
+            name = p["name"]
+            est = _estimate_tokens(messages, max_tokens)
+            try:
+                self._wait_for_budget(p, est)
+                self._sent.setdefault(name, []).append((time.time(), est))
+                return self._call(p, messages, max_tokens, temperature)
+            except LLMError as e:
+                last_err = e
+                msg = str(e)
+                low = msg.lower()
+                if "больше лимита" in low or "413" in msg or "too large" in low or "tokens_limit" in low:
+                    log(f"⚠️ {name}: запрос не влезает в лимит, беру другой ключ")
+                    skip.add(name)
+                    continue
+                if re.search(r"per ?day|perday|\btpd\b|daily", low) and ("429" in msg or "quota" in low or "rate" in low):
+                    log(f"⚠️ {name}: дневная квота исчерпана, отключаю до конца запуска")
+                    self.dead.add(name)
+                    continue
+                if "429" in msg or "rate limit" in low or "ratelimit" in low or "quota" in low:
+                    pause, why = max(5.0, min(_retry_after(msg, 60.0), 120.0)), "лимит в минуту"
+                elif "timed out" in low or "timeout" in low:
+                    pause, why = 150.0, "таймаут"
+                elif any(code in msg for code in ("500", "502", "503", "504")) or "high demand" in low:
+                    pause, why = 120.0, "сервер перегружен"
+                elif "network" in low:
+                    pause, why = 60.0, "сетевая ошибка"
+                else:
+                    pause, why = 45.0, "ошибка ответа"
+                self.cool[name] = time.time() + pause
+                log(f"↪ {name}: {why}, пауза {pause:.0f} с, пробую другой ключ")
+                skip.add(name)
         raise LLMError(f"Все ИИ-провайдеры недоступны: {last_err}")
 
     def _wait_for_budget(self, p: dict, est: int) -> None:
@@ -119,7 +148,7 @@ class LLM:
         body = {"model": p["model"], "messages": messages, "max_tokens": max_tokens,
                 "temperature": temperature, "response_format": {"type": "json_object"}}
         try:
-            r = requests.post(url, json=body, timeout=180,
+            r = requests.post(url, json=body, timeout=90,
                               headers={"Authorization": f"Bearer {os.environ[p['key_env']]}",
                                        "Content-Type": "application/json"})
         except requests.RequestException as e:
