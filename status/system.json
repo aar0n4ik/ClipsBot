@@ -65,10 +65,10 @@
  "auth:tt_main": {
   "level": "ok",
   "msg": "tt_main (tiktok) подключён",
-  "at": "2026-10-21T17:34:58Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/39645031975",
+  "at": "2026-10-24T07:13:58Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40073296016",
   "since": "2026-10-21T17:34:58Z",
   "fails": 0,
-  "last_ok": "2026-10-21T17:34:58Z"
+  "last_ok": "2026-10-24T07:13:58Z"
  }
 }
