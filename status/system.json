@@ -37,11 +37,11 @@
  },
  "process": {
   "level": "error",
-  "msg": "кусок 0:00:00–2:00:00: Expecting ',' delimiter: line 87 column 8 (char 2391)",
-  "at": "2026-10-24T00:44:40Z",
+  "msg": "запуск «process» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
+  "at": "2026-10-24T00:44:42Z",
   "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40044129866",
   "since": "2026-10-22T01:46:21Z",
-  "fails": 24,
+  "fails": 25,
   "last_ok": "2026-10-21T22:31:22Z"
  },
  "auth:yt_main": {
