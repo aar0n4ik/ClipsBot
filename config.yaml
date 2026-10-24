@@ -126,7 +126,7 @@ posting:
   disable_stitch: false
   disable_comment: false
   tiktok:
-    mode: inbox                      # inbox = в черновики (без аудита) | direct = сразу публично (после аудита)
+    mode: direct                     # direct = публично (SELF_ONLY для неаудированных); inbox нестабилен
     max_age_hours: 72
     max_cap: 4
   youtube:
