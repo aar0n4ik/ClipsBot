@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь 2/14",
+ "stage": "Расшифровываю речь 3/14",
  "vod_id": "2908816817",
  "vod_title": "Автопилот везет бургеры? Доставка еды на Tesla по LA!",
  "chunk": "1:58:00–4:00:00",
- "progress": 27,
- "updated_at": "2026-10-24T01:52:53Z",
+ "progress": 30,
+ "updated_at": "2026-10-24T01:53:11Z",
  "detail": "Expecting ',' delimiter: line 87 column 8 (char 2391)"
 }
