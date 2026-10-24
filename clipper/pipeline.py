@@ -83,6 +83,7 @@ def next_chunk(cfg: dict, store: Store, vods: list[dict], live: dict | None, met
     durations = store.read_json("status/vod_durations.json", {}) or {}
     since = parse_iso(meta["since"])
     retry = os.environ.get("RETRY_GAPS") == "1"
+    # живой стрим — всегда приоритет: сортируем так, чтобы live VOD шёл первым
     for v in sorted(vods, key=lambda x: (0 if is_live_vod(x, live) else 1, x["created_at"])):
         created = parse_iso(v["created_at"])
         if created < since - dt.timedelta(hours=24) or now_utc() - created > dt.timedelta(hours=72):

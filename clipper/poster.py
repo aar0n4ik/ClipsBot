@@ -172,16 +172,17 @@ def decide(acc: dict, cfg: dict, policy: dict, a: dict, hstate: dict, queue: lis
     ranked = [x for x in ranked if int(x[1].get("score", 0)) >= max(thr, limits.get("min_score", 0))]
     info["threshold"] = thr
     if not ranked:
-    return None, None, info
+        return None, None, info
     hot = next(((k, c, why) for k, c, why in ranked if is_hot(c, posting)), None)
-    if hot and since >= max(45, gap // 2) and local.hour not in quiet and st in ("ok", "watch") and not w: 
+    if hot and since >= max(45, gap // 2) and local.hour not in quiet and st in ("ok", "watch") and not w:
         return "горячий клип во время эфира", hot[1], {**info, "why": hot[2]}
     if since < gap:
         return None, None, info
-        _, clip, why = ranked[0]
+    _, clip, why = ranked[0]
     if local.hour not in quiet:
         return "прошло время между постами", clip, {**info, "why": why}
     return None, None, info
+
 
 def full_caption(t: dict, posting: dict) -> str:
     tags = list(dict.fromkeys((t.get("hashtags") or []) + (posting.get("fixed_hashtags") or [])))
