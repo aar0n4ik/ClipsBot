@@ -148,48 +148,43 @@
   "title": "Автопилот везет бургеры? Доставка еды на Tesla по LA!",
   "created_at": "2026-10-23T20:17:20Z",
   "fails": {},
-  "duration": 21998,
+  "duration": 34414,
   "llm": {
    "by_model": {
-    "gemini-3.8-flash-8": {
+    "gemini-3.8-flash-2": {
      "calls": 1,
-     "in": 1359,
-     "out": 117
+     "in": 1394,
+     "out": 206
     },
-    "gemini-3.8-flash-5": {
-     "calls": 1,
-     "in": 1292,
-     "out": 115
-    },
-    "gemini-3.8-flash-3": {
-     "calls": 3,
-     "in": 4508,
-     "out": 455
+    "gemini-3.8-flash-4": {
+     "calls": 2,
+     "in": 3078,
+     "out": 231
     },
     "gemini-3.8-flash-6": {
-     "calls": 2,
-     "in": 2954,
-     "out": 244
+     "calls": 4,
+     "in": 5743,
+     "out": 601
     },
     "gemini-3.8-flash-7": {
      "calls": 2,
-     "in": 2759,
-     "out": 213
+     "in": 2667,
+     "out": 332
     },
-    "gemini-3.8-flash-2": {
-     "calls": 1,
-     "in": 1354,
-     "out": 131
+    "gemini-3.8-flash-5": {
+     "calls": 2,
+     "in": 2907,
+     "out": 391
     },
-    "gemini-3.8-flash-4": {
+    "gemini-3.8-flash-8": {
      "calls": 1,
-     "in": 1465,
-     "out": 201
+     "in": 1698,
+     "out": 212
     }
    },
-   "usd": 0.0173
+   "usd": 0.0205
   },
-  "processed_until": 21600,
+  "processed_until": 28800,
   "finished": false,
   "candidate_times": [
    229,
@@ -233,10 +228,24 @@
    21230,
    21327,
    21443,
-   21534
+   21534,
+   22430,
+   22766,
+   23048,
+   23525,
+   24103,
+   24222,
+   24533,
+   24683,
+   24804,
+   25029,
+   25162,
+   25340,
+   27957,
+   28563
   ],
   "clips": 0,
-  "updated_at": "2026-10-24T02:47:05Z",
+  "updated_at": "2026-10-24T06:50:43Z",
   "gaps": []
  }
 }
