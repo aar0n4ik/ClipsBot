@@ -20,10 +20,10 @@
  "post": {
   "level": "error",
   "msg": "запуск «post» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-24T16:15:20Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40110680840",
+  "at": "2026-10-24T16:26:10Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40111521867",
   "since": "2026-10-24T16:15:20Z",
-  "fails": 1,
+  "fails": 2,
   "last_ok": "2026-10-24T14:27:03Z"
  },
  "doctor": {
