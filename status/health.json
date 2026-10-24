@@ -11,7 +11,7 @@
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-24T06:22:22Z",
+  "checked_at": "2026-10-24T11:29:24Z",
   "since": "2026-10-21T12:15:46Z",
   "spam_errors": 0
  },
@@ -27,7 +27,7 @@
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-24T06:22:22Z",
+  "checked_at": "2026-10-24T11:29:24Z",
   "since": "2026-10-21T12:15:46Z",
   "spam_errors": 0
  },
@@ -43,7 +43,7 @@
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-24T06:22:22Z",
+  "checked_at": "2026-10-24T11:29:24Z",
   "since": "2026-10-21T17:36:17Z",
   "spam_errors": 0
  }
