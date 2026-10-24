@@ -171,7 +171,7 @@
    "tries": 1,
    "account": "ig_main",
    "error": "Instagram: API access blocked. (200/None)",
-   "last_try": "2026-10-23T22:04:33Z",
+   "last_try": "2026-10-24T10:49:33Z",
    "status": "retry"
   }
  },

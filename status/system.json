@@ -18,11 +18,11 @@
   "last_ok": "2026-10-24T06:24:17Z"
  },
  "post": {
-  "level": "ok",
-  "msg": "публикации в норме",
-  "at": "2026-10-24T05:42:31Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40067286941",
-  "since": "2026-10-24T00:35:04Z",
+  "level": "warn",
+  "msg": "tt_main: [Errno 2] No such file or directory: 'ffprobe'; ig_main: Instagram: API access blocked. (200/None)",
+  "at": "2026-10-24T10:49:33Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40087410633",
+  "since": "2026-10-24T10:49:33Z",
   "fails": 0,
   "last_ok": "2026-10-24T05:42:31Z"
  },
