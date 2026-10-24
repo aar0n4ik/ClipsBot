@@ -52,3 +52,11 @@ jobs:
           PLATFORM: ${{ inputs.platform }}
           ACCOUNT: ${{ inputs.account }}
           CODE: ${{ inputs.code }}
+      - name: Save tokens to repo
+        if: success()
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add state/tokens.enc
+          git commit -m "🔐 Update tokens for ${{ inputs.account }} (${{ inputs.platform }})" || true
+          git push origin main
