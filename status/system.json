@@ -18,12 +18,12 @@
   "last_ok": "2026-10-24T14:47:58Z"
  },
  "post": {
-  "level": "ok",
-  "msg": "публикации в норме",
-  "at": "2026-10-24T14:27:03Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40102526722",
-  "since": "2026-10-24T14:27:03Z",
-  "fails": 0,
+  "level": "error",
+  "msg": "запуск «post» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
+  "at": "2026-10-24T16:15:20Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40110680840",
+  "since": "2026-10-24T16:15:20Z",
+  "fails": 1,
   "last_ok": "2026-10-24T14:27:03Z"
  },
  "doctor": {
