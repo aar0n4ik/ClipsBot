@@ -16,7 +16,29 @@ KEEP_CLIPS = 150
 
 
 def build(store: Store, cfg: dict) -> dict:
-    queue = sorted((normalize(c) for c in store.list_json("queue")), key=lambda c: c.get("created_at", ""), reverse=True)
+    from datetime import datetime, timedelta, timezone
+
+    all_clips = sorted((normalize(c) for c in store.list_json("queue")), key=lambda c: c.get("created_at", ""), reverse=True)
+    now = datetime.now(timezone.utc)
+    day_ago = now - timedelta(days=1)
+
+    # Показываем: успешные посты только за последние 24ч, остальные — без ограничений
+    filtered = []
+    for c in all_clips:
+        # Успешные (posted) показываем только за день
+        posts = c.get("posts", {})
+        if any(p.get("status") == "posted" for p in posts.values()):
+            posted_at = next((p.get("posted_at") for p in posts.values() if p.get("posted_at")), None)
+            if posted_at:
+                try:
+                    posted_time = datetime.fromisoformat(posted_at.replace("Z", "+00:00"))
+                    if posted_time < day_ago:
+                        continue  # Пропускаем старые успешные
+                except ValueError:
+                    pass
+        filtered.append(c)
+
+    queue = filtered[:KEEP_CLIPS]
     stats = store.read_json("stats.json", {}) or {}
     link = {}
     for c in queue:
