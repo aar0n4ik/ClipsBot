@@ -1,5 +1,4 @@
 name: 0 · Connect account (TikTok / YouTube / Instagram)
-# Запусти после страницы connect.html: она покажет, что вписать в поля.
 on:
   workflow_dispatch:
     inputs:
