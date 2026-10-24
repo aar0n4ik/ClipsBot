@@ -165,7 +165,10 @@ class LLM:
         cur[0] += 1
         cur[1] += int(u.get("prompt_tokens", 0) or 0)
         cur[2] += int(u.get("completion_tokens", 0) or 0)
-        return parse_json_loose(text)
+        try:
+            return parse_json_loose(text)
+        except (ValueError, LLMError) as e:  # битый JSON от модели: это ошибка ответа, идём на другой ключ
+            raise LLMError(f"bad json: {str(e)[:200]} | {text[:200]}") from e
 
     def totals(self) -> dict[str, list[int]]:
         return {k: list(v) for k, v in self.usage.items()}

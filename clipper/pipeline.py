@@ -334,23 +334,22 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
         st("ИИ пишет хуки и тексты под площадки", 68)
     platforms = targets_for(cfg, store)
     made = 0
-    # тексты пишем пачками по 3 и сразу монтируем эту пачку: готовые клипы выходят, не дожидаясь всего чанка
-    for b0 in range(0, len(plans), 3):
-        group = plans[b0:b0 + 3]
-        edits = edit_clips(llm, cfg, group)
-        for k, pl in enumerate(group, start=b0):
-            st(f"Монтирую клип {k + 1}/{len(plans)}", 70 + int(28 * k / max(1, len(plans))))
-            ed = edits.get(pl["id"])
-            if not ed and not cfg["clips"].get("allow_fallback_texts", False):
-                log(f"клип {pl['id']} отложен: ИИ-редактор не ответил, а тексты без него не выпускаю")
-                health.report(store, "render", "warn", f"клип {pl['id']} отложен: редактор не ответил")
-                continue
-            try:
-                ed = ed or fallback_texts(pl["v"], pl["words"])
-                made += bool(make_clip(cfg, store, llm, policy, vod, pl, ed, platforms, work))
-            except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
-                log(f"⚠️ клип не собран: {str(e)[:400]}")
-                health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
+    # сначала тексты для всех клипов чанка (быстрый шаг, ИИ), потом монтаж и выкладка строго по одному:
+    # первый готовый клип уходит сразу, не дожидаясь остальных
+    edits = edit_clips(llm, cfg, plans) if plans else {}
+    for k, pl in enumerate(plans):
+        st(f"Монтирую клип {k + 1}/{len(plans)}", 70 + int(28 * k / max(1, len(plans))))
+        ed = edits.get(pl["id"])
+        if not ed and not cfg["clips"].get("allow_fallback_texts", False):
+            log(f"клип {pl['id']} отложен: ИИ-редактор не ответил, а тексты без него не выпускаю")
+            health.report(store, "render", "warn", f"клип {pl['id']} отложен: редактор не ответил")
+            continue
+        try:
+            ed = ed or fallback_texts(pl["v"], pl["words"])
+            made += bool(make_clip(cfg, store, llm, policy, vod, pl, ed, platforms, work))
+        except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
+            log(f"⚠️ клип не собран: {str(e)[:400]}")
+            health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
 
     spent = llm.delta(u0)
     if spent["by_model"]:
