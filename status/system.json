@@ -37,12 +37,12 @@
  },
  "process": {
   "level": "ok",
-  "msg": "обработано кусков: 3",
-  "at": "2026-10-24T02:47:07Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40048644703",
+  "msg": "обработано кусков: 2",
+  "at": "2026-10-24T07:18:12Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40070071090",
   "since": "2026-10-24T02:47:07Z",
   "fails": 0,
-  "last_ok": "2026-10-24T02:47:07Z"
+  "last_ok": "2026-10-24T07:18:12Z"
  },
  "auth:yt_main": {
   "level": "ok",
