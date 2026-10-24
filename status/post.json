@@ -4,19 +4,18 @@
    "platform": "tiktok",
    "connected": true,
    "plan": {
-    "cap": 6,
-    "gap_min": 80,
+    "cap": 4,
+    "gap_min": 150,
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "08:07",
      "13:07",
-     "15:07",
-     "17:07",
+     "16:07",
      "19:07",
-     "21:07"
+     "22:07"
     ],
-    "health": "ok"
+    "health": "ok",
+    "threshold": 7
    },
    "last_post_at": "2026-10-23T19:06:50Z",
    "last_clip": "2907089925_15487",
@@ -62,16 +61,17 @@
    "connected": true,
    "plan": {
     "cap": 4,
-    "gap_min": 80,
+    "gap_min": 150,
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
      "13:07",
-     "17:07",
+     "16:07",
      "19:07",
-     "21:07"
+     "22:07"
     ],
-    "health": "ok"
+    "health": "ok",
+    "threshold": 7
    },
    "last_post_at": "2026-10-23T19:06:53Z",
    "last_clip": "2907089925_9786",
@@ -124,23 +124,23 @@
    "connected": true,
    "plan": {
     "cap": 3,
-    "gap_min": 80,
+    "gap_min": 150,
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
      "13:07",
      "19:07",
-     "21:07"
+     "22:07"
     ],
     "health": "ok",
-    "why": []
+    "threshold": 7
    },
    "last_error": "Instagram: API access blocked. (200/None) [temp]",
    "last_error_at": "2026-10-23T22:04:33Z"
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-23T22:04:33Z",
+ "updated_at": "2026-10-24T00:35:04Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -221,5 +221,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-23T23:07:00+00:00"
+ "next_check": "2026-10-24T01:07:00+00:00"
 }
