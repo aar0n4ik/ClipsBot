@@ -22,6 +22,7 @@ from .config import FONTS_DIR
 from .util import ffprobe_json, run
 
 W, H = 1080, 1920
+SRC_STRIDE = 10_000.0     # сборные нарезки: время источника k = k*SRC_STRIDE + секунды внутри файла k
 TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 228, 880, (100, 92, 84, 78, 72)
 PANEL_Y, PANEL_H = 480, 920
 SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1312, 84, 760
@@ -305,9 +306,11 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
                 cfg: dict, out: Path, *, punches: list[float] | None = None, notes: list[dict] | None = None,
                 variant: dict | None = None, audio_override: Path | None = None,
                 en_lines: list[str] | None = None, punch_at: float | None = None,
-                pan_keys: list | None = None) -> Path:
+                pan_keys: list | None = None, extra_srcs: list[Path] | None = None,
+                max_bitrate: int | None = None) -> Path:
     """segments — куски исходника в порядке показа ([холодное открытие], основной);
-    words_src, punches — во времени исходника; notes — во времени итогового ролика."""
+    words_src, punches — во времени исходника; notes — во времени итогового ролика.
+    Сборная нарезка: extra_srcs — другие файлы; время файла k в segments/words_src/pan_keys = k*SRC_STRIDE + секунды."""
     variant = variant or {}
     cl = {**cfg["clips"], **{k: v for k, v in variant.items() if k in ("subtitles",)}}
     cfg = {**cfg, "clips": cl}
@@ -336,15 +339,18 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         keys = plan_pan(detect_subject(src, segments[-1][0], segments[-1][1]), segments[-1][0], segments[-1][1], crop_frac)
     from .framing import x_expr
     fc = []
-    asrc = "1:a" if audio_override else "0:a"
+    srcs = [src] + list(extra_srcs or [])
+    asrc = f"{len(srcs)}:a" if audio_override else None
     audio = has_audio or audio_override is not None
     for i, (a, b) in enumerate(segments):
+        k = int(a // SRC_STRIDE + 1e-6)
+        la, lb = a - k * SRC_STRIDE, b - k * SRC_STRIDE
         xe = x_expr(keys, a, crop_frac) if keys else "(iw-ow)/2"
-        fc.append(f"[0:v]trim=start={a:.3f}:end={b:.3f},setpts=PTS-STARTPTS,fps=30,"
+        fc.append(f"[{k}:v]trim=start={la:.3f}:end={lb:.3f},setpts=PTS-STARTPTS,fps=30,"
                   f"crop=w='min(iw\\,ih*{asp:.4f})':h='min(ih\\,iw/{asp:.4f})':x='{xe}':y='(ih-oh)/2',"
-                  f"scale={fw}:{fh},setsar=1,format=yuv420p[v{i}]")
+                  f"scale={fw}:{fh}:flags=lanczos,setsar=1,format=yuv420p[v{i}]")
         if audio:
-            fc.append(f"[{asrc}]atrim=start={a:.3f}:end={b:.3f},asetpts=PTS-STARTPTS[a{i}]")
+            fc.append(f"[{asrc or f'{k}:a'}]atrim=start={la:.3f}:end={lb:.3f},asetpts=PTS-STARTPTS[a{i}]")
     n = len(segments)
     fc.append("".join(f"[v{i}]" + (f"[a{i}]" if audio else "") for i in range(n))
               + f"concat=n={n}:v=1:a={1 if audio else 0}[fgc]" + ("[ac]" if audio else ""))
@@ -352,7 +358,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     fc.append("[ba]scale=270:480:force_original_aspect_ratio=increase,crop=270:480,boxblur=16:3,"
               f"scale={W}:{H},eq=brightness=-0.22:saturation=1.1[bg]")
     fc.append(f"[bg][fg]overlay=x=0:y={fg_y}[v0]")
-    last, inputs = "v0", [src.resolve()] + ([audio_override.resolve()] if audio_override else [])
+    last, inputs = "v0", [x.resolve() for x in srcs] + ([audio_override.resolve()] if audio_override else [])
     if variant.get("progress_bar") and layout != "vertical":
         purple = (cfg.get("branding") or {}).get("color", "#9146FF").lstrip("#")
         fc.append(f"color=c=0x{purple}:s={W}x8:r=30,format=yuv420p[bar]")
@@ -373,8 +379,13 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     cmd += ["-filter_complex", ";".join(fc), "-map", "[vout]"]
     if audio:
         cmd += ["-map", "[aout]", "-c:a", "aac", "-b:a", "160k"]
-    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-maxrate", "8M",
-            "-bufsize", "16M", "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
+    # качество: платформы всё равно пережимают, поэтому отдаём им максимум (низкий CRF, высокий потолок битрейта);
+    # потолок для конкретной площадки считает вызывающий код из её лимита размера файла
+    crf = int(cl.get("video_crf", 16))
+    cap = int(max_bitrate or cl.get("video_maxrate", 16_000_000))
+    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", str(cl.get("video_preset", "slow")), "-crf", str(crf),
+            "-maxrate", str(cap), "-bufsize", str(cap * 2), "-profile:v", "high", "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart", out.resolve()]
     prev = os.getcwd()
     os.chdir(work)  # ass-фильтр читает файл относительно текущей папки
     try:

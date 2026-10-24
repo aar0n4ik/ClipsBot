@@ -76,6 +76,12 @@ clips:
   subtitle_caps: true
   hook_overlay: true
   follow_subject: true               # камера плавно едет за стримером, если он ушёл от центра (без дёрганий)
+  # Качество: берём исходник стрима без потолка по высоте и отдаём площадкам максимум —
+  # они всё равно пережимают, и чем чище вход, тем лучше картинка после их сжатия.
+  source_max_height: 0               # 0 = без потолка (оригинал стрима, хоть 1440p); число = максимум по высоте
+  video_crf: 16                      # меньше = чище (было 20); 14–18 разумный диапазон
+  video_preset: slow                 # медленнее = лучше сжатие при том же размере
+  video_maxrate: 16000000            # потолок битрейта, бит/с; для площадки урезается по её лимиту размера файла
 
 audio:
   max_muted: 0.15                    # больше 15% цифровой тишины (заглушка Twitch) — клип пропускается
@@ -86,7 +92,7 @@ judge:
   min_score: 5
   fill_min_score: 4
   use_frames: true
-  batch_size: 3
+  batch_size: 2                      # меньше кандидатов в запросе — укладываемся в лимит токенов в минуту (Groq free)
   learn_from_stats: true
 
 learning:
@@ -97,7 +103,7 @@ health:
 
 llm:
   providers:
-    - {name: groq, base_url: "https://api.groq.com/openai/v1", model: openai/gpt-oss-120b, key_env: GROQ_API_KEY}
+    - {name: groq, base_url: "https://api.groq.com/openai/v1", model: openai/gpt-oss-120b, key_env: GROQ_API_KEY, vision: false, extra: {reasoning_effort: low}}
     - {name: gemini, base_url: "https://generativelanguage.googleapis.com/v1beta/openai", model: gemini-3.8-flash, key_env: GEMINI_API_KEY}
 
 posting:

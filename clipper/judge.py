@@ -41,7 +41,16 @@ PICKER = """Ты — главный по отбору в команде, кот�
 • score 1–10 — итоговый шанс на просмотры: 9–10 вирусно, 7–8 сильно, 5–6 нормально (база), 4 на грани, ≤3 мусор.
 • start / end — секунды от начала окна, по словам. start — сразу с действия, без «короче», «ну вот», приветствий.
   end — через 0.5–1.5 с после панчлайна или реакции. Длина {min_s}–{max_s} с.
+• segments — ОБРЕЗКА. Если внутри момента есть лишнее (вода, долгая пауза, отвлечение, пересказ уже понятного),
+  вырежи это: верни список ОСТАВЛЯЕМЫХ кусков [[от,до],[от,до]] в секундах от начала окна, по порядку (2–3 куска,
+  каждый ≥ 2 с, в сумме {min_s}–{max_s} с; склейка должна оставаться понятной). Нечего резать — не добавляй,
+  хватит start/end. start/end при этом = начало первого и конец последнего куска.
 • payoff_at — секунда (от начала окна) главного момента.
+• tags — 1–3 коротких метки типа события для поиска СВЯЗОК по всему стриму: «косяк», «промах мимо адреса»,
+  «странный клиент», «чаевые», «спор с навигатором», «ругань на дороге» (одинаковые события называй одинаково).
+• motif — если в моменте прозвучала фраза, идея или ситуация, которая может «выстрелить» позже (её повторят,
+  к ней вернутся, она окажется смешной или важной в другой части стрима), или он сам продолжает такую линию:
+  коротко, до 60 символов («обещал не брать заказы в Малибу»). Иначе пустая строка.
 • category — funny, conflict, money, america, customer, road, emotional, chat, other.
 • risk — {{"level":0..3,"flags":[...]}}: за что площадка может урезать показ или удалить. Флаги:
   phone_driving (стример держит/листает телефон за рулём — опасное вождение), dangerous_driving,
@@ -51,7 +60,7 @@ PICKER = """Ты — главный по отбору в команде, кот�
 • why — коротко, почему зайдёт или нет.
 {learned}
 Ответ строго JSON:
-{{"clips":[{{"id":"…","keep":true,"hook":7,"payoff":8,"clarity":9,"emotion":7,"relate":6,"score":7,"start":3.2,"end":27.5,"payoff_at":21.0,"category":"funny","risk":{{"level":0,"flags":[]}},"why":"…"}}]}}
+{{"clips":[{{"id":"…","keep":true,"hook":7,"payoff":8,"clarity":9,"emotion":7,"relate":6,"score":7,"start":3.2,"end":27.5,"segments":[[3.2,14.0],[18.5,27.5]],"payoff_at":21.0,"category":"funny","tags":["косяк"],"motif":"","risk":{{"level":0,"flags":[]}},"why":"…"}}]}}
 Верни объект для каждого кандидата, даже если keep=false. Будь строгим и честным, без завышения."""
 
 EDITOR = """Ты — редактор каналов с нарезками русскоязычного стримера. Тексты должны звучать как у живого
@@ -185,6 +194,17 @@ def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | Non
         for r in js.get("clips", []):
             if str(r.get("id")) in ids:
                 results[str(r["id"])] = r
+        missing = [c for c in batch if c["id"] not in results]
+        if missing and len(missing) < len(batch):  # ответ оборвался — доспрашиваем только недостающих
+            try:
+                content = [p for c in missing for p in candidate_block({**c, "frames": []})]
+                js = llm.chat_json([{"role": "system", "content": system}, {"role": "user", "content": content}],
+                                   temperature=0.3)
+                for r in js.get("clips", []):
+                    if str(r.get("id")) in {c["id"] for c in missing}:
+                        results[str(r["id"])] = r
+            except LLMError as e:
+                log(f"доспросить не вышло: {str(e)[:120]}")
         log(f"отборщик: {min(i + bs, len(cands))}/{len(cands)}")
     return results
 
@@ -198,7 +218,7 @@ def edit_clips(llm: LLM, cfg: dict, items: list[dict]) -> dict[str, dict]:
         batch = items[i:i + 3]
         text = "\n\n".join(
             f"### Клип id={it['id']} ({it['dur']:.0f} с, тема: {it.get('category')}, суть: {it.get('why', '')})\n"
-            f"Транскрипт:\n{words_to_timed_text(it['words'], every=2.5)}\nЧат:\n" + "\n".join(it.get("chat_sample", [])[:12])
+            f"{it.get('note', '')}Транскрипт:\n{words_to_timed_text(it.get('words_out') or it['words'], every=2.5)}\nЧат:\n" + "\n".join(it.get("chat_sample", [])[:12])
             for it in batch)
         try:
             js = llm.chat_json([{"role": "system", "content": system}, {"role": "user", "content": text}],
@@ -265,6 +285,48 @@ def snap_bounds(words: list[dict], start: float, end: float, ctx_dur: float, cfg
         pad = (mn - (end - start)) / 2
         start, end = max(0.0, start - pad), min(ctx_dur, end + pad)
     return round(start, 2), round(end, 2)
+
+
+def snap_segments(words: list[dict], segs, start: float, end: float, ctx_dur: float, cfg: dict) -> list[tuple[float, float]]:
+    """Куски, оставленные ИИ после обрезки лишнего. Приводим к словам, чистим пересечения, держим длину в рамках.
+    Не получилось разумно — один кусок через snap_bounds. Возвращает список (от, до) во времени окна."""
+    cl = cfg["clips"]
+    mn, mx = float(cl["min_seconds"]), float(cl["max_seconds"])
+    clean: list[list[float]] = []
+    try:
+        raw = sorted((float(a), float(b)) for a, b in (segs or []))
+    except (TypeError, ValueError):
+        raw = []
+    for a, b in raw:
+        a, b = max(0.0, a), min(ctx_dur, b)
+        if b - a < 1.5:
+            continue
+        if words:
+            nxt = [w["s"] for w in words if w["s"] >= a - 0.6]
+            if nxt:
+                a = max(0.0, min(nxt, key=lambda x: abs(x - a)) - 0.2)
+            inside = [w for w in words if a <= w["s"] < b + 0.3]
+            if inside:
+                b = min(ctx_dur, max(b, inside[-1]["e"] + 0.4))
+        if clean and a - clean[-1][1] < 1.0:      # дыра меньше секунды — это не обрезка, склеиваем
+            clean[-1][1] = max(clean[-1][1], b)
+        else:
+            clean.append([a, b])
+    if len(clean) < 2:
+        return [snap_bounds(words, start, end, ctx_dur, cfg)]
+    clean = clean[:4]
+    total = 0.0
+    kept = []
+    for a, b in clean:
+        if total + (b - a) > mx:
+            b = a + (mx - total)
+            if b - a < 1.5:
+                break
+        kept.append((round(a, 2), round(b, 2)))
+        total += b - a
+    if len(kept) < 2 or total < mn:
+        return [snap_bounds(words, start, end, ctx_dur, cfg)]
+    return kept
 
 
 def translate_lines(llm: LLM, lines: list[str]) -> list[str]:

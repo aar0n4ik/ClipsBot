@@ -11,6 +11,13 @@ LIMITS = {"tiktok": 287 * 1024 * 1024, "youtube": 2 * 1024 ** 3, "instagram": 10
 MAX_DUR = {"tiktok": 600, "youtube": 180, "instagram": 90}
 
 
+def platform_maxrate(cfg: dict, platform: str, dur: float) -> int:
+    """Потолок битрейта, бит/с: общий из config (clips.video_maxrate), но так, чтобы ролик влез в лимит размера площадки."""
+    cap = int(cfg["clips"].get("video_maxrate", 16_000_000))
+    room = int(LIMITS.get(platform, 10 ** 12) * 0.85 * 8 / max(dur, 1.0)) - 200_000
+    return max(2_000_000, min(cap, room))
+
+
 def plan_opening(words: list[dict], start: float, end: float, cfg: dict) -> tuple[float, dict]:
     """Первые секунды решают всё. Если речь начинается поздно — подрезаем начало под первое слово.
     words — во времени окна. Возвращает (новый start, отчёт)."""

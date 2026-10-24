@@ -23,6 +23,10 @@ class LLM:
             raise SystemExit("Нет ни одного ключа для ИИ (GITHUB_TOKEN или GEMINI_API_KEY)")
         self.dead: set[str] = set()
 
+    def sees_images(self) -> bool:
+        """Есть ли живой провайдер, который принимает картинки (иначе кадры качать незачем)."""
+        return any(p.get("vision", True) and p["name"] not in self.dead for p in self.providers)
+
     def chat_json(self, messages: list[dict], max_tokens: int = 2500, temperature: float = 0.6) -> dict:
         last_err = None
         for p in self.providers:
@@ -50,8 +54,10 @@ class LLM:
 
     def _call(self, p: dict, messages, max_tokens, temperature) -> dict:
         url = p["base_url"].rstrip("/") + "/chat/completions"
+        vision = bool(p.get("vision", True))
+        messages = [{**m, "content": prepare_content(m.get("content"), vision)} for m in messages]
         body = {"model": p["model"], "messages": messages, "max_tokens": max_tokens,
-                "temperature": temperature, "response_format": {"type": "json_object"}}
+                "temperature": temperature, "response_format": {"type": "json_object"}, **(p.get("extra") or {})}
         try:
             r = requests.post(url, json=body, timeout=180,
                               headers={"Authorization": f"Bearer {os.environ[p['key_env']]}",
@@ -67,13 +73,65 @@ class LLM:
         return parse_json_loose(text)
 
 
+def prepare_content(content, vision: bool):
+    """Текстовые модели (Groq gpt-oss, Llama) принимают content только строкой: список частей даёт
+    400 «messages[1].content must be a string». Если картинок нет или модель их не видит — склеиваем в строку."""
+    if not isinstance(content, list):
+        return content
+    texts = [str(x.get("text", "")) for x in content if isinstance(x, dict) and x.get("type") == "text"]
+    has_img = any(isinstance(x, dict) and x.get("type") == "image_url" for x in content)
+    if vision and has_img:
+        return content
+    return "\n".join(t for t in texts if t)
+
+
+def _salvage_truncated(text: str) -> str | None:
+    """ИИ оборвал ответ на лимите токенов: оставляем полностью готовые элементы массива и закрываем скобки."""
+    stack, in_str, esc, good = [], False, False, None
+    for i, ch in enumerate(text):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch in "{[":
+            stack.append(ch)
+        elif ch in "}]":
+            if stack:
+                stack.pop()
+            if stack and stack[-1] == "[":
+                good = (i + 1, list(stack))
+    if not good:
+        return None
+    pos, st = good
+    return text[:pos] + "".join("]" if c == "[" else "}" for c in reversed(st))
+
+
 def parse_json_loose(text: str) -> dict:
     text = text.strip()
     text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.M).strip()
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", text, re.S)
-        if m:
+        pass
+    m = re.search(r"\{.*\}", text, re.S)
+    if m:
+        try:
             return json.loads(m.group(0))
-        raise LLMError(f"ИИ вернул не JSON: {text[:200]}")
+        except json.JSONDecodeError:
+            pass
+    fixed = _salvage_truncated(text[text.find("{"):] if "{" in text else text)
+    if fixed:
+        try:
+            js = json.loads(fixed)
+            if isinstance(js, dict):
+                log("⚠️ ответ ИИ оборван — взял только полностью готовые элементы")
+                return js
+        except json.JSONDecodeError:
+            pass
+    raise LLMError(f"ИИ вернул не JSON: {text[:200]}")

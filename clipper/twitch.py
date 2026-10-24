@@ -87,13 +87,21 @@ def _section(start: float, end: float) -> str:
     return f"*{max(0, start):.2f}-{end:.2f}"
 
 
-def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
-    """Звук куска VOD. Сегменты HLS качаются параллельно напрямую (без ffmpeg-потока, который идёт
-    в темпе эфира), склеиваются в один файл и обрезаются локально по точному старту (-c copy, без перекодирования)."""
-    out.parent.mkdir(parents=True, exist_ok=True)
-    raw = out.with_suffix(".raw.ts")
-    url = run(["yt-dlp", "-g", "-f", "Audio_Only/audio_only/bestaudio/worst",
-               f"https://www.twitch.tv/videos/{vod_id}"], timeout=300).stdout.strip().splitlines()[0]
+def _hls_url(vod_id: str, fmt: str) -> str:
+    """Ссылка на медиа-плейлист нужного формата (yt-dlp только получает URL, ничего не качает)."""
+    out = run(["yt-dlp", "-g", "-f", fmt, f"https://www.twitch.tv/videos/{vod_id}"], timeout=300).stdout.split()
+    urls = [u for u in out if u.startswith("http")]
+    if len(urls) != 1:
+        raise RuntimeError("формат состоит из нескольких потоков — прямая склейка не поддержана")
+    return urls[0]
+
+
+def hls_fetch(vod_id: str, start: float, end: float, fmt: str, raw: Path, workers: int = 8) -> float:
+    """Сегменты HLS качаются параллельно и склеиваются в один .ts без перекодирования.
+    ffmpeg-загрузчик читает такой плейлист в темпе эфира (~1x), параллельная загрузка — в сотни раз быстрее.
+    Возвращает время VOD (с), с которого начинается файл: это начало первого сегмента, оно может быть раньше `start`."""
+    raw.parent.mkdir(parents=True, exist_ok=True)
+    url = _hls_url(vod_id, fmt)
     s = requests.Session()
     pl = s.get(url, timeout=30).text
     if "#EXT-X-MAP" in pl:
@@ -115,7 +123,8 @@ def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
     if not segs:
         raise RuntimeError(f"в плейлисте нет сегментов для {start:.0f}-{end:.0f} с")
 
-    def fetch(u):
+    def fetch(u: str) -> bytes:
+        r = None
         for _ in range(3):
             r = s.get(u, timeout=60)
             if r.status_code == 200:
@@ -123,27 +132,55 @@ def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
             time.sleep(1)
         raise RuntimeError(f"сегмент не скачался ({r.status_code})")
 
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        parts = list(ex.map(fetch, segs))
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        parts = list(ex.map(fetch, segs))   # порядок сегментов сохраняется
     with open(raw, "wb") as f:
         for p in parts:
             f.write(p)
-    run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{max(0.0, start - first_start):.3f}", "-i", str(raw),
-         "-t", f"{end - start:.3f}", "-c", "copy", str(out.with_suffix(".ts"))], timeout=600)
-    raw.unlink(missing_ok=True)
-    return out.with_suffix(".ts")
+    return float(first_start)
 
 
-def download_video(vod_id: str, start: float, end: float, out: Path, max_height: int = 1080) -> Path:
+def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
+    """Звук куска VOD: параллельные сегменты, потом точная обрезка по времени (atrim, как и в рендере).
+    Звук нужен только для анализа и расшифровки, поэтому пережатие в AAC 96k здесь ни на что не влияет."""
     out.parent.mkdir(parents=True, exist_ok=True)
+    raw = out.with_suffix(".raw.ts")
+    first = hls_fetch(vod_id, start, end, "Audio_Only/audio_only/bestaudio/worst", raw)
+    a0 = max(0.0, start - first)
+    run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-vn",
+         "-af", f"atrim=start={a0:.3f}:end={a0 + (end - start):.3f},asetpts=PTS-STARTPTS",
+         "-c:a", "aac", "-b:a", "96k", str(out)], timeout=1200)
+    raw.unlink(missing_ok=True)
+    return out
+
+
+def video_format(max_height: int | None = None) -> str:
+    """Формат видео VOD. Без потолка по высоте берём лучшее, что отдаёт Twitch (исходное качество стрима)."""
+    if max_height:
+        return f"best[height<={max_height}][fps<=60]/best[height<={max_height}]/best"
+    return "best[fps<=60]/best"
+
+
+def download_video(vod_id: str, start: float, end: float, out: Path, max_height: int | None = None) -> tuple[Path, float]:
+    """Видео куска VOD в исходном качестве (без перекодирования). Возвращает (файл, время VOD, с которого он начинается):
+    файл может начинаться чуть раньше `start` (с начала сегмента), вызывающий код учитывает это сдвигом.
+    Если прямая загрузка сегментов не вышла — запасной путь через yt-dlp (старт точный)."""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fmt = video_format(max_height)
+    try:
+        raw = out.with_suffix(".ts")
+        first = hls_fetch(vod_id, start, end, fmt, raw)
+        return raw, first
+    except Exception as e:  # noqa: BLE001
+        log(f"прямая загрузка видео не вышла ({str(e)[:140]}), запасной путь через yt-dlp")
     tmpl = str(out.with_suffix("")) + ".%(ext)s"
-    fmt = f"best[height<={max_height}][fps<=60]/best[height<={max_height}]/best"
     run(["yt-dlp", "-q", "--no-warnings", "--no-part", "-f", fmt, "--download-sections", _section(start, end),
-         "--force-keyframes-at-cuts", "--merge-output-format", "mp4", "-o", tmpl, f"https://www.twitch.tv/videos/{vod_id}"], timeout=1800)
+         "--force-keyframes-at-cuts", "--merge-output-format", "mp4", "-o", tmpl, f"https://www.twitch.tv/videos/{vod_id}"],
+        timeout=1800)
     got = [p for p in out.parent.glob(out.stem + ".*") if p.suffix in (".mp4", ".ts", ".mkv")]
     if not got:
         raise RuntimeError("yt-dlp не скачал видео")
-    return got[0]
+    return got[0], max(0.0, start)
 
 
 # ── чат ─────────────────────────────────────────────────────────
