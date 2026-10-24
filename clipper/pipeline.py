@@ -17,7 +17,7 @@ from .bundles import record_moment
 from .cuts import speech_runs
 from .clips import normalize
 from .config import WORK_DIR, env
-from .judge import edit_clips, fallback_texts, grounded, judge_candidates, snap_bounds, target_texts, translate_lines
+from .judge import edit_clips, fallback_texts, grounded, judge_candidates, review_clip, snap_bounds, target_texts, translate_lines
 from .llm import LLM
 from .platforms import connected_platforms
 from .qa import hook_quality, plan_opening, validate_render
@@ -332,22 +332,25 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
                       "chat_sample": c["chat_sample"], "category": v.get("category"), "why": v.get("why")})
     if plans:
         st("ИИ пишет хуки и тексты под площадки", 68)
-    edits = edit_clips(llm, cfg, plans)
     platforms = targets_for(cfg, store)
     made = 0
-    for k, pl in enumerate(plans):
-        st(f"Монтирую клип {k + 1}/{len(plans)}", 70 + int(28 * k / max(1, len(plans))))
-        ed = edits.get(pl["id"])
-        if not ed and not cfg["clips"].get("allow_fallback_texts", False):
-            log(f"клип {pl['id']} отложен: ИИ-редактор не ответил, а тексты без него не выпускаю")
-            health.report(store, "render", "warn", f"клип {pl['id']} отложен: редактор не ответил")
-            continue
-        try:
-            ed = ed or fallback_texts(pl["v"], pl["words"])
-            made += bool(make_clip(cfg, store, llm, policy, vod, pl, ed, platforms, work))
-        except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
-            log(f"⚠️ клип не собран: {str(e)[:400]}")
-            health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
+    # тексты пишем пачками по 3 и сразу монтируем эту пачку: готовые клипы выходят, не дожидаясь всего чанка
+    for b0 in range(0, len(plans), 3):
+        group = plans[b0:b0 + 3]
+        edits = edit_clips(llm, cfg, group)
+        for k, pl in enumerate(group, start=b0):
+            st(f"Монтирую клип {k + 1}/{len(plans)}", 70 + int(28 * k / max(1, len(plans))))
+            ed = edits.get(pl["id"])
+            if not ed and not cfg["clips"].get("allow_fallback_texts", False):
+                log(f"клип {pl['id']} отложен: ИИ-редактор не ответил, а тексты без него не выпускаю")
+                health.report(store, "render", "warn", f"клип {pl['id']} отложен: редактор не ответил")
+                continue
+            try:
+                ed = ed or fallback_texts(pl["v"], pl["words"])
+                made += bool(make_clip(cfg, store, llm, policy, vod, pl, ed, platforms, work))
+            except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
+                log(f"⚠️ клип не собран: {str(e)[:400]}")
+                health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
 
     spent = llm.delta(u0)
     if spent["by_model"]:
@@ -399,6 +402,10 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed
     cl = cfg["clips"]
     abs_s, dur = c["ctx_start"] + s, e - s
     clip_id = f"{vod['id']}_{int(abs_s)}"
+    ok, why = review_clip(llm, cfg, pl, ed)
+    if not ok:
+        decisions.record(store, "skip", f"Клип {fmt_hms(abs_s)} не выложен после проверки: {why}", reversible=False)
+        return False
     pad = min(3.0, abs_s)
     src_off = abs_s - pad  # время в записи VOD, с которого начинается скачанный исходник
     src = download_video(vod["id"], src_off, abs_s + dur + 2, work / f"{clip_id}_src.mp4")

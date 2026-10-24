@@ -129,6 +129,19 @@
     return posts.filter(p => !p.deleted_at || (paid[p.clip_id || `ext:${p.platform}:${p.id}`] || 0) > 0);
   }
 
-  root.Money = { viewsAt, groups, paidTo, owed, summarize, makeEntry, periodGain, livePosts };
+  /* Клипы, у которых все видео удалены с площадок и ничего не выплачено — не показываем вообще. */
+  function hiddenClips(posts, clips, entries) {
+    const postToG = {};
+    for (const x of Object.values(groups(posts, []))) for (const p of x.posts) postToG[p.id] = x.key;
+    const paid = paidTo(entries || [], postToG);
+    const out = new Set();
+    for (const c of clips || []) {
+      const ps = (posts || []).filter(p => p.clip_id === c.id);
+      if (ps.length && ps.every(p => p.deleted_at) && !((paid[c.id] || 0) > 0)) out.add(c.id);
+    }
+    return out;
+  }
+
+  root.Money = { viewsAt, groups, paidTo, owed, summarize, makeEntry, periodGain, livePosts, hiddenClips };
   if (typeof module !== "undefined") module.exports = root.Money;
 })(typeof window !== "undefined" ? window : globalThis);

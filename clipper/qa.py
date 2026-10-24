@@ -69,6 +69,10 @@ def validate_render(path: Path, expect_dur: float, platform: str = "tiktok", exp
     if v[0].get("codec_name") != "h264":
         problems.append(f"кодек {v[0].get('codec_name')}")
     dur = float(info.get("format", {}).get("duration", 0) or 0)
+    vdur = float(v[0].get("duration", 0) or 0)
+    adur = float(a[0].get("duration", 0) or 0) if a else 0.0
+    if a and vdur and adur and abs(vdur - adur) > 0.25:
+        problems.append(f"звук и картинка расходятся на {abs(vdur - adur):.2f} с")
     if abs(dur - expect_dur) > 0.6:
         problems.append(f"длина {dur:.1f} с вместо {expect_dur:.1f} с")
     if dur > MAX_DUR.get(platform, 600):

@@ -706,6 +706,9 @@ const cur = () => (D.money || {}).currency || "USD";
 let G = {}, POST2G = {};
 function rebuildGroups() {
   D.allPosts ||= D.posts || [];
+  D.allClips ||= D.clips || [];
+  const hidden = M.hiddenClips(D.allPosts, D.allClips, ledger.entries);
+  D.clips = D.allClips.filter(c => !hidden.has(c.id));
   D.posts = M.livePosts(D.allPosts, ledger.entries);
   G = M.groups(D.posts, D.clips);
   POST2G = {};

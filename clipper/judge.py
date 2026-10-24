@@ -300,6 +300,48 @@ def snap_bounds(words: list[dict], start: float, end: float, ctx_dur: float, cfg
     return round(start, 2), round(end, 2)
 
 
+REVIEW = """Ты — последний контроль перед публикацией короткого ролика со стрима. Смотри на текст ролика (слова со временем),
+название и хуки. Ролик должен:
+• совпадать с названием и хуком: то, что написано в заголовке, реально происходит и говорится в ролике;
+• быть понятным без контекста стрима: не начинаться с середины мысли без смысла и не заканчиваться на полуслове;
+• нести смысл: не бубнёж, не пустой разговор, не пересказ ничего, не бессвязный набор слов;
+• не выглядеть как ошибка распознавания: если ключевая фраза явно искажена, отметь это.
+Ответ строго JSON: {"ok": true или false, "title_matches": true/false, "makes_sense": true/false, "problems": ["коротко, по-русски"]}.
+Будь строгим: сомневаешься — ok=false и объясни в problems."""
+
+
+def review_clip(llm: LLM, cfg: dict, pl: dict, ed: dict) -> tuple[bool, str]:
+    """Проверка слов и смысла до рендера. Если ИИ недоступен — не блокируем выпуск (логируем)."""
+    words = pl.get("words") or []
+    if not words:
+        return False, "в клипе нет речи, без неё без контекста непонятно"
+    dur = float(pl.get("dur", 0) or 0)
+    prev = -1.0
+    for w in words:
+        if w["s"] < -0.05 or w["e"] > dur + 0.6 or w["s"] < prev - 0.05:
+            return False, "субтитры не совпадают по времени со звуком"
+        prev = w["s"]
+    hooks = [h.get("text", "") if isinstance(h, dict) else str(h) for h in (ed.get("hooks") or [])][:4]
+    yt = (ed.get("youtube") or {}).get("title", "")
+    text = (f"Заголовки: {' | '.join(h for h in hooks if h)}\nНазвание YouTube: {yt}\n"
+            f"Длина: {dur:.0f} с\nСлова со временем:\n{words_to_timed_text(words, every=2.5)}")
+    try:
+        js = llm.chat_json([{"role": "system", "content": REVIEW}, {"role": "user", "content": text}],
+                           temperature=0.2, max_tokens=400)
+    except LLMError as e:
+        log(f"проверка клипа пропущена: ИИ недоступен ({str(e)[:100]})")
+        return True, ""
+    title_ok = bool(js.get("title_matches", True))
+    sense_ok = bool(js.get("makes_sense", True))
+    ok = bool(js.get("ok")) and title_ok and sense_ok
+    probs = "; ".join(str(x) for x in (js.get("problems") or []))[:200]
+    if ok:
+        return True, ""
+    if not probs:
+        probs = "не совпадает с названием" if not title_ok else "бессмысленно без контекста"
+    return False, probs
+
+
 def translate_lines(llm: LLM, lines: list[str]) -> list[str]:
     if not lines:
         return []
