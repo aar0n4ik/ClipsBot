@@ -151,41 +151,36 @@
   "duration": 34414,
   "llm": {
    "by_model": {
-    "gemini-3.8-flash-2": {
-     "calls": 1,
-     "in": 1394,
-     "out": 206
-    },
     "gemini-3.8-flash-4": {
-     "calls": 2,
-     "in": 3078,
-     "out": 231
+     "calls": 3,
+     "in": 4665,
+     "out": 539
     },
     "gemini-3.8-flash-6": {
-     "calls": 4,
-     "in": 5743,
-     "out": 601
+     "calls": 1,
+     "in": 1319,
+     "out": 116
     },
     "gemini-3.8-flash-7": {
-     "calls": 2,
-     "in": 2667,
-     "out": 332
+     "calls": 3,
+     "in": 4073,
+     "out": 439
     },
     "gemini-3.8-flash-5": {
-     "calls": 2,
-     "in": 2907,
-     "out": 391
+     "calls": 1,
+     "in": 1418,
+     "out": 121
     },
     "gemini-3.8-flash-8": {
      "calls": 1,
-     "in": 1698,
-     "out": 212
+     "in": 1366,
+     "out": 129
     }
    },
-   "usd": 0.0205
+   "usd": 0.0147
   },
-  "processed_until": 28800,
-  "finished": false,
+  "processed_until": 34414,
+  "finished": true,
   "candidate_times": [
    229,
    748,
@@ -242,10 +237,21 @@
    25162,
    25340,
    27957,
-   28563
+   28563,
+   31012,
+   31500,
+   32312,
+   32855,
+   33008,
+   33126,
+   33246,
+   33360,
+   33688,
+   34095,
+   34192
   ],
   "clips": 0,
-  "updated_at": "2026-10-24T06:50:43Z",
+  "updated_at": "2026-10-24T07:18:10Z",
   "gaps": []
  }
 }
