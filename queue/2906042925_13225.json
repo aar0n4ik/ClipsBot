@@ -82,7 +82,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "failed",
    "comment": "А как вы спасаете себя от штрафов за парковку? 🤔",
    "cover_ms": 600
   },
@@ -149,12 +149,29 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "А как вы спасаете себя от штрафов за парковку? 🤔",
    "cover_ms": 600
   }
  },
- "posts": {},
+ "posts": {
+  "tiktok": {
+   "account": "tt_main",
+   "status": "failed",
+   "error": "[Errno 2] No such file or directory: 'ffprobe'",
+   "last_try": "2026-10-24T20:41:50Z"
+  },
+  "youtube": {
+   "status": "posted",
+   "video_id": "tckcr_n4QaM",
+   "url": "https://youtube.com/shorts/tckcr_n4QaM",
+   "privacy": "public",
+   "account": "yt_main",
+   "posted_at": "2026-10-24T20:41:54Z",
+   "reason": "прошло время между постами",
+   "why": []
+  }
+ },
  "created_at": "2026-10-23T04:55:38Z",
  "live_when_made": true,
  "uid": "794cddad"

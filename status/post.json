@@ -9,7 +9,6 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "21:07",
      "23:07"
     ],
     "health": "ok",
@@ -64,20 +63,28 @@
     "mode": "обычный режим",
     "posts_today": 2,
     "plan_today": [
-     "22:07"
+     "23:07"
     ],
     "health": "ok",
-    "threshold": 7
+    "threshold": 7,
+    "why": []
    },
-   "last_post_at": "2026-10-24T17:04:23Z",
-   "last_clip": "2907089925_4016",
+   "last_post_at": "2026-10-24T20:41:55Z",
+   "last_clip": "2906042925_13225",
    "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
     "2026-10-23": 3,
-    "2026-10-24": 2
+    "2026-10-24": 3
    },
    "recent": [
+    {
+     "clip": "2906042925_13225",
+     "category": "money",
+     "vod_id": "2906042925",
+     "vod_time": 13225.4,
+     "hook_style": "quote"
+    },
     {
      "clip": "2907089925_4016",
      "category": "road",
@@ -144,7 +151,7 @@
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-24T18:03:57Z",
+ "updated_at": "2026-10-24T20:41:55Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -225,5 +232,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-24T19:07:00+00:00"
+ "next_check": "2026-10-24T21:07:00+00:00"
 }
