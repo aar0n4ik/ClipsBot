@@ -1,10 +1,10 @@
 {
  "state": "running",
- "stage": "Скачиваю звук",
+ "stage": "Читаю чат и клипы зрителей",
  "vod_id": "2908816817",
  "vod_title": "Автопилот везет бургеры? Доставка еды на Tesla по LA!",
  "chunk": "0:00:00–2:00:00",
- "progress": 5,
- "updated_at": "2026-10-24T00:18:04Z",
+ "progress": 15,
+ "updated_at": "2026-10-24T00:18:21Z",
  "detail": "Все ИИ-провайдеры недоступны: 429 {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01ktt9db4af0e828ab8130bk4a` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3036, Requested 4970. Please try again in 45ms. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n"
 }
