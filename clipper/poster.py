@@ -179,13 +179,10 @@ def decide(acc: dict, cfg: dict, policy: dict, a: dict, hstate: dict, queue: lis
     if since < gap:
         return None, None, info
     _, clip, why = ranked[0]
-    if local.hour in plan:
-        return "лучший час по плану", clip, {**info, "why": why}
-    ready = len(ranked)
-    if ready > remaining + cap * 2 and local.hour not in quiet and not w:
-        return "клипов больше, чем успеем выложить", clip, {**info, "why": why}
+        _, clip, why = ranked[0]
+    if local.hour not in quiet:
+        return "прошло время между постами", clip, {**info, "why": why}
     return None, None, info
-
 
 def full_caption(t: dict, posting: dict) -> str:
     tags = list(dict.fromkeys((t.get("hashtags") or []) + (posting.get("fixed_hashtags") or [])))
