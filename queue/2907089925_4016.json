@@ -148,7 +148,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Кто уже пробовал сдавать права в США? Делитесь опытом!",
    "cover_ms": 600
   }
@@ -162,6 +162,16 @@
    "account": "tt_main",
    "posted_at": "2026-10-23T14:57:44Z",
    "reason": "лучший час по плану",
+   "why": []
+  },
+  "youtube": {
+   "status": "posted",
+   "video_id": "6Ztw4V4tUvg",
+   "url": "https://youtube.com/shorts/6Ztw4V4tUvg",
+   "privacy": "public",
+   "account": "yt_main",
+   "posted_at": "2026-10-24T17:04:22Z",
+   "reason": "прошло время между постами",
    "why": []
   }
  },

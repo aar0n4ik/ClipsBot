@@ -18,12 +18,12 @@
   "last_ok": "2026-10-24T14:47:58Z"
  },
  "post": {
-  "level": "error",
-  "msg": "запуск «post» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова",
-  "at": "2026-10-24T16:58:59Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40111930066",
-  "since": "2026-10-24T16:15:20Z",
-  "fails": 4,
+  "level": "warn",
+  "msg": "tt_main: [Errno 2] No such file or directory: 'ffprobe'",
+  "at": "2026-10-24T17:04:23Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40114412482",
+  "since": "2026-10-24T17:04:23Z",
+  "fails": 0,
   "last_ok": "2026-10-24T14:27:03Z"
  },
  "doctor": {

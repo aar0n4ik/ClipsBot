@@ -5,15 +5,16 @@
    "connected": true,
    "plan": {
     "cap": 4,
-    "gap_min": 150,
+    "gap_min": 120,
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "19:07",
+     "20:07",
      "22:07"
     ],
     "health": "ok",
-    "threshold": 7
+    "threshold": 7,
+    "why": []
    },
    "last_post_at": "2026-10-23T19:06:50Z",
    "last_clip": "2907089925_15487",
@@ -59,25 +60,33 @@
    "connected": true,
    "plan": {
     "cap": 4,
-    "gap_min": 150,
+    "gap_min": 120,
     "mode": "обычный режим",
     "posts_today": 1,
     "plan_today": [
-     "19:07",
+     "20:07",
      "22:07"
     ],
     "health": "ok",
-    "threshold": 7
+    "threshold": 7,
+    "why": []
    },
-   "last_post_at": "2026-10-24T10:49:31Z",
-   "last_clip": "2907089925_13868",
+   "last_post_at": "2026-10-24T17:04:23Z",
+   "last_clip": "2907089925_4016",
    "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
     "2026-10-23": 3,
-    "2026-10-24": 1
+    "2026-10-24": 2
    },
    "recent": [
+    {
+     "clip": "2907089925_4016",
+     "category": "road",
+     "vod_id": "2907089925",
+     "vod_time": 4016.6,
+     "hook_style": "number"
+    },
     {
      "clip": "2907089925_13868",
      "category": "funny",
@@ -137,7 +146,7 @@
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-24T14:27:03Z",
+ "updated_at": "2026-10-24T17:04:23Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -218,5 +227,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-24T15:07:00+00:00"
+ "next_check": "2026-10-24T18:07:00+00:00"
 }
