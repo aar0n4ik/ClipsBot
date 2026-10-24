@@ -1,18 +1,18 @@
 {
  "yt_main": {
-  "early_baseline": null,
+  "early_baseline": 0,
   "cusum": 0.0,
   "recent_low": 0,
-  "last5_median": 739,
-  "baseline_median": 282,
+  "last5_median": 130,
+  "baseline_median": 537.5,
   "stuck": 0,
-  "n_early": 9,
-  "n_mature": 6,
-  "state": "ok",
-  "reason": "всё в норме",
-  "until": null,
-  "checked_at": "2026-10-24T18:19:39Z",
-  "since": "2026-10-21T12:15:46Z",
+  "n_early": 10,
+  "n_mature": 7,
+  "state": "cooldown",
+  "reason": "просмотры упали: медиана 130 против обычных 537",
+  "until": "2026-10-26T21:07:23.940883+00:00",
+  "checked_at": "2026-10-24T21:07:23Z",
+  "since": "2026-10-24T21:07:23Z",
   "spam_errors": 0
  },
  "ig_main": {
@@ -27,7 +27,7 @@
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-24T18:19:39Z",
+  "checked_at": "2026-10-24T21:07:23Z",
   "since": "2026-10-21T12:15:46Z",
   "spam_errors": 0
  },
@@ -43,7 +43,7 @@
   "state": "ok",
   "reason": "всё в норме",
   "until": null,
-  "checked_at": "2026-10-24T18:19:39Z",
+  "checked_at": "2026-10-24T21:07:23Z",
   "since": "2026-10-21T17:36:17Z",
   "spam_errors": 0
  }

@@ -166,5 +166,28 @@
   "account": null,
   "platform": null,
   "reverted": false
+ },
+ {
+  "id": "683f7475e2",
+  "at": "2026-10-24T21:07:23Z",
+  "kind": "health",
+  "summary": "yt_main: режим «норма» → «остывание». просмотры упали: медиана 130 против обычных 537",
+  "path": null,
+  "before": "ok",
+  "after": "cooldown",
+  "evidence": {
+   "early_baseline": 0,
+   "cusum": 0.0,
+   "recent_low": 0,
+   "last5_median": 130,
+   "baseline_median": 537.5,
+   "stuck": 0,
+   "n_early": 10,
+   "n_mature": 7
+  },
+  "reversible": false,
+  "account": "yt_main",
+  "platform": null,
+  "reverted": false
  }
 ]
