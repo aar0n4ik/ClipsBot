@@ -51,6 +51,14 @@ jobs:
             ~/.cache/torch
           key: models-v2-${{ hashFiles('config.yaml') }}
           restore-keys: models-v2-
+      - name: Cache tools (fonts, TwitchDownloaderCLI, face model)
+        uses: actions/cache@v4
+        with:
+          path: |
+            fonts
+            assets/face_detection_yunet.onnx
+            ~/.local/bin/TwitchDownloaderCLI
+          key: tools-v1-${{ hashFiles('scripts/setup_tools.sh') }}
       - name: Tools (ffmpeg, fonts, TwitchDownloaderCLI)
         run: bash scripts/setup_tools.sh
       - run: bash scripts/mount_state.sh
