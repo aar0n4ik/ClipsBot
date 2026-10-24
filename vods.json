@@ -147,8 +147,63 @@
  "2908816817": {
   "title": "Автопилот везет бургеры? Доставка еды на Tesla по LA!",
   "created_at": "2026-10-23T20:17:20Z",
-  "fails": {
-   "0-7200": 1
-  }
+  "fails": {},
+  "duration": 18283,
+  "llm": {
+   "by_model": {
+    "gemini-3.8-flash-8": {
+     "calls": 1,
+     "in": 1306,
+     "out": 205
+    },
+    "gemini-3.8-flash-5": {
+     "calls": 4,
+     "in": 5682,
+     "out": 667
+    },
+    "gemini-3.8-flash-3": {
+     "calls": 2,
+     "in": 3332,
+     "out": 454
+    },
+    "gemini-3.8-flash-6": {
+     "calls": 2,
+     "in": 2938,
+     "out": 410
+    },
+    "gemini-3.8-flash-7": {
+     "calls": 2,
+     "in": 3292,
+     "out": 415
+    },
+    "gemini-3.8-flash-2": {
+     "calls": 1,
+     "in": 1395,
+     "out": 119
+    }
+   },
+   "usd": 0.022
+  },
+  "processed_until": 7200,
+  "finished": false,
+  "candidate_times": [
+   229,
+   748,
+   870,
+   2908,
+   3068,
+   3175,
+   3335,
+   3484,
+   4102,
+   4489,
+   4886,
+   6206,
+   6939,
+   7031
+  ],
+  "clips": 0,
+  "updated_at": "2026-10-24T01:51:57Z",
+  "gaps": []
  }
 }
