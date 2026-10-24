@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from .clips import normalize, overall
+from .clips import normalize, overall, pending_for
 from .config import load_money
 from .crypto import encrypt_json
 from .platforms import LABELS
@@ -20,22 +20,24 @@ def build(store: Store, cfg: dict) -> dict:
 
     all_clips = sorted((normalize(c) for c in store.list_json("queue")), key=lambda c: c.get("created_at", ""), reverse=True)
     now = datetime.now(timezone.utc)
-    day_ago = now - timedelta(days=1)
+    hour_ago = now - timedelta(hours=1)
 
-    # Показываем: успешные посты только за последние 24ч, остальные — без ограничений
+    # Залитые клипы остаются в очереди только час после последней публикации.
+    # Клип, у которого на какой-то площадке ещё что-то ждёт публикации, не прячем.
     filtered = []
     for c in all_clips:
-        # Успешные (posted) показываем только за день
         posts = c.get("posts", {})
-        if any(p.get("status") == "posted" for p in posts.values()):
-            posted_at = next((p.get("posted_at") for p in posts.values() if p.get("posted_at")), None)
-            if posted_at:
-                try:
-                    posted_time = datetime.fromisoformat(posted_at.replace("Z", "+00:00"))
-                    if posted_time < day_ago:
-                        continue  # Пропускаем старые успешные
-                except ValueError:
-                    pass
+        done = [p for p in posts.values() if p.get("status") == "posted" and p.get("posted_at")]
+        waiting = any(pending_for(c, plat) for plat in c.get("targets", {}))
+        if done and not waiting:
+            try:
+                last = max(datetime.fromisoformat(p["posted_at"].replace("Z", "+00:00")) for p in done)
+                if last.tzinfo is None:
+                    last = last.replace(tzinfo=timezone.utc)
+                if last < hour_ago:
+                    continue
+            except ValueError:
+                pass
         filtered.append(c)
 
     queue = filtered[:KEEP_CLIPS]
@@ -64,7 +66,7 @@ def build(store: Store, cfg: dict) -> dict:
                                      "created_at", "signal", "subscores", "risk", "audio", "opening")},
             "overlay": c.get("overlay"), "status": overall(c), "thumb": c.get("thumb") if i < 80 else None,
             "targets": {p: {k: t.get(k) for k in ("hook", "hook_style", "caption", "hashtags", "title", "description",
-                                                  "comment", "variant", "status", "duration", "hook_quality")}
+                                                  "comment", "variant", "status", "duration", "hook_quality", "asset")}
                         for p, t in c["targets"].items()},
             "posts": {p: {k: x.get(k) for k in ("account", "status", "posted_at", "video_id", "url", "reason", "why",
                                                 "error", "privacy")} for p, x in c["posts"].items()}})
