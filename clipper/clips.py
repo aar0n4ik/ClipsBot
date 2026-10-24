@@ -45,8 +45,6 @@ def overall(c: dict) -> str:
     st = [p.get("status") for p in c.get("posts", {}).values()]
     if any(s == "posted" for s in st):
         return "posted"
-    if any(s == "inbox" for s in st):
-        return "inbox"
     if any(s == "processing" for s in st):
         return "processing"
     if c.get("status") in ("broken", "skipped", "expired"):
@@ -55,6 +53,8 @@ def overall(c: dict) -> str:
         return "ready"
     if any(s == "failed" for s in st):
         return "failed"
+    if any(s in ("retry", "inbox") for s in st):  # inbox тоже retry в дашборде
+        return "retry"
     return c.get("status") or "ready"
 
 

@@ -300,9 +300,10 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
             releases.delete(t["asset"])
         tz = ZoneInfo(posting["timezone"])
         today = now.astimezone(tz).date().isoformat()
-        # inbox = TikTok принял файл, но в черновиках нестабильно — не трогаем счётчик и таймер
+        # inbox = TikTok принял файл, но в черновиках нестабильно — помечаем как retry, не трогаем таймер
         if res.get("status") == "inbox":
-            log(f"⚠️ {acc['id']}: TikTok вернул inbox — клип помечен как попытка, таймер не сброшен")
+            log(f"⚠️ {acc['id']}: TikTok вернул inbox — пометим как retry, таймер не сброшен")
+            clip["posts"][plat]["status"] = "retry"
             store.write_json(f"queue/{clip['id']}.json", clip)
             continue
         cbd = {k: v for k, v in a.get("count_by_day", {}).items() if k >= (now - dt.timedelta(days=10)).date().isoformat()}
