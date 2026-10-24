@@ -20,8 +20,8 @@
  "post": {
   "level": "warn",
   "msg": "tt_main: [Errno 2] No such file or directory: 'ffprobe'",
-  "at": "2026-10-24T17:04:23Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40114412482",
+  "at": "2026-10-24T18:03:57Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40118961373",
   "since": "2026-10-24T17:04:23Z",
   "fails": 0,
   "last_ok": "2026-10-24T14:27:03Z"

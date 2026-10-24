@@ -9,8 +9,8 @@
     "mode": "обычный режим",
     "posts_today": 0,
     "plan_today": [
-     "20:07",
-     "22:07"
+     "21:07",
+     "23:07"
     ],
     "health": "ok",
     "threshold": 7,
@@ -62,14 +62,12 @@
     "cap": 4,
     "gap_min": 120,
     "mode": "обычный режим",
-    "posts_today": 1,
+    "posts_today": 2,
     "plan_today": [
-     "20:07",
      "22:07"
     ],
     "health": "ok",
-    "threshold": 7,
-    "why": []
+    "threshold": 7
    },
    "last_post_at": "2026-10-24T17:04:23Z",
    "last_clip": "2907089925_4016",
@@ -146,7 +144,7 @@
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-24T17:04:23Z",
+ "updated_at": "2026-10-24T18:03:57Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -227,5 +225,5 @@
    0.5
   ]
  },
- "next_check": "2026-10-24T18:07:00+00:00"
+ "next_check": "2026-10-24T19:07:00+00:00"
 }
