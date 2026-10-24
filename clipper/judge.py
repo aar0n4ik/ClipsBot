@@ -48,10 +48,11 @@ PICKER = """Ты — главный по отбору в команде, кот�
   heavy_profanity (мат почти в каждой фразе), insult_group (оскорбления групп людей), violence,
   private_info (адрес, номер телефона, номер машины крупно), minor (ребёнок в кадре),
   sexual, drugs_alcohol, music (громкая чужая музыка в фоне). 0 — чисто, 1 — мелочь, 2 — заметный риск, 3 — не публиковать.
+• fresh — true, если момент важен именно сейчас (свежая новость, событие, тема, которая завтра уже не зайдёт), иначе false.
 • why — коротко, почему зайдёт или нет.
 {learned}
 Ответ строго JSON:
-{{"clips":[{{"id":"…","keep":true,"hook":7,"payoff":8,"clarity":9,"emotion":7,"relate":6,"score":7,"start":3.2,"end":27.5,"payoff_at":21.0,"category":"funny","risk":{{"level":0,"flags":[]}},"why":"…"}}]}}
+{{"clips":[{{"id":"…","keep":true,"hook":7,"payoff":8,"clarity":9,"emotion":7,"relate":6,"score":7,"start":3.2,"end":27.5,"payoff_at":21.0,"category":"funny","fresh":false,"risk":{{"level":0,"flags":[]}},"why":"…"}}]}}
 Верни объект для каждого кандидата, даже если keep=false. Будь строгим и честным, без завышения."""
 
 EDITOR = """Ты — редактор каналов с нарезками русскоязычного стримера. Тексты должны звучать как у живого

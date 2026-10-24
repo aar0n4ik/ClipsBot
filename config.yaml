@@ -56,7 +56,10 @@ processing:
   min_window_seconds: 360
   candidates_per_hour: 7
   max_candidates_per_chunk: 18
-  max_renders_per_chunk: 12
+  max_renders_per_chunk: 3           # жёсткий потолок клипов на один кусок стрима
+  expected_stream_hours: 8           # средний стрим: дневной лимит делится на куски по этой длине
+  exceptional_score: 9               # такой момент берём всегда (даже сверх лимита куска)
+  fresh_score: 8                     # свежая по времени тема с этой оценкой проходит сверх лимита
   min_per_chunk: 2
   min_gap_seconds: 90
   chat_delay_seconds: 9

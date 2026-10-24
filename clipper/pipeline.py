@@ -314,13 +314,8 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
             continue
         scored.append((c, v))
     scored.sort(key=lambda x: (-int(x[1].get("score", 0)), -x[0]["signal"]))
-    limit, floor = render_budget(cfg, store)
-    picked = [x for x in scored if int(x[1].get("score", 0)) >= max(jcfg["min_score"], floor)]
-    if len(picked) < p["min_per_chunk"]:  # «хоть что-то», но не пустоту
-        picked += [x for x in scored if jcfg["fill_min_score"] <= int(x[1].get("score", 0)) and x not in picked][
-                  : p["min_per_chunk"] - len(picked)]
-    picked = picked[:limit]
-    log(f"к рендеру: {len(picked)} (лимит {limit}, планка {max(jcfg['min_score'], floor)})")
+    picked = select_for_chunk(cfg, store, scored, end - start)
+    log(f"к рендеру: {len(picked)} из {len(scored)} подходящих")
 
     # границы → первые секунды (подрезка под первое слово) → второй проход ИИ
     plans = []
@@ -375,23 +370,56 @@ def targets_for(cfg: dict, store: Store) -> list[str]:
     return [p for p in plats if p in (cfg.get("platforms") or {"tiktok": 1, "youtube": 1, "instagram": 1})]
 
 
-def render_budget(cfg: dict, store: Store) -> tuple[int, int]:
-    """Больше роликов = больше шансов, но очередь не должна протухать.
-    Запас ≈ 1.5 суток публикаций самой «прожорливой» площадки; полный запас — рендерим только сильное."""
+def select_for_chunk(cfg: dict, store: Store, scored: list, chunk_s: float) -> list:
+    """Сколько клипов рендерим из куска стрима. Не больше дневной нормы на весь день, а не на кусок:
+    средний стрим ~8 ч, значит кусок в 2 ч — это четверть дня. Слабые клипы не выпускаем, даже если их много.
+    Исключения: очень сильный момент (exceptional_score) и свежая по времени тема (fresh_score) берём сверх лимита."""
+    from datetime import datetime, timedelta, timezone
     from .platforms import accounts as list_accounts
     p = cfg["processing"]
     policy = learn.load(store, cfg)
     per_plat = {}
     for a in list_accounts(cfg):
         per_plat[a["platform"]] = per_plat.get(a["platform"], 0) + learn.daily_cap(policy, a, cfg)
-    per_day = max(per_plat.values() or [6])
-    ready = sum(1 for c in (normalize(x) for x in store.list_json("queue"))
-                if any(t.get("status", "ready") == "ready" for t in c["targets"].values()))
-    room = int(per_day * 1.5) - ready
-    hard = int(p["max_renders_per_chunk"])
+    day_target = max(per_plat.values() or [4])          # клипов в сутки (каждый выходит на всех площадках)
+    # сколько уже есть: готовые в очереди и выложенные за последние сутки
+    ready, posted = 0, 0
+    since = datetime.now(timezone.utc) - timedelta(hours=24)
+    for raw in store.list_json("queue"):
+        c = normalize(raw)
+        if any(t.get("status", "ready") == "ready" for t in c["targets"].values()):
+            ready += 1
+        for pst in c.get("posts", {}).values():
+            try:
+                ts = datetime.fromisoformat(str(pst.get("posted_at", "")).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                if ts >= since:
+                    posted += 1
+                    break
+            except ValueError:
+                continue
+    room = day_target - ready - posted
+    share = max(1, round(day_target * (chunk_s / 60) / (float(p.get("expected_stream_hours", 8)) * 60)))
+    hard = int(p.get("max_renders_per_chunk", 3))
+    exc, fresh_bar = int(p.get("exceptional_score", 9)), int(p.get("fresh_score", 8))
+    bar = int(cfg["judge"].get("min_score", 5))
+    limit = min(hard, room, share + 1) if room > 0 else 0   # за кусок не больше share+1, чтобы норма не сгорела в первом куске
     if room <= 0:
-        return max(2, hard // 4), 7
-    return min(hard, max(p["min_per_chunk"], room)), 0
+        bar = max(bar, exc)                              # день уже полон: только по-настоящему сильное
+    def is_exc(v):
+        sc = int(v.get("score", 0))
+        return sc >= exc or (bool(v.get("fresh")) and sc >= fresh_bar)
+    picked = [x for x in scored if int(x[1].get("score", 0)) >= max(bar, 7 if room > 0 else bar)][:limit]
+    for x in scored:
+        if len(picked) >= hard:
+            break
+        if x not in picked and is_exc(x[1]):
+            picked.append(x)
+    if not picked and room > 0 and scored and int(scored[0][1].get("score", 0)) >= 6:
+        picked = scored[:1]                              # хотя бы один лучший, если совсем ничего не прошло
+    log(f"дневная норма {day_target}: в очереди {ready}, выложено за сутки {posted}, осталось {max(room, 0)}; кусок ≈{share} клип(а)")
+    return picked
 
 
 def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed: dict, platforms: list[str],
