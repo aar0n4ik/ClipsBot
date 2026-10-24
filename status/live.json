@@ -1,8 +1,5 @@
 {
- "is_live": true,
- "title": "Автопилот везет бургеры? Доставка еды на Tesla по LA!",
- "started_at": "2026-10-23T20:17:16Z",
- "viewers": 69,
- "game": "IRL",
- "updated_at": "2026-10-24T02:59:48Z"
+ "is_live": false,
+ "last_seen_live": "2026-10-23T20:17:16Z",
+ "updated_at": "2026-10-24T06:24:15Z"
 }
