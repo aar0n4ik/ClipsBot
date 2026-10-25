@@ -500,6 +500,13 @@ dialog table { min-width: 560px; }
 <dialog id="settings">
   <h3>Настройки</h3>
   <div class="setting">
+    <div>Язык / Language</div>
+    <select id="langSelect" style="background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px;cursor:pointer">
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="en">🇬🇧 English</option>
+    </select>
+  </div>
+  <div class="setting">
     <div><div>Напоминание о выплате</div><div class="muted" style="font-size:12.5px" id="thrNote">Подсветка, когда накопится сумма для вывода</div></div>
     <label class="switch"><input type="checkbox" id="optAlert" aria-label="Напоминание о выплате"><span></span></label>
   </div>
@@ -567,6 +574,7 @@ dialog table { min-width: 560px; }
 
 <script src="app-config.js"></script>
 <script src="money.js"></script>
+<script src="i18n.js"></script>
 <script>
 (() => {
 "use strict";
