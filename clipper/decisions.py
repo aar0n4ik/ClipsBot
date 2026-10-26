@@ -75,11 +75,13 @@ def apply_commands(store: Store, policy: dict) -> bool:
                 changed = True
             mark_done(store, c["id"], "откачено")
         elif cmd in ("freeze", "unfreeze"):
-            policy["frozen"] = cmd == "freeze"
-            record(store, "freeze", "Обучение поставлено на паузу" if policy["frozen"] else "Обучение снова включено",
-                   reversible=False)
+            want = cmd == "freeze"
+            if bool(policy.get("frozen")) != want:  # повторные нажатия не плодят записи
+                policy["frozen"] = want
+                record(store, "freeze", "Обучение поставлено на паузу" if want else "Обучение снова включено",
+                       reversible=False)
+                changed = True
             mark_done(store, c["id"], "ок")
-            changed = True
         elif cmd in ("pause_account", "resume_account") and c.get("account"):
             pa = policy.setdefault("paused", {})
             if cmd == "pause_account":
@@ -90,6 +92,12 @@ def apply_commands(store: Store, policy: dict) -> bool:
                    account=c["account"], reversible=False)
             mark_done(store, c["id"], "ок")
             changed = True
+        elif cmd == "post_now" and c.get("clip"):
+            q = store.read_json(f"queue/{c['clip']}.json")
+            if q:
+                q["force_post"] = now_iso()
+                store.write_json(f"queue/{c['clip']}.json", q)
+            mark_done(store, c["id"], "выложу при ближайшем запуске публикации")
         elif cmd == "cancel_clip" and c.get("clip"):
             from .releases import delete as _del_asset
             q = store.read_json(f"queue/{c['clip']}.json")

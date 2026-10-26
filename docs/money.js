@@ -172,6 +172,21 @@
     return out;
   }
 
-  root.Money = { viewsAt, aliasMap, groups, paidTo, owed, summarize, makeEntry, periodGain, livePosts, hiddenClips };
+  /* Ручные пометки владельца (реестр → overrides): исключить клип из статистики и выплат, своё название.
+   * Ключ пометки — главный ключ группы после склейки. Возвращает новый объект групп. */
+  function applyOverrides(G, overrides, alias) {
+    alias = alias || same;
+    const ov = {};
+    for (const [k, v] of Object.entries(overrides || {})) ov[alias(k)] = { ...(ov[alias(k)] || {}), ...v };
+    const out = {};
+    for (const [k, x] of Object.entries(G)) {
+      const o = ov[k] || {};
+      if (o.excluded) continue;
+      out[k] = o.label ? { ...x, title: o.label, labeled: true } : x;
+    }
+    return out;
+  }
+
+  root.Money = { viewsAt, aliasMap, groups, paidTo, owed, summarize, makeEntry, periodGain, livePosts, hiddenClips, applyOverrides };
   if (typeof module !== "undefined") module.exports = root.Money;
 })(typeof window !== "undefined" ? window : globalThis);

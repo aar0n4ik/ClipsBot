@@ -91,41 +91,39 @@ def account_signals(videos: list[dict], now_ts: float) -> dict:
 
 
 def update_accounts(store: Store, stats: dict, cfg: dict) -> dict:
+    """Только наблюдение, без автоматического урезания постов.
+
+    Раньше «остывание» включалось по медиане просмотров и сравнивало новые ролики со старыми (другая эпоха канала),
+    из-за чего бот резал частоту на здоровом аккаунте. Теперь режимы такие:
+      ok        — всё нормально;
+      watch     — информативно: свежие ролики в первые 2 часа заметно отстают от нормы ИЛИ висят с нулём просмотров;
+      restricted — площадка сама ругалась на спам/лимит (тогда poster.py ставит паузу этой площадке на 24 ч).
+    """
     prev = store.read_json(ACC, {}) or {}
     out = {}
     now = now_utc()
     hc = cfg.get("health") or {}
     for acc, a in (stats.get("accounts") or {}).items():
-        sig = account_signals(list((a.get("videos") or {}).values()), now.timestamp())
+        vids = [v for v in (a.get("videos") or {}).values() if not v.get("paid_only")]
+        # норма — только по роликам последних 30 дней (старые эпохи канала не сравниваем с новой)
+        fresh = [v for v in vids if v.get("create_time") and now.timestamp() - v["create_time"] < 30 * 86400]
+        sig = account_signals(fresh, now.timestamp())
         old = prev.get(acc, {})
-        state, reason, until = "ok", "всё в норме", None
-        drop = sig["baseline_median"] >= 200 and sig["last5_median"] < 0.25 * sig["baseline_median"]
-        early = sig["cusum"] >= float(hc.get("cusum_alarm", 3.0)) and sig["recent_low"] >= 3
         spam = old.get("spam_errors", 0) >= 2
-        if drop or (early and sig["stuck"] >= 2) or spam:
-            state = "cooldown"
-            reason = ("платформа ругается на частоту постов" if spam else
-                      f"просмотры упали: медиана {int(sig['last5_median'])} против обычных {int(sig['baseline_median'])}"
-                      if drop else "новые ролики набирают сильно медленнее обычного и есть зависшие")
-            until = old.get("until") if old.get("state") in ("cooldown", "pause") and old.get("until") else \
-                (now + dt.timedelta(hours=48)).isoformat()
-            if old.get("state") == "cooldown" and old.get("since") and \
-                    now - parse_iso(old["since"]) > dt.timedelta(hours=72) and (drop or early):
-                state, reason = "pause", "просадка держится 3 суток — пауза, чтобы аккаунт «остыл»"
-                until = (now + dt.timedelta(hours=72)).isoformat()
+        early = sig["cusum"] >= float(hc.get("cusum_alarm", 3.0)) and sig["recent_low"] >= 3
+        if spam:
+            state, reason = "restricted", "площадка ругается на частоту постов — пауза этой площадке"
         elif early:
-            state, reason = "watch", (f"последние ролики в первые 2 часа отстают от нормы "
-                                      f"(норма ≈{sig['early_baseline']} просм.) — ранний сигнал")
+            state, reason = "watch", f"последние ролики в первые 2 часа отстают от нормы (≈{sig['early_baseline']} просм.) — смотрим на качество"
         elif sig["stuck"] >= 2:
-            state, reason = "watch", f"{sig['stuck']} свежих ролика без просмотров — возможно, на проверке"
-        if old.get("until") and old.get("state") in ("cooldown", "pause") and parse_iso(old["until"]) > now \
-                and state in ("ok", "watch"):
-            state, reason, until = old["state"], old.get("reason", reason), old["until"]
-        h = {**sig, "state": state, "reason": reason, "until": until, "checked_at": now_iso(),
+            state, reason = "watch", f"{sig['stuck']} свежих ролика без просмотров — возможно, на проверке у площадки"
+        else:
+            state, reason = "ok", "всё в норме"
+        h = {**sig, "state": state, "reason": reason, "until": None, "checked_at": now_iso(),
              "since": old.get("since") if old.get("state") == state else now_iso(),
              "spam_errors": old.get("spam_errors", 0) if state != "ok" else 0}
-        if state != old.get("state", "ok"):
-            decisions.record(store, "health", f"{acc}: режим «{label(old.get('state', 'ok'))}» → «{label(state)}». {reason}",
+        if state != old.get("state", "ok") and state != "ok" or (old.get("state") not in (None, "ok", state)):
+            decisions.record(store, "health", f"{acc}: «{label(old.get('state', 'ok'))}» → «{label(state)}». {reason}",
                              before=old.get("state", "ok"), after=state, evidence=sig, reversible=False, account=acc)
         out[acc] = h
     for acc, old in prev.items():
@@ -144,7 +142,8 @@ def note_platform_error(store: Store, acc: str, kind: str):
 
 
 def label(state: str) -> str:
-    return {"ok": "норма", "watch": "присмотреться", "cooldown": "остывание", "pause": "пауза"}.get(state, state)
+    return {"ok": "норма", "watch": "присмотреться", "restricted": "ограничение площадки", "cooldown": "остывание",
+            "pause": "пауза"}.get(state, state)
 
 
 def restrictions(state: str) -> dict:

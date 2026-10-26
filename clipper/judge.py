@@ -20,71 +20,19 @@ from .util import log
 
 HOOK_STYLES = ("tease", "conflict", "number", "quote")
 
-PICKER = """Ты — главный по отбору в команде, которая делает нарезки стримов для TikTok, YouTube Shorts и Instagram Reels.
-Платят за просмотры: почти каждый нормальный ролик набирает базу ~1000 просмотров, сильный — десятки и сотни тысяч.
-Поэтому брать нужно всё, что реально стоит выложить, и выкидывать только пустое.
-
-Как площадки решают судьбу ролика: первые 100–200 показов. Если люди не свайпают в первые 2–3 секунды
-и досматривают (70%+), ролик уходит дальше. Решают: хук в начале, отсутствие воды, понятность без контекста,
-эмоция, концовка, после которой хочется пересмотреть или написать коммент.
-
-О стримере: {persona}
-Аудитория: {audience}
-{hints}
-Для КАЖДОГО кандидата (транскрипт с таймкодами в секундах от начала окна, реакция чата, клипы зрителей, кадры):
-• keep — есть ли законченный момент, понятный человеку, который никогда не видел этот стрим.
-  Берём: смешное, конфликт, неожиданность, сильная реакция, деньги/чаевые/цены, странный клиент или прохожий,
-  ситуация на дороге, «Америка глазами русского», душевный момент, острое мнение, реакция на донат с сутью.
-  Не берём: тишину, езду без событий, бубнёж, «ща погодите», тех. паузы, чтение донатов без сути,
-  внутренние шутки, которые без контекста непонятны.
-• Подоценки 0–10: hook, payoff, clarity, emotion, relate.
-• score 1–10 — итоговый шанс на просмотры: 9–10 вирусно, 7–8 сильно, 5–6 нормально (база), 4 на грани, ≤3 мусор.
-• start / end — секунды от начала окна, по словам. start — сразу с действия, без «короче», «ну вот», приветствий.
-  end — через 0.5–1.5 с после панчлайна или реакции. Длина {min_s}–{max_s} с.
-• payoff_at — секунда (от начала окна) главного момента.
-• category — funny, conflict, money, america, customer, road, emotional, chat, other.
-• risk — {{"level":0..3,"flags":[...]}}: за что площадка может урезать показ или удалить. Флаги:
-  phone_driving (стример держит/листает телефон за рулём — опасное вождение), dangerous_driving,
-  heavy_profanity (мат почти в каждой фразе), insult_group (оскорбления групп людей), violence,
-  private_info (адрес, номер телефона, номер машины крупно), minor (ребёнок в кадре),
-  sexual, drugs_alcohol, music (громкая чужая музыка в фоне). 0 — чисто, 1 — мелочь, 2 — заметный риск, 3 — не публиковать.
-• fresh — true, если момент важен именно сейчас (свежая новость, событие, тема, которая завтра уже не зайдёт), иначе false.
-• why — коротко, почему зайдёт или нет.
-{learned}
-Ответ строго JSON:
-{{"clips":[{{"id":"…","keep":true,"hook":7,"payoff":8,"clarity":9,"emotion":7,"relate":6,"score":7,"start":3.2,"end":27.5,"payoff_at":21.0,"category":"funny","fresh":false,"risk":{{"level":0,"flags":[]}},"why":"…"}}]}}
-Верни объект для каждого кандидата, даже если keep=false. Будь строгим и честным, без завышения."""
-
-EDITOR = """Ты — редактор каналов с нарезками русскоязычного стримера. Тексты должны звучать как у живого
-клипера 18–25 лет, а не как у нейросети или SMM-агентства.
-
+EDITOR = """Ты — редактор каналов с нарезками русскоязычного IRL-стримера.
 О стримере: {persona}
 
-Для каждого клипа (транскрипт выбранного куска со временем в секундах от начала клипа, чат, суть):
-1. hooks — РОВНО 4 заголовка поверх видео, по одному в стиле:
-   tease — недосказанность («Клиент открыл дверь, а там…»),
-   conflict — конфликт или ставки («Охранник против курьера»),
-   number — конкретика или цифра («$3 за 40 минут езды»),
-   quote — прямая речь из ролика («Ты вообще русский?»).
-   Правила: 2–6 слов, до 28 символов, байтово, но правдиво, без спойлера концовки, без эмодзи,
-   без слов «шок», «невероятно», «вы не поверите», «эпично», «до конца». Без мата.
-   Если в ролике сравнение двух вещей или людей — пиши заголовок в формате «X vs Y» (2–3 слова с каждой стороны).
-2. pick — индекс лучшего (0–3).
-3. notes — 0–2 коротких подписи-контекста поверх видео, только если без них момент непонятен:
-   {{"t": секунда от начала клипа, "text": "до 32 символов"}} («Заказ на $3 через весь город»).
-4. punch_at — 1–3 секунды для резкого приближения (пик реакции, панчлайн).
-5. cold_open — {{"use":true/false,"start":x,"end":y}}: показать главный момент (≤2.5 с) в самом начале,
-   потом ролик с начала. Только если до развязки больше 7 секунд подводки и кусок сам по себе интригует.
-6. tiktok — {{"caption": до 110 символов, разговорно, в первых словах поисковые слова по теме
-   (доставка в сша, курьер в америке, жизнь в лос-анджелесе, русский в америке — только если по теме),
-   "hashtags": 3–5 нишевых}}.
-7. youtube — {{"title": до 70 символов, интригующе, по-русски, с ключевым словом, "description": 1–2 предложения,
-   "tags": 5–8 ключевых фраз}}.
-8. instagram — {{"caption": 1–2 строки, разговорно, вопрос к зрителю в конце, "hashtags": 4–6}}.
-   Тексты для трёх площадок должны отличаться формулировками, а не быть копией.
-9. comment — первый комментарий от автора, до 80 символов, вопрос к зрителям по теме.
-Без длинных тире «—», без кавычек-ёлочек, максимум 1 эмодзи на текст. Ответ строго JSON:
-{{"clips":[{{"id":"…","hooks":[{{"style":"tease","text":"…"}},{{"style":"conflict","text":"…"}},{{"style":"number","text":"…"}},{{"style":"quote","text":"…"}}],"pick":0,"notes":[],"punch_at":[12.4],"cold_open":{{"use":false}},"tiktok":{{"caption":"…","hashtags":["#…"]}},"youtube":{{"title":"…","description":"…","tags":["…"]}},"instagram":{{"caption":"…","hashtags":["#…"]}},"comment":"…"}}]}}"""
+Для каждого клипа (транскрипт выбранного куска со временем в секундах от начала клипа, чат, суть) напиши тексты.
+{style}
+1. hooks — РОВНО 4 заголовка поверх видео в стилях tease (недосказанность), conflict (конфликт или ставки),
+   number (конкретика или цифра ИЗ РОЛИКА), quote (дословная фраза из ролика). pick — индекс лучшего.
+2. tiktok — {{"caption": до 110 символов, разговорно, в начале поисковые слова по теме, "hashtags": 3–5 нишевых}}.
+3. youtube — {{"title": до 70 символов, с ключевым словом, "description": 1–2 предложения, "tags": 5–8 фраз}}.
+4. instagram — {{"caption": 1–2 строки, вопрос к зрителю в конце, "hashtags": 4–6}}.
+5. comment — первый комментарий автора, вопрос к зрителям по теме, до 80 символов.
+Без длинных тире, без кавычек-ёлочек, максимум 1 эмодзи на текст. Ответ строго JSON:
+{{"clips":[{{"id":"…","hooks":[{{"style":"tease","text":"…"}},{{"style":"conflict","text":"…"}},{{"style":"number","text":"…"}},{{"style":"quote","text":"…"}}],"pick":0,"tiktok":{{"caption":"…","hashtags":["#…"]}},"youtube":{{"title":"…","description":"…","tags":["…"]}},"instagram":{{"caption":"…","hashtags":["#…"]}},"comment":"…"}}]}}"""
 
 
 # ── очеловечивание ───────────────────────────────────────────────
@@ -168,7 +116,8 @@ def candidate_block(c: dict) -> list[dict]:
     text = (f"### Кандидат id={c['id']}\nОкно {c['ctx_dur']:.0f} с, пик реакции ≈ {c['peak_in_ctx']:.0f} с.\n"
             f"Сигналы: чат {b['chat']}, смех/шок {b['keywords']}, спам-волна {b['spam_wave']}, громкость {b['audio']}, "
             f"клипы зрителей {b['viewer_clips']}. Сообщений рядом: {c['chat_count']}. Клипы зрителей: {vc}\n{extra}"
-            f"Транскрипт:\n{words_to_timed_text(c['words'])}\n"
+            + (f"Заметка разведчика (слушал весь стрим): {c['scout'].get('what')} (его оценка {c['scout'].get('guess')})\n" if c.get('scout') else "")
+            + f"Транскрипт:\n{words_to_timed_text(c['words'])}\n"
             f"Чат (время от пика):\n" + ("\n".join(c["chat_sample"]) or "(пусто)") + "\n")
     parts = [{"type": "text", "text": text}]
     if c.get("frames"):
@@ -195,19 +144,20 @@ def _judge_batch(llm: LLM, system: str, batch: list[dict]) -> dict:
 
 def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | None = None,
                      hints: str = "") -> dict[str, dict]:
+    from .brain import CATS, PICKER, RISK, SCALE
     st, cl = cfg["streamer"], cfg["clips"]
     system = PICKER.format(persona=st["persona"].strip(), audience=st.get("audience", "").strip(),
-                           min_s=cl["min_seconds"], max_s=cl["max_seconds"],
+                           min_s=cl["min_seconds"], max_s=cl["max_seconds"], scale=SCALE, cats=CATS, risk=RISK,
                            hints=(hints + "\n") if hints else "",
                            learned=learned_block(learned) if cfg["judge"].get("learn_from_stats") else "")
-    bs = max(1, int(cfg["judge"].get("batch_size", 1)))
+    bs = max(1, int(cfg["judge"].get("batch_size", 4)))
     results: dict[str, dict] = {}
     batches = list(range(0, len(cands), bs))
     failed = 0
     for i in batches:
         batch = cands[i:i + bs]
         try:
-            js = _judge_batch(llm, system, batch)
+            js = llm.chat_json(_judge_messages(system, batch, False), temperature=0.2, max_tokens=1200 * len(batch) + 800)
         except LLMError as e:
             # одна пачка не ответила — пропускаем только её, остальные кандидаты не теряем
             failed += 1
@@ -226,7 +176,8 @@ def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | Non
 def edit_clips(llm: LLM, cfg: dict, items: list[dict]) -> dict[str, dict]:
     if not items:
         return {}
-    system = EDITOR.format(persona=cfg["streamer"]["persona"].strip())
+    from .brain import STYLE_RULES
+    system = EDITOR.format(persona=cfg["streamer"]["persona"].strip(), style=STYLE_RULES)
     out: dict[str, dict] = {}
     for i in range(0, len(items), 3):
         batch = items[i:i + 3]

@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 from clipper.config import load_config  # noqa: E402
 from clipper.crypto import decrypt_json, encrypt_json  # noqa: E402
 from clipper.judge import snap_bounds  # noqa: E402
-from clipper.poster import decide, plan_hours  # noqa: E402
+from clipper.poster import plan_hours  # noqa: E402
 from clipper.signals import find_candidates  # noqa: E402
 
 CFG = load_config(ROOT / "config.yaml")

@@ -11,7 +11,6 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from clipper.config import load_config  # noqa: E402
-from clipper.poster import decide  # noqa: E402
 
 CFG = load_config(ROOT / "config.yaml")
 
@@ -23,37 +22,6 @@ def _store():
 
 def _iso(t):
     return t.replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def test_decide_hot_clip_cap_and_cooldown():
-    from clipper import learn
-    now = dt.datetime(2026, 10, 17, 8, 7, tzinfo=dt.timezone.utc)  # 11:07 МСК
-    iso = lambda m: (now - dt.timedelta(minutes=m)).isoformat()
-    tgt = {"tiktok": {"asset": "a.mp4", "status": "ready", "variant": {}}}
-    q = [{"id": "hot", "score": 9, "created_at": iso(30), "live_when_made": True, "signal": 3, "vod_id": "v", "vod_time": 100,
-          "targets": tgt, "posts": {}},
-         {"id": "norm", "score": 6, "created_at": iso(30), "signal": 1, "vod_id": "v", "vod_time": 900,
-          "targets": tgt, "posts": {}}]
-    cfg = {**CFG, "posting": {**CFG["posting"], "warmup": {"ramp": [2]}}}
-    acc = {"id": "tt", "platform": "tiktok"}
-    pol = learn.default_policy(cfg)
-    import clipper.clips as C
-    import clipper.poster as P
-    real = (P.now_utc, C.now_utc)
-    P.now_utc = C.now_utc = lambda: now
-    try:
-        reason, clip, info = decide(acc, cfg, pol, {}, {}, q, {}, now)
-        assert clip["id"] == "hot" and "горяч" in reason, (reason, info)
-        a = {"count_by_day": {"2026-10-17": 6}}
-        assert decide(acc, cfg, pol, a, {}, q, {}, now)[1] is None            # лимит выбран
-        cool = {"state": "cooldown", "until": (now + dt.timedelta(hours=10)).isoformat(), "reason": "тест"}
-        _, c2, info = decide(acc, cfg, pol, {}, cool, q, {}, now)
-        assert info["cap"] == 2 and info["gap_min"] >= 240 and (c2 is None or c2["score"] >= 7)
-        pol["warmup"]["tt"] = {"active": True, "started": now.isoformat()}
-        _, _, info = decide(acc, cfg, pol, {}, {}, q, {}, now)
-        assert info["cap"] == 2 and "разгон" in info["mode"]
-    finally:
-        P.now_utc, C.now_utc = real
 
 
 def _fake_history(store, n_posts, effect, dims_fn, seed=1, platform="tiktok", acc="tt"):

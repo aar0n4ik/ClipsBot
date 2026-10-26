@@ -76,13 +76,14 @@ def build(store: Store, cfg: dict) -> dict:
     for i, c in enumerate(queue[:KEEP_CLIPS]):
         clips.append({
             **{k: c.get(k) for k in ("id", "vod_id", "vod_title", "vod_time", "duration", "score", "category", "why",
-                                     "created_at", "signal", "subscores", "risk", "audio", "opening")},
+                                     "created_at", "signal", "subscores", "risk", "audio", "opening", "what", "brain",
+                                     "vod_url", "live_when_made", "force_post", "transcript")},
             "overlay": c.get("overlay"), "status": overall(c), "thumb": c.get("thumb") if i < 80 else None,
             "targets": {p: {k: t.get(k) for k in ("hook", "hook_style", "caption", "hashtags", "title", "description",
                                                   "comment", "variant", "status", "duration", "hook_quality", "asset")}
                         for p, t in c["targets"].items()},
-            "posts": {p: {k: x.get(k) for k in ("account", "status", "posted_at", "video_id", "url", "reason", "why",
-                                                "error", "privacy")} for p, x in c["posts"].items()}})
+            "posts": {p: {k: x.get(k) for k in ("account", "status", "posted_at", "video_id", "url", "reason", "why", "by",
+                                                "error", "privacy", "published_at")} for p, x in c["posts"].items()}})
     vods = store.read_json("vods.json", {}) or {}
     meta = store.read_json("meta.json", {}) or {}
     name = (cfg["streamer"].get("display_name") or "").strip()
@@ -100,7 +101,9 @@ def build(store: Store, cfg: dict) -> dict:
                       "enabled": a.get("enabled", True)} for a in list_accounts(cfg, enabled_only=False)],
         "posting": {"timezone": cfg["posting"].get("timezone"), "quiet_hours": cfg["posting"].get("quiet_hours")},
         "status": {k: store.read_json(f"status/{k}.json", {}) or {}
-                   for k in ("live", "process", "post", "watch", "health", "system", "tokens", "storage")},
+                   for k in ("live", "process", "post", "watch", "health", "system", "tokens", "storage", "funnel", "brain")},
+        "settings": _settings(store, cfg),
+        "switches": store.read_json("control/switches.json", {}) or {},
         "policy": {k: policy.get(k) for k in ("arms", "hours", "caps", "warmup", "hints", "frozen", "paused", "stats",
                                                "evidence", "pins")},
         "decisions": (store.read_json("decisions.json", []) or [])[-150:],
@@ -111,6 +114,12 @@ def build(store: Store, cfg: dict) -> dict:
                                                            "finished", "clips", "gaps")}} for k, v in vods.items()],
                        key=lambda x: x.get("created_at") or "", reverse=True)[:20],
     }
+
+
+def _settings(store: Store, cfg: dict) -> dict:
+    from . import settings as S
+    return {"values": S.load(store, cfg), "schema": {k: [d, (list(sp) if isinstance(sp, tuple) else str(sp.__name__ if sp is bool else sp))]
+                                                    for k, (d, sp, _) in S.SCHEMA.items()}}
 
 
 def install(store: Store, cfg: dict):

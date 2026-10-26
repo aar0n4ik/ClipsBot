@@ -31,9 +31,8 @@ PRIOR_SD = 0.25
 DEFAULT_NOISE = 0.8
 MIN_N, CONF, MIN_DAYS_BETWEEN = 8, 0.85, 3
 
-ARMS = {"hook_style": ["tease", "conflict", "number", "quote"], "cold_open": [True, False],
-        "subtitles": ["ru", "both"], "progress_bar": [False, True]}
-HOOK_DIMS = ("hook_style", "cold_open")
+ARMS = {"hook_style": ["tease", "conflict", "number", "quote"]}   # видео одно на все площадки → тестируем только стиль хука
+HOOK_DIMS = ("hook_style",)
 # стартовая кривая активности русскоязычной аудитории (часы по МСК)
 PRIOR_HOURS = [0.25, 0.15, 0.08, 0.05, 0.05, 0.08, 0.2, 0.45, 0.6, 0.55, 0.5, 0.55,
                0.7, 0.75, 0.65, 0.6, 0.65, 0.75, 0.9, 1.0, 1.0, 0.95, 0.8, 0.5]
@@ -95,7 +94,7 @@ def get(policy: dict, path: str, default=None):
 # ── выбор варианта для нового клипа ─────────────────────────────
 def choose_variant(policy: dict, platform: str, cfg: dict, rng: random.Random | None = None) -> dict:
     rng = rng or random.Random()
-    enabled = (cfg.get("learning") or {}).get("arms", list(ARMS))
+    enabled = [d for d in (cfg.get("learning") or {}).get("arms", list(ARMS)) if d in ARMS]
     out = {}
     for dim in enabled:
         vals = ARMS.get(dim)
@@ -260,10 +259,10 @@ def update(store: Store, cfg: dict) -> dict:
         save(store, policy)
         return policy
 
-    # 1) варианты монтажа
-    for plat in platforms:
+    # 1) стиль хука: общий (видео одинаковое на всех площадках) + по площадкам для справки
+    for plat in ["all"] + platforms:
         for dim, vals in ARMS.items():
-            post = dim_posteriors(rows, dim, vals, plat, noise)
+            post = dim_posteriors(rows, dim, vals, None if plat == "all" else plat, noise)
             policy.setdefault("evidence", {}).setdefault(plat, {})[dim] = post
             new = shares_from(post)
             path = f"arms.{plat}.{dim}"
@@ -332,11 +331,8 @@ def update(store: Store, cfg: dict) -> dict:
                     f"{_pl(plat)}: лучшие часы по факту — {', '.join(f'{h:02d}:00' for h in sorted(top_new))} "
                     f"(было {', '.join(f'{h:02d}:00' for h in sorted(top_old))})", {"buckets": bp})
 
-    # 4) разгон новых аккаунтов и потолок постов
-    stats = store.read_json("stats.json", {}) or {}
-    for acc in cfg["accounts"]:
-        _warmup(store, policy, cfg, acc, stats)
-        _cap_controller(store, policy, cfg, acc, rows)
+    # 4) разгон и «потолок постов» убраны: объём решает качество очереди и ИИ-продюсер (poster.py)
+    policy["warmup"], policy["caps"] = {}, {}
 
     # 5) автооткат решений, после которых стало хуже
     _auto_revert(store, policy, rows)

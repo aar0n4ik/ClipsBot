@@ -73,4 +73,16 @@ assert(M.paidTo([old1, old2], {}, M.aliasMap([["cA", "cB"]])).cA === 5000, "уж
 // удалённые видео при склейке
 const dd = [P("e1", "tiktok", "cA", 3000), P("e2", "tiktok", "cB", 5000)]; dd.forEach(x => x.deleted_at = "2026-10-20T00:00:00Z");
 assert(M.livePosts(dd, [], al).length === 0, "удалённые склеенные без выплаты убираются");
+// ручные пометки: исключить и переименовать — работают и для склеенных групп
+const ovG = M.applyOverrides(M.groups(dupPosts, dupClips, al), { cB: { excluded: true }, cZ: { label: "Мой клип" } }, al);
+assert(!ovG.cA && ovG.cZ.title === "Мой клип", "исключение по любому ключу склеенной группы + своё название");
+assert(M.owed(ovG, {}, 1).length === 1, "исключённый не попадает в выплату");
+// частичная выплата: только выбранные клипы закрываются, остальное остаётся к выплате
+const pG = M.groups([P("p1", "tiktok", "c1", 1000), P("p2", "tiktok", "c2", 2000)], []);
+const pl = M.owed(pG, {}, 1);
+const part = M.makeEntry(pl.filter(l => l.g === "c2"), 2, 1, "USD", "2026-10-26T10:00:00Z", "");
+const rest = M.owed(pG, M.paidTo([part], {}), 1);
+assert(rest.length === 1 && rest[0].g === "c1", "частичная выплата закрывает только выбранное");
+// корректировка без клипов не трогает «оплачено до»
+assert(Object.keys(M.paidTo([{ v: 2, kind: "adjust", amount: -3, lines: [] }], {})).length === 0, "корректировка не закрывает клипы");
 console.log("✅ money: все проверки пройдены");

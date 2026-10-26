@@ -91,15 +91,30 @@ def link_clips(store: Store, acc_id: str, platform: str, A: dict, queue: list[di
             continue
         key = _norm((c["targets"].get(platform) or {}).get("caption", ""))[:40]
         posted = int(parse_iso(p["posted_at"]).timestamp()) if p.get("posted_at") else 0
+        hit = None
         for vid, v in A["videos"].items():
             if vid in claimed or not key:
                 continue
             if key in _norm(v.get("description", "")) and (v.get("create_time") or 0) >= posted - 3600:
-                p.update(video_id=vid, status="posted", url=v.get("url"))
-                claimed.add(vid)
-                store.write_json(f"queue/{c['id']}.json", c)
-                log(f"связал клип {c['id']} ↔ {platform} {vid}")
+                hit = vid
                 break
+        if not hit and platform == "tiktok" and p.get("status") == "inbox":
+            # черновик опубликовали с другим текстом: ищем по длине ролика и времени (после отправки, в пределах 3 суток)
+            dur = float((c["targets"].get(platform) or {}).get("duration") or c.get("duration") or 0)
+            best = None
+            for vid, v in A["videos"].items():
+                ct = v.get("create_time") or 0
+                if vid in claimed or not dur or not v.get("duration") or not posted <= ct <= posted + 3 * 86400:
+                    continue
+                if abs(float(v["duration"]) - dur) <= 1.6 and (best is None or ct < best[1]):
+                    best = (vid, ct)
+            hit = best[0] if best else None
+        if hit:
+            v = A["videos"][hit]
+            p.update(video_id=hit, status="posted", url=v.get("url"), published_at=v.get("create_time"))
+            claimed.add(hit)
+            store.write_json(f"queue/{c['id']}.json", c)
+            log(f"связал клип {c['id']} ↔ {platform} {hit}")
         if p.get("status") == "inbox" and posted and time.time() - posted > 3 * 86400 and not p.get("video_id"):
             p["status"] = "inbox_stale"  # черновик так и не опубликовали
             store.write_json(f"queue/{c['id']}.json", c)

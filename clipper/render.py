@@ -343,9 +343,9 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     asp = fw / fh
     crop_frac = min(1.0, (sh * asp) / sw) if sw else 1.0
     keys = pan_keys
-    if keys is None and cl.get("follow_subject", True) and layout == "panel" and crop_frac < 0.98:
-        from .framing import detect_subject, plan_pan
-        keys = plan_pan(detect_subject(src, segments[-1][0], segments[-1][1]), segments[-1][0], segments[-1][1], crop_frac)
+    if keys is None and layout == "panel" and crop_frac < 0.98:
+        from .framing import static_crop
+        keys = static_crop(src, segments[0][0], segments[-1][1], crop_frac) if cl.get("follow_subject", False) else None
     from .framing import x_expr
     fc = []
     audio = has_audio or audio_override is not None
@@ -360,6 +360,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         else:
             ai = vi if has_audio else None
         seg_in.append((vi, ai))
+    n_seg = len(segments)
     for i, (a, b) in enumerate(segments):
         vi, ai = seg_in[i]
         keys_local = [(ta - a, va) for ta, va in keys] if keys else None  # ключи — во времени куска
@@ -368,7 +369,9 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
                   f"crop=w='min(iw\\,ih*{asp:.4f})':h='min(ih\\,iw/{asp:.4f})':x='{xe}':y='(ih-oh)/2',"
                   f"scale={fw}:{fh},setsar=1,format=yuv420p[v{i}]")
         if audio and ai is not None:
-            fc.append(f"[{ai}:a]asetpts=PTS-STARTPTS[a{i}]")
+            d = b - a
+            fade = f",afade=t=in:d=0.025,afade=t=out:st={max(0.0, d - 0.04):.3f}:d=0.04" if n_seg > 1 and d > 0.3 else ""
+            fc.append(f"[{ai}:a]asetpts=PTS-STARTPTS{fade}[a{i}]")
     n = len(segments)
     fc.append("".join(f"[v{i}]" + (f"[a{i}]" if audio else "") for i in range(n))
               + f"concat=n={n}:v=1:a={1 if audio else 0}[fgc]" + ("[ac]" if audio else ""))
