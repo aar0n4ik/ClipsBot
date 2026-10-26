@@ -556,7 +556,8 @@ dialog table { min-width: 560px; }
   <p class="muted" style="margin:0 0 12px;font-size:13px" id="bdNote"></p>
   <div id="bdBars"></div>
   <div class="tabs" id="bdTabs" style="margin:14px 0 10px"></div>
-  <div class="tbl-wrap"><table><thead><tr><th>Клип</th><th>Площадки</th><th class="r">Лучший</th><th class="r">Уже оплачено</th><th class="r">К выплате</th></tr></thead><tbody id="bdRows"></tbody></table></div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px"><button class="iconbtn" type="button" id="bdMerge" disabled>Склеить выбранные как один клип</button><span class="muted" style="font-size:12.5px" id="bdMergeHint">Отметь дубли галочками — платим только за лучший результат</span></div>
+  <div class="tbl-wrap"><table><thead><tr><th></th><th>Клип</th><th>Площадки</th><th class="r">Лучший</th><th class="r">Уже оплачено</th><th class="r">К выплате</th></tr></thead><tbody id="bdRows"></tbody></table></div>
 </dialog>
 
 <dialog id="stDlg" class="wide">
@@ -621,7 +622,7 @@ async function encrypt(obj, password) {
 
 /* ── загрузка и запись в ветку data ───────────────── */
 let password = null, D = null;
-const ledger = { entries: [], loaded: false, error: null };
+const ledger = { entries: [], merges: [], loaded: false, error: null };
 const sentCmds = new Set(LS.get("sentCmds", []));
 async function fetchData() {
   const r = await fetch(rawUrl("data.enc"), { cache: "no-store" });
@@ -660,14 +661,19 @@ async function ghWrite(path, mutate, message, encrypted) {
 async function fetchLedger() {
   try {
     const cur = await ghRead("ledger.enc");
-    ledger.entries = cur.text ? ((await decrypt(JSON.parse(cur.text), password)).entries || []) : [];
+    const obj = cur.text ? await decrypt(JSON.parse(cur.text), password) : {};
+    ledger.entries = obj.entries || []; ledger.merges = obj.merges || [];
     ledger.loaded = true; ledger.error = null;
   } catch (e) { ledger.error = e.message; }
 }
 async function mutateLedger(fn, message) {
-  if (DEMO) { fn(ledger.entries); return; }
-  const obj = await ghWrite("ledger.enc", o => { const entries = (o && o.entries) || []; fn(entries); return { entries, updated_at: new Date().toISOString() }; }, message, true);
-  ledger.entries = obj.entries;
+  if (DEMO) { fn(ledger.entries, ledger); return; }
+  const obj = await ghWrite("ledger.enc", o => {
+    const entries = (o && o.entries) || [], st = { merges: (o && o.merges) || [] };
+    fn(entries, st);
+    return { entries, merges: st.merges, updated_at: new Date().toISOString() };
+  }, message, true);
+  ledger.entries = obj.entries; ledger.merges = obj.merges;
 }
 async function sendCommand(cmd, message) {
   const c = { id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), at: new Date().toISOString(), ...cmd };
@@ -722,20 +728,23 @@ const accPlat = id => (D.accounts.find(a => a.id === id) || {}).platform || "tik
 /* ── деньги ──────────────────────────────────────── */
 const rate = () => +(D.money || {}).rate_per_1000 || 0;
 const cur = () => (D.money || {}).currency || "USD";
-let G = {}, POST2G = {};
+let G = {}, POST2G = {}, AL = k => k;
+/* Склейка дублей (один момент, залитый отдельно): временный список в реестре + склейки, уже зафиксированные в выплатах + MONEY_CONFIG → merge */
+const activeMerges = () => [ledger.merges, (D.money || {}).merge, ...activeEntries().map(e => e.merged)];
 function rebuildGroups() {
   D.allPosts ||= D.posts || [];
   D.allClips ||= D.clips || [];
-  const hidden = M.hiddenClips(D.allPosts, D.allClips, ledger.entries);
+  AL = M.aliasMap(...activeMerges());
+  const hidden = M.hiddenClips(D.allPosts, D.allClips, ledger.entries, AL);
   D.clips = D.allClips.filter(c => !hidden.has(c.id));
-  D.posts = M.livePosts(D.allPosts, ledger.entries);
-  G = M.groups(D.posts, D.clips);
+  D.posts = M.livePosts(D.allPosts, ledger.entries, AL);
+  G = M.groups(D.posts, D.clips, AL);
   POST2G = {};
   for (const x of Object.values(G)) for (const p of x.posts) POST2G[p.id] = x.key;
 }
 const activeEntries = () => ledger.entries.filter(e => e.status !== "void");
 function owedNow() {
-  const lines = M.owed(G, M.paidTo(ledger.entries, POST2G), rate(), (D.money || {}).excluded || []);
+  const lines = M.owed(G, M.paidTo(ledger.entries, POST2G, AL), rate(), (D.money || {}).excluded || []);
   return { lines, sum: M.summarize(lines), received: activeEntries().reduce((s, e) => s + (+e.amount || 0), 0),
            min: +(D.money || {}).payout_min || 20, last: activeEntries().sort((a, b) => b.received_at.localeCompare(a.received_at))[0] };
 }
@@ -743,7 +752,7 @@ function owedNow() {
 /* ── UI-состояние ────────────────────────────────── */
 const ui = { period: LS.get("period", "7"), platform: "", from: null, to: null, sort: LS.get("sort", "pviews"),
              lperiod: "all", lfrom: null, lto: null, lplatform: "", lvoid: false, confirmVoid: null, learnTab: "tiktok",
-             bdKind: "new", bdPlat: "", confirmRevert: null, decOnlyRev: false };
+             bdKind: "new", bdPlat: "", bdSel: new Set(), confirmRevert: null, decOnlyRev: false };
 const STAGES = [["звук", "Скачиваю звук"], ["чат", "Читаю чат"], ["пики", "Ищу пики"], ["речь", "Расшифровываю"], ["ИИ", "ИИ"], ["монтаж", "Монтирую"]];
 
 function periodRange() {
@@ -973,10 +982,15 @@ function renderBreakdown() {
       <span class="num" style="text-align:right"><b>${fmtMoney(b.amount, cur())}</b> · ${b.count} ${plural(b.count, "клип", "клипа", "клипов")}</span></div>`).join("")
     : `<p class="muted" style="margin:0">Сейчас здесь ничего нет.</p>`;
   $("bdTabs").innerHTML = [["", "Все"], ...Object.keys(byP).map(p => [p, PL[p] || p])].map(([v, t]) => `<button type="button" data-bd="${v}" aria-pressed="${ui.bdPlat === v}">${esc(t)}</button>`).join("");
+  ui.bdSel = new Set([...ui.bdSel].filter(k => lines.some(l => l.g === k)));
   $("bdRows").innerHTML = lines.filter(l => !ui.bdPlat || l.best.platform === ui.bdPlat).map(l => `<tr>
-    <td>${esc(l.title)}</td><td>${linksHtml(l.links.map((k, i) => ({ ...k, id: "l" + i })), "l" + l.links.findIndex(k => k.platform === l.best.platform && k.views === l.best.views))}</td>
+    <td><input type="checkbox" data-bdsel="${esc(l.g)}" aria-label="Выбрать для склейки"${ui.bdSel.has(l.g) ? " checked" : ""}></td>
+    <td>${esc(l.title)}${l.merged ? ` <span class="chip" title="Склеено дублей: ${l.merged.length}">склеено ×${l.merged.length}</span> <button class="mini" type="button" data-unmerge="${esc(l.g)}">Разъединить</button>` : ""}</td><td>${linksHtml(l.links.map((k, i) => ({ ...k, id: "l" + i })), "l" + l.links.findIndex(k => k.platform === l.best.platform && k.views === l.best.views))}</td>
     <td class="r num">${fmtInt(l.best.views)}</td><td class="r num muted">${fmtInt(l.prev_paid)}</td>
-    <td class="r money-cell">${fmtMoney(l.amount, cur())}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">Пусто</td></tr>`;
+    <td class="r money-cell">${fmtMoney(l.amount, cur())}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">Пусто</td></tr>`;
+  const n = ui.bdSel.size;
+  $("bdMerge").disabled = n < 2;
+  $("bdMerge").textContent = n >= 2 ? `Склеить выбранные (${n}) как один клип` : "Склеить выбранные как один клип";
 }
 
 /* ── реестр ──────────────────────────────────────── */
@@ -1236,6 +1250,22 @@ function bind() {
   $("vidDlg").addEventListener("close", stopVideo);
   $("vidDlg").addEventListener("click", ev => { if (ev.target === $("vidDlg")) $("vidDlg").close(); });
   $("bdTabs").onclick = e => { const b = e.target.closest("button[data-bd]"); if (b) { ui.bdPlat = b.dataset.bd; renderBreakdown(); } };
+  /* склейка дублей: галочки → «Склеить». Хранится в реестре (зашифрованно), при выплате переезжает в запись */
+  $("bdRows").onchange = e => { const c = e.target.closest("input[data-bdsel]"); if (!c) return; c.checked ? ui.bdSel.add(c.dataset.bdsel) : ui.bdSel.delete(c.dataset.bdsel); renderBreakdown(); };
+  $("bdMerge").onclick = async () => {
+    const keys = [...ui.bdSel]; if (keys.length < 2) return;
+    const b = $("bdMerge"); b.disabled = true;
+    try { await mutateLedger((l, st) => { st.merges = [...(st.merges || []), keys]; }, `реестр: склеены дубли (${keys.length})`); ui.bdSel.clear(); render(); renderBreakdown(); toast("Склеено: платим по лучшему результату"); }
+    catch (err) { toast(err.message); b.disabled = false; }
+  };
+  $("bdRows").onclick = async e => {
+    const b = e.target.closest("button[data-unmerge]"); if (!b) return;
+    const line = owedNow().lines.find(l => l.g === b.dataset.unmerge); if (!line || !line.merged) return;
+    const raw = new Set(line.merged);
+    if (!(ledger.merges || []).some(g => g.some(k => raw.has(k)))) return toast("Эта склейка уже зафиксирована в выплате или в настройках — снять её здесь нельзя");
+    try { await mutateLedger((l, st) => { st.merges = (st.merges || []).filter(g => !g.some(k => raw.has(k))); }, "реестр: склейка снята"); render(); renderBreakdown(); }
+    catch (err) { toast(err.message); }
+  };
   $("learnTabs").onclick = e => { const b = e.target.closest("button[data-learn]"); if (b) { ui.learnTab = b.dataset.learn; renderLearn(); } };
   $("openSettings").onclick = () => { $("optAlert").checked = LS.get("payoutAlert", true); $("ghToken").value = ""; $("tokenState").textContent = LS.get("gh", "") ? "Ключ сохранён на этом устройстве." : "Ключ не задан."; $("settings").showModal(); };
   $("closeSettings").onclick = () => $("settings").close();
@@ -1267,8 +1297,9 @@ function bind() {
     const btn = $("paySave"); btn.disabled = true; btn.textContent = "Сохраняю…"; $("payErr2").textContent = "";
     try {
       const O = owedNow();
-      const e = M.makeEntry(O.lines, parseFloat($("payAmount").value), rate(), cur(), payWhenIso(), $("payNote").value.trim());
-      await mutateLedger(list => list.push(e), `реестр: получено ${e.amount} ${e.currency}`);
+      const e = M.makeEntry(O.lines, parseFloat($("payAmount").value), rate(), cur(), payWhenIso(), $("payNote").value.trim(), [...(ledger.merges || []), ...(((D.money || {}).merge) || [])]);
+      // склейка переезжает в запись выплаты; временный список очищается
+      await mutateLedger((list, st) => { list.push(e); st.merges = []; }, `реестр: получено ${e.amount} ${e.currency}`);
       $("payDlg").close(); toast(`Записано: ${fmtMoney(e.amount, cur())}`); render();
     } catch (err) { $("payErr2").textContent = err.message; }
     btn.disabled = false; btn.textContent = "Да, записать в реестр";

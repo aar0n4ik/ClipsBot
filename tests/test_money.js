@@ -45,4 +45,32 @@ const lp = M.livePosts(dp, [paidC]);
 assert(!lp.find(p => p.id === "d2"), "удалённый невыплаченный убран");
 assert(lp.find(p => p.id === "d3"), "удалённый выплаченный остался");
 assert(lp.find(p => p.id === "d1"), "живой остался");
+// дубли: один момент залит отдельно под разными clip_id — склеиваем, платим по лучшему, без двойной оплаты
+const dupPosts = [P("a1", "tiktok", "cA", 3000), P("a2", "tiktok", "cB", 5000), P("a3", "youtube", "cC", 4000), P("z1", "tiktok", "cZ", 700)];
+const dupClips = [{ id: "cA", overlay: "Как заработать в деревне?" }, { id: "cB", overlay: "Школьник просит совет" }, { id: "cC", overlay: "Школьник просит совет (Shorts)" }];
+let al = M.aliasMap([["cB", "cA"]], [["cC", "cB"]]);
+assert(al("cA") === "cA" && al("cB") === "cA" && al("cC") === "cA" && al("cZ") === "cZ", "склейка транзитивна, главный ключ — наименьший");
+let dG = M.groups(dupPosts, dupClips, al);
+assert(Object.keys(dG).length === 2, "3 дубля → 1 клип + 1 обычный");
+let dl = M.owed(dG, M.paidTo([], {}, al), 1);
+assert(Math.abs(M.summarize(dl).total - (5 + 0.7)) < 1e-9, "дубли считаются по лучшему (5000), а не по сумме");
+assert(dl.find(l => l.g === "cA").title === "Школьник просит совет", "название — от клипа с лучшим результатом");
+// без склейки — старое поведение (двойной счёт), т.е. склейка реально что-то меняет
+assert(M.summarize(M.owed(M.groups(dupPosts, dupClips), {}, 1)).total > 11, "без склейки платили бы за каждый отдельно");
+// выплата по склеенному, потом склейку убираем из временного списка — она живёт в записи
+const dE = M.makeEntry(dl, 5.7, 1, "USD", "2026-10-26T10:00:00Z", "", [["cA", "cB", "cC"]]);
+assert(dE.merged.length === 1 && !("merged" in dE.lines[0]), "склейка скопирована в запись выплаты");
+const al2 = M.aliasMap([], dE.merged);
+const dG2 = M.groups(dupPosts, dupClips, al2);
+assert(M.owed(dG2, M.paidTo([dE], {}, al2), 1).length === 0, "после выплаты и без временного списка двойной оплаты нет");
+// дубль вырос после выплаты — платим только прирост лучшего
+dupPosts[2].views = 6500;
+assert(M.owed(M.groups(dupPosts, dupClips, al2), M.paidTo([dE], {}, al2), 1)[0].views === 1500, "доплата только за прирост лучшего из дублей");
+// выплата была ДО склейки по отдельности: берём максимум, а не сумму
+const old1 = M.makeEntry(M.owed(M.groups([P("o1", "tiktok", "cA", 3000)], []), {}, 1), 3, 1, "USD", "2026-10-01T10:00:00Z", "");
+const old2 = M.makeEntry(M.owed(M.groups([P("o2", "tiktok", "cB", 5000)], []), {}, 1), 5, 1, "USD", "2026-10-02T10:00:00Z", "");
+assert(M.paidTo([old1, old2], {}, M.aliasMap([["cA", "cB"]])).cA === 5000, "уже оплаченное до склейки не складывается");
+// удалённые видео при склейке
+const dd = [P("e1", "tiktok", "cA", 3000), P("e2", "tiktok", "cB", 5000)]; dd.forEach(x => x.deleted_at = "2026-10-20T00:00:00Z");
+assert(M.livePosts(dd, [], al).length === 0, "удалённые склеенные без выплаты убираются");
 console.log("✅ money: все проверки пройдены");
