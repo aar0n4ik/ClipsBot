@@ -681,7 +681,7 @@ async function sendCommand(cmd, message) {
   await ghWrite("control/commands.json", list => { list = list || []; list.push(c); return list.slice(-300); }, "дашборд: " + message, false);
   sentCmds.add(c.id); LS.set("sentCmds", [...sentCmds].slice(-100));
   pendingUi.push({ ...cmd, id: c.id });
-  toast("Отправлено. Бот выполнит при следующем запуске (до часа)");
+  toast("Отправлено. Бот выполнит при ближайшем запуске, до публикации");
 }
 const pendingUi = [];
 

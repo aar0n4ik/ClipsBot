@@ -192,6 +192,11 @@ def full_caption(t: dict, posting: dict) -> str:
 def cmd_post(cfg: dict, store: Store, force: bool = False):
     posting = cfg["posting"]
     policy = learn.load(store, cfg)
+    # Команды из дашборда (отмена клипа и т. п.) выполняем ДО публикации: раньше они ждали часового пересчёта
+    # статистики, и отменённый клип мог успеть уйти на площадку.
+    from . import decisions
+    if decisions.apply_commands(store, policy):
+        learn.save(store, policy)
     pstate = store.read_json("status/post.json", {}) or {}
     accs = pstate.setdefault("accounts", {})
     hs = store.read_json("status/health.json", {}) or {}
