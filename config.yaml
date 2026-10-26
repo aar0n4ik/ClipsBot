@@ -40,7 +40,7 @@ accounts:                            # один клип выходит на п�
   - id: yt_main
     platform: youtube
     name: "YouTube Shorts"
-    enabled: false
+    enabled: true
     warmup: auto
   - id: ig_main
     platform: instagram
