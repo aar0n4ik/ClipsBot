@@ -33,6 +33,14 @@ def advice_for(platform: str, kind: str, message: str) -> str:
     if platform == "tiktok" and "unaudited" in message:
         base = ("Приложение TikTok ещё не прошло аудит: публикация только в черновики или приватно. "
                 "Это ограничение TikTok, а не ошибка бота.")
+    if platform == "instagram" and kind == "blocked":
+        base = ("Meta блокирует доступ приложения к API (код 200 «API access blocked»). Проверь в developers.facebook.com → "
+                "твоё приложение: 1) режим приложения Live, а не Development; 2) Instagram-аккаунт добавлен в роли как "
+                "Instagram Tester и приглашение принято (instagram.com → Настройки → Приложения и сайты → Приглашения "
+                "тестера); 3) у приложения нет блокировок в Alerts / App Review и права instagram_business_basic, "
+                "instagram_business_content_publish, instagram_business_manage_insights в списке; 4) аккаунт профессиональный "
+                "(Creator/Business). Если всё в порядке, переподключи аккаунт: Actions → «0 · Connect account». "
+                "Бот ставит паузу на 24 ч и не жжёт клипы.")
     return f"{base}\nТекст площадки: {message[:300]}"
 
 

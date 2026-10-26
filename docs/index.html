@@ -500,7 +500,7 @@ dialog table { min-width: 560px; }
 <dialog id="settings">
   <h3>Настройки</h3>
   <div class="setting">
-    <div>Язык / Language</div>
+    <div>Язык</div>
     <select id="langSelect" style="background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px;cursor:pointer">
       <option value="ru">🇷🇺 Русский</option>
       <option value="en">🇬🇧 English</option>
@@ -803,9 +803,13 @@ function render() {
 }
 
 /* ── предупреждения ──────────────────────────────── */
-function staleness() {
+// GitHub сильно задерживает расписание (cron «каждые 10 минут» на деле идёт раз в 1–3 часа), поэтому пороги большие.
+// hard=false: мягкая пометка в карточке «Система». hard=true: баннер наверху, только при реальном простое (сутки и больше).
+function staleness(hard) {
   const sys = D.status.system || {}, out = [];
-  const lim = { watch: [40, "проверка Twitch"], stats: [180, "сбор статистики"], post: [180, "публикация"] };
+  const lim = hard
+    ? { watch: [1440, "проверка Twitch"], stats: [1440, "сбор статистики"], post: [1440, "публикация"] }
+    : { watch: [360, "проверка Twitch"], stats: [720, "сбор статистики"], post: [720, "публикация"] };
   for (const [k, [min, nm]] of Object.entries(lim)) {
     const s = sys[k];
     if (s && s.at && (Date.now() - new Date(s.at)) / 6e4 > min) out.push([k, `«${nm}» не запускалась ${ago(s.at).replace(" назад", "")}`]);
@@ -817,7 +821,7 @@ function renderAlerts() {
   const L = D.status.live || {};
   if (L.is_live && L.vod_missing) out.push(["bad", "Стрим идёт, но Twitch не сохраняет запись.", "Стример должен включить «Сохранять прошлые трансляции» в настройках Twitch."]);
   for (const [comp, s] of Object.entries(D.status.system || {})) if (s.level === "error") out.push(["bad", `Сбой: ${esc(comp)}.`, esc(s.msg) + (s.run_url ? ` <a href="${esc(s.run_url)}" target="_blank" rel="noopener">Лог</a>` : "")]);
-  for (const [, msg] of staleness()) out.push(["warn", "GitHub давно не запускал задачу.", esc(msg) + ". Проверь вкладку Actions: не выключено ли расписание."]);
+  for (const [, msg] of staleness(true)) out.push(["warn", "GitHub давно не запускал задачу.", esc(msg) + ". Проверь вкладку Actions: не выключено ли расписание."]);
   Object.entries(D.status.health || {}).forEach(([acc, h]) => {
     if (h.state === "cooldown" || h.state === "pause") out.push(["warn", `${esc(accName(acc))}: ${HL[h.state][0]} до ${fmtDateTime(h.until)}.`, esc(h.reason) + ". Бот сам снизил частоту постов и выкладывает только сильные безопасные клипы."]);
     if (h.state === "watch") out.push(["warn", `${esc(accName(acc))}: ранний сигнал.`, esc(h.reason)]);

@@ -8,10 +8,8 @@
   let lang = (() => {
     try {
       const saved = localStorage.getItem(LS_KEY);
-      if (saved) return saved;
-      // Auto-detect from browser: use "en" only if the primary language is English
-      const browserLang = (navigator.language || navigator.userLanguage || "ru").toLowerCase();
-      return browserLang.startsWith("en") ? "en" : "ru";
+      if (saved === "en" || saved === "ru") return saved;
+      return "ru"; // сайт русский по умолчанию, выбор пользователя запоминается
     } catch { return "ru"; }
   })();
 
@@ -160,7 +158,7 @@
     "Было оплачено": "Previously paid",
     "Оплачено сейчас": "Paid now",
     "Сумма": "Amount",
-    "Каждый клип оплачивается один раз по лучшей площадке. «Доплата» — только рост лучшего результата сверх ранее оплаченного.": "Each clip is paid once by best platform. "Top-up" covers only growth beyond what was previously paid.",
+    "Каждый клип оплачивается один раз по лучшей площадке. «Доплата» — только рост лучшего результата сверх ранее оплаченного.": "Each clip is paid once by best platform. \"Top-up\" covers only growth beyond what was previously paid.",
 
     /* video dialog */
     "Не удалось загрузить файл: его уже удалили после публикации или репозиторий закрыт.": "Could not load file: it was deleted after publishing or the repository is private.",
@@ -328,7 +326,7 @@
     "Забыть": "Forget",
     "Забыто": "Forgotten",
     "Готово": "Done",
-    "Язык / Language": "Language / Язык",
+    "Язык": "Language",
 
     /* demo banner */
     "Это демо с выдуманными цифрами, чтобы было видно, как всё выглядит. На твоём сайте GitHub Pages будут только настоящие данные бота.":
@@ -390,34 +388,43 @@
   const original = new WeakMap(); // textNode → original Russian text
   const applied  = new WeakMap(); // textNode → last value we wrote
 
+  // Для частичных совпадений берём только длинные ключи (короткие вроде «из», «Все» ломают текст), сначала самые длинные.
+  const PARTIAL = Object.keys(EN).filter(k => k.length >= 6).sort((x, y) => y.length - x.length);
+
+  function toEn(src) {
+    const trimmed = src.trim();
+    const full = EN[trimmed];
+    if (full !== undefined) return src.replace(trimmed, () => full);
+    let out = src;
+    for (const ru of PARTIAL) if (out.includes(ru)) out = out.split(ru).join(EN[ru]);
+    return out;
+  }
+
   function translate(node) {
     const current = node.nodeValue;
-    // If the JS runtime changed this node since we last touched it,
-    // treat the new value as the new "original".
+    // Если приложение само поменяло текст, считаем новое значение оригиналом.
     if (applied.get(node) !== current) original.set(node, current);
 
     const src = original.get(node) || "";
-    const trimmed = src.trim();
-    if (!trimmed) return;
+    if (!src.trim()) return;
 
-    let target = src;
-    if (lang === "en") {
-      const full = EN[trimmed];
-      if (full !== undefined) {
-        target = src.replace(trimmed, full);
-      } else {
-        // Try partial key matches (prefix/suffix patterns like "Ждут публикации N клипов")
-        for (const [ru, en] of Object.entries(EN)) {
-          if (trimmed.includes(ru)) {
-            target = src.replace(ru, en);
-            break;
-          }
-        }
-      }
-    }
-
+    const target = lang === "en" ? toEn(src) : src;
     if (node.nodeValue !== target) node.nodeValue = target;
     applied.set(node, target);
+  }
+
+  const ATTRS = ["placeholder", "title", "aria-label"];
+  function translateAttrs() {
+    document.querySelectorAll("[placeholder],[title],[aria-label]").forEach(el => {
+      ATTRS.forEach(a => {
+        if (!el.hasAttribute(a)) return;
+        const k = "i18n" + a.replace("-", "");
+        if (el.dataset[k] === undefined) el.dataset[k] = el.getAttribute(a);
+        const src = el.dataset[k];
+        const val = lang === "en" ? toEn(src) : src;
+        if (el.getAttribute(a) !== val) el.setAttribute(a, val);
+      });
+    });
   }
 
   function translateAll() {
@@ -437,9 +444,10 @@
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(translate);
+    translateAttrs();
 
     // Page title
-    if (lang === "en" && EN["Нарезки"]) document.title = EN["Нарезки"];
+    document.title = lang === "en" && EN["Нарезки"] ? EN["Нарезки"] : "Нарезки";
     document.documentElement.lang = lang === "en" ? "en" : "ru";
   }
 

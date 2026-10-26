@@ -126,7 +126,7 @@ posting:
   disable_stitch: false
   disable_comment: false
   tiktok:
-    mode: direct                     # direct = публично (SELF_ONLY для неаудированных); inbox нестабилен
+    mode: inbox                      # inbox = черновики TikTok (публиковать вручную); direct у неаудированного приложения даёт только приватные посты
     max_age_hours: 72
     max_cap: 4
   youtube:
