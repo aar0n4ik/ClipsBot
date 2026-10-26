@@ -27,21 +27,15 @@ def build(store: Store, cfg: dict) -> dict:
         return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
     # Что показываем в «Очередь и последние клипы»:
-    #  • выложен везде — сутки после последней публикации;
-    #  • выложен хоть где-то, но на другой площадке ещё что-то ждёт — не прячем, пока ждёт (пропадёт, когда выложится
-    #    или протухнет окно ожидания);
-    #  • ничего не выложено и ничего не ждёт (отменён / пропущен / протух) — не дольше суток с момента создания.
+    # Любой клип держим не дольше суток: от последней публикации, а если ничего не выложено — от создания.
+    # Ожидание на других площадках на это не влияет.
     filtered = []
     for c in all_clips:
         posts = c.get("posts", {})
         done = [p for p in posts.values() if p.get("status") == "posted" and p.get("posted_at")]
-        waiting = any(pending_for(c, plat) for plat in c.get("targets", {}))
         try:
-            if done:
-                last = max(_ts(p["posted_at"]) for p in done)
-                if not waiting and last < day_ago:
-                    continue
-            elif not waiting and c.get("created_at") and _ts(c["created_at"]) < day_ago:
+            ref = max(_ts(p["posted_at"]) for p in done) if done else (_ts(c["created_at"]) if c.get("created_at") else None)
+            if ref and ref < day_ago:
                 continue
         except ValueError:
             pass
