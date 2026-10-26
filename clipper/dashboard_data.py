@@ -27,17 +27,21 @@ def build(store: Store, cfg: dict) -> dict:
         return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
     # Что показываем в «Очередь и последние клипы»:
-    # Клип, который везде отработал (выложен или лежит в черновиках TikTok), пропадает через сутки после последней
-    # публикации. Если ничего не выложено — через сутки от создания (отменённые, пропущенные, протухшие).
-    # Не прячем вовсе: клип, который ещё ждёт своей очереди на какой-то площадке, и клип с ошибкой публикации —
-    # на нём в дашборде есть кнопка «Повторить» именно для упавшей площадки.
+    # Клип, который реально выложен везде, пропадает через сутки после последней публикации.
+    # Если ничего не выложено — через сутки от создания (отменённые, пропущенные, протухшие).
+    # Не прячем вовсе, пока не выложено по-настоящему:
+    #  • клип ждёт своей очереди на какой-то площадке;
+    #  • публикация упала (в дашборде есть кнопка «Повторить» для этой площадки);
+    #  • ролик лежит в черновиках TikTok и ещё не опубликован (статус inbox / inbox_stale) — черновик не считается
+    #    выложенным, клип висит, пока ролик не выйдет (тогда stats находит его и ставит posted).
     filtered = []
     for c in all_clips:
         posts = c.get("posts", {})
-        done = [p for p in posts.values() if p.get("status") in ("posted", "inbox", "inbox_stale") and p.get("posted_at")]
+        done = [p for p in posts.values() if p.get("status") == "posted" and p.get("posted_at")]
         failed = any(p.get("status") == "failed" for p in posts.values()) or any(
             t.get("status") == "failed" for t in c.get("targets", {}).values())
-        waiting = any(pending_for(c, plat) for plat in c.get("targets", {}))
+        waiting = any(pending_for(c, plat) for plat in c.get("targets", {})) or any(
+            p.get("status") in ("inbox", "inbox_stale", "processing") for p in posts.values())
         if failed or waiting:
             filtered.append(c)
             continue

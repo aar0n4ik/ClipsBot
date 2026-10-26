@@ -716,7 +716,7 @@ async function copy(text, btn) {
 /* ── справочники ─────────────────────────────────── */
 const PL = { tiktok: "TikTok", youtube: "Shorts", instagram: "Reels" };
 const plChip = p => `<span class="pl ${esc(p)}" title="${esc(PL[p] || p)}"></span>`;
-const STATUS = { ready: ["В очереди", "acc"], inbox: ["В черновиках TikTok", "good"], inbox_stale: ["Черновик не опубликован", "warn"], posted: ["Опубликован", "good"],
+const STATUS = { ready: ["В очереди", "acc"], inbox: ["В черновиках TikTok — ждёт публикации", "warn"], inbox_stale: ["Черновик не опубликован", "warn"], posted: ["Опубликован", "good"],
   processing: ["Обрабатывается", ""], failed: ["Ошибка", "bad"], expired: ["Устарел", ""], used: ["Выложен", "good"], retry: ["Повтор", "warn"], broken: ["Битый", "bad"] };
 const CATS = { funny: "Смешное", conflict: "Конфликт", money: "Деньги", america: "Америка", customer: "Клиенты", road: "Дорога", emotional: "Эмоции", chat: "Чат", other: "Другое" };
 const DIMS = { hook_style: "Стиль заголовка", cold_open: "Панчлайн в первые секунды", subtitles: "Английская строка субтитров", progress_bar: "Полоса прогресса" };
