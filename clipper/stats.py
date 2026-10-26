@@ -201,6 +201,20 @@ def cmd_doctor(cfg: dict, store: Store):
             (issues if e.kind == "auth" else warns).append(f"{acc['id']}: {e}")
         tokens[acc["id"]] = st
     store.write_json("status/tokens.json", tokens)
+    # проверка аккаунта прошла → пауза после «blocked/auth» больше не нужна, не ждём сутки
+    ps = store.read_json("status/post.json", {}) or {}
+    cleared = []
+    for acc in list_accounts(cfg):
+        a = (ps.get("accounts") or {}).get(acc["id"])
+        ok = acc["id"] in tokens and not tokens[acc["id"]].get("error") and tokens[acc["id"]].get("last_ok")
+        if a and ok and a.get("cooldown_until") and str(a.get("last_error", "")).endswith(("[blocked]", "[auth]")):
+            for k in ("cooldown_until", "cooldown_reason", "last_error", "last_error_at", "diagnosis"):
+                a.pop(k, None)
+            a["plan"] = {"mode": "пауза снята: проверка аккаунта прошла"}
+            cleared.append(acc["id"])
+    if cleared:
+        store.write_json("status/post.json", ps)
+        log(f"▶️ пауза снята после успешной проверки: {', '.join(cleared)}")
     # файлы в релизе, которые уже не нужны (клип опубликован/устарел/сломан)
     try:
         assets = releases.list_assets()
