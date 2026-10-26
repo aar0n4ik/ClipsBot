@@ -40,7 +40,7 @@ accounts:                            # один клип выходит на п�
   - id: yt_main
     platform: youtube
     name: "YouTube Shorts"
-    enabled: false
+    enabled: true
     warmup: auto
   - id: ig_main
     platform: instagram
@@ -126,7 +126,7 @@ posting:
   disable_stitch: false
   disable_comment: false
   tiktok:
-    mode: direct                     # TEST: direct = публикация сразу на профиль
+    mode: inbox                      # inbox = черновики TikTok; direct отклоняется TikTok пока приложение без аудита (unaudited_client_can_only_post_to_private_accounts)
     max_age_hours: 72
     max_cap: 4
   youtube:
