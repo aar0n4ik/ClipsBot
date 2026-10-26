@@ -716,7 +716,7 @@ async function copy(text, btn) {
 /* ── справочники ─────────────────────────────────── */
 const PL = { tiktok: "TikTok", youtube: "Shorts", instagram: "Reels" };
 const plChip = p => `<span class="pl ${esc(p)}" title="${esc(PL[p] || p)}"></span>`;
-const STATUS = { ready: ["В очереди", "acc"], inbox: ["Отправлен в TikTok, не подтверждён", "warn"], inbox_stale: ["Черновик не опубликован", "warn"], posted: ["Опубликован", "good"],
+const STATUS = { ready: ["В очереди", "acc"], inbox: ["В черновиках TikTok", "good"], inbox_stale: ["Черновик не опубликован", "warn"], posted: ["Опубликован", "good"],
   processing: ["Обрабатывается", ""], failed: ["Ошибка", "bad"], expired: ["Устарел", ""], used: ["Выложен", "good"], retry: ["Повтор", "warn"], broken: ["Битый", "bad"] };
 const CATS = { funny: "Смешное", conflict: "Конфликт", money: "Деньги", america: "Америка", customer: "Клиенты", road: "Дорога", emotional: "Эмоции", chat: "Чат", other: "Другое" };
 const DIMS = { hook_style: "Стиль заголовка", cold_open: "Панчлайн в первые секунды", subtitles: "Английская строка субтитров", progress_bar: "Полоса прогресса" };
@@ -1104,7 +1104,9 @@ function renderQueue() {
       const canPlay = t.asset && !live && post?.status !== "inbox";
       const play = canPlay ? `<button class="mini play" type="button" data-play="${esc(t.asset)}" data-title="${esc(PL[p] || p)} · «${esc(t.hook || "")}»">▶ Смотреть</button>` : "";
       const open = live && post?.url ? `<a class="mini open" href="${esc(post.url)}" target="_blank" rel="noopener">Открыть в ${esc(PL[p] || p)} ↗</a>` : "";
-      return `<div class="tg-row">${plChip(p)}<span>«${esc(t.hook || "")}»</span><span class="chip ${sc}">${sl}</span>${play}${open}</div>`;
+      const bad = post?.status === "failed" || t.status === "failed";
+      const retry = bad ? `<button class="mini retry" type="button" data-retry="${esc(c.id)}" data-plat="${esc(p)}" title="Перезапустить публикацию в ${esc(PL[p] || p)}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>Повторить</button>` : "";
+      return `<div class="tg-row">${plChip(p)}<span>«${esc(t.hook || "")}»</span><span class="chip ${sc}">${sl}</span>${retry}${play}${open}</div>`;
     }).join("");
     const texts = Object.entries(c.targets || {}).map(([p, t]) => {
       const txt = p === "youtube" ? `${t.title || ""}\n\n${t.description || ""}` : `${t.caption || ""}${t.hashtags?.length ? "\n\n" + t.hashtags.join(" ") : ""}`;
@@ -1124,7 +1126,6 @@ function renderQueue() {
         ${c.audio?.reason ? `<div><b>Звук:</b> ${esc(c.audio.reason)}</div>` : ""}
         ${Object.values(c.posts || {}).filter(p => p.reason).map(p => `<div><b>Почему выложен тогда:</b> ${esc(p.reason)}${(p.why || []).length ? " (" + esc(p.why.join("; ")) + ")" : ""}</div>`).join("")}
         ${Object.values(c.posts || {}).filter(p => p.error).map(p => `<div style="color:var(--bad)">${esc(p.error)}</div>`).join("")}
-        ${failed ? `<button class="mini" type="button" data-retry="${esc(c.id)}">Повторить публикацию</button>` : ""}
       </div></details>
     </div></div>`;
   }).join("") : `<p class="muted" style="margin:0">Клипов пока нет. После первого стрима сюда придут готовые нарезки с оценкой ИИ.</p>`;
@@ -1324,7 +1325,7 @@ function bind() {
       return;
     }
     if (t.dataset.cancelClip) { if (!confirm("Отменить публикацию этого клипа? Потом можно будет сделать новый, похожий.")) return; t.disabled = true; try { await sendCommand({ cmd: "cancel_clip", clip: t.dataset.cancelClip }, "отмена публикации"); } catch (e) { toast(e.message); t.disabled = false; } return; }
-    if (t.dataset.retry) { t.disabled = true; try { await sendCommand({ cmd: "retry_clip", clip: t.dataset.retry }, "повтор публикации"); } catch (e) { toast(e.message); t.disabled = false; } return; }
+    if (t.dataset.retry) { t.disabled = true; try { await sendCommand({ cmd: "retry_clip", clip: t.dataset.retry, platform: t.dataset.plat || undefined }, "повтор публикации"); } catch (e) { toast(e.message); t.disabled = false; } return; }
     const setStatus = async (id, status, msg) => {
       t.disabled = true;
       try { await mutateLedger(list => { const e = list.find(x => x.id === id); if (e) { e.status = status; e.voided_at = status === "void" ? new Date().toISOString() : null; } }, msg); ui.confirmVoid = null; render(); }

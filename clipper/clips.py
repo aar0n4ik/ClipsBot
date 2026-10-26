@@ -38,7 +38,8 @@ def pending_for(c: dict, platform: str) -> bool:
 
 
 def age_hours(c: dict) -> float:
-    return (now_utc() - parse_iso(c["created_at"])).total_seconds() / 3600
+    # После ручного «Повторить» отсчёт возраста идёт от повтора, иначе старый клип сразу бы «протух»
+    return (now_utc() - parse_iso(c.get("retry_at") or c["created_at"])).total_seconds() / 3600
 
 
 def overall(c: dict) -> str:

@@ -27,12 +27,20 @@ def build(store: Store, cfg: dict) -> dict:
         return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
     # Что показываем в «Очередь и последние клипы»:
-    # Любой клип держим не дольше суток: от последней публикации, а если ничего не выложено — от создания.
-    # Ожидание на других площадках на это не влияет.
+    # Клип, который везде отработал (выложен или лежит в черновиках TikTok), пропадает через сутки после последней
+    # публикации. Если ничего не выложено — через сутки от создания (отменённые, пропущенные, протухшие).
+    # Не прячем вовсе: клип, который ещё ждёт своей очереди на какой-то площадке, и клип с ошибкой публикации —
+    # на нём в дашборде есть кнопка «Повторить» именно для упавшей площадки.
     filtered = []
     for c in all_clips:
         posts = c.get("posts", {})
-        done = [p for p in posts.values() if p.get("status") == "posted" and p.get("posted_at")]
+        done = [p for p in posts.values() if p.get("status") in ("posted", "inbox", "inbox_stale") and p.get("posted_at")]
+        failed = any(p.get("status") == "failed" for p in posts.values()) or any(
+            t.get("status") == "failed" for t in c.get("targets", {}).values())
+        waiting = any(pending_for(c, plat) for plat in c.get("targets", {}))
+        if failed or waiting:
+            filtered.append(c)
+            continue
         try:
             ref = max(_ts(p["posted_at"]) for p in done) if done else (_ts(c["created_at"]) if c.get("created_at") else None)
             if ref and ref < day_ago:

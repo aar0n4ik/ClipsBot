@@ -109,12 +109,16 @@ def apply_commands(store: Store, policy: dict) -> bool:
         elif cmd == "retry_clip" and c.get("clip"):
             q = store.read_json(f"queue/{c['clip']}.json")
             if q:
+                only = c.get("platform")  # кнопка «Повторить» у конкретной площадки; без неё — все упавшие
                 for p, post in (q.get("posts") or {}).items():
-                    if post.get("status") == "failed":
+                    if post.get("status") == "failed" and (not only or p == only):
                         post["status"] = "retry"
-                for t in (q.get("targets") or {}).values():
-                    if t.get("status") == "failed":
+                        post.pop("error", None)
+                        q["retry_at"] = now_iso()
+                for p, t in (q.get("targets") or {}).items():
+                    if t.get("status") == "failed" and (not only or p == only):
                         t["status"] = "ready"
+                        q["retry_at"] = now_iso()
                 if q.get("status") == "broken":
                     q["status"] = None
                 store.write_json(f"queue/{c['clip']}.json", q)
