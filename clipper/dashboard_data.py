@@ -20,7 +20,6 @@ def build(store: Store, cfg: dict) -> dict:
 
     all_clips = sorted((normalize(c) for c in store.list_json("queue")), key=lambda c: c.get("created_at", ""), reverse=True)
     now = datetime.now(timezone.utc)
-    hour_ago = now - timedelta(hours=1)
     day_ago = now - timedelta(hours=24)
 
     def _ts(s):
@@ -28,9 +27,9 @@ def build(store: Store, cfg: dict) -> dict:
         return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
     # Что показываем в «Очередь и последние клипы»:
-    #  • выложен везде — час после последней публикации;
-    #  • выложен хоть где-то, но на другой площадке ещё что-то ждёт — не дольше суток после последней публикации
-    #    (раньше такие висели днями, пока не протухнет окно ожидания);
+    #  • выложен везде — сутки после последней публикации;
+    #  • выложен хоть где-то, но на другой площадке ещё что-то ждёт — не прячем, пока ждёт (пропадёт, когда выложится
+    #    или протухнет окно ожидания);
     #  • ничего не выложено и ничего не ждёт (отменён / пропущен / протух) — не дольше суток с момента создания.
     filtered = []
     for c in all_clips:
@@ -40,7 +39,7 @@ def build(store: Store, cfg: dict) -> dict:
         try:
             if done:
                 last = max(_ts(p["posted_at"]) for p in done)
-                if last < (day_ago if waiting else hour_ago):
+                if not waiting and last < day_ago:
                     continue
             elif not waiting and c.get("created_at") and _ts(c["created_at"]) < day_ago:
                 continue
