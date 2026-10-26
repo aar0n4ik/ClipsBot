@@ -1,19 +1,25 @@
-"""Публикация. Каждый час для каждого аккаунта каждой площадки решаем: постить сейчас или нет, и что.
+"""Публикация: ОДИН клип → ВСЕ площадки одновременно («релиз»), когда это выгодно.
 
-Порядок решения (каждое «почему» пишется в пост и видно в дашборде):
-  1. Аккаунт на паузе / в режиме «пауза» по здоровью → нет.
-  2. Лимит на сутки (разгон нового аккаунта → потолок, подобранный по данным → ограничения режима здоровья).
-  3. Пауза между постами.
-  4. Горячий клип (8+, сделан пока идёт эфир) → сразу, свежесть важнее идеального часа.
-  5. Лучшие часы сегодня (кривая аудитории, переученная на фактических просмотрах этой площадки).
-  6. Клипов больше, чем успеем выложить до их протухания → в любой не ночной час.
-Выбор клипа: оценка ИИ × свежесть × успех темы по факту × «проверен на другой площадке»
-с штрафами за повтор темы/хука/того же отрезка стрима и с потолком на безопасность контента.
+Как решается «постить ли сейчас и что» (каждый час):
+  1. Жёсткие правила (их не может нарушить никто, ни ИИ, ни скрипт): выключатель в дашборде, ночь аудитории,
+     пауза между релизами, максимум в сутки, ошибки площадки (лимит/спам/вход) — площадка отдыхает.
+  2. Пул: только клипы с финальной оценкой ≥ порога (после просмотра видео ИИ), свежие (≤ 36 ч, 9+ — до 72 ч),
+     без высокого риска. Слабых клипов «для количества» нет вообще: нечего выложить — бот ждёт.
+  3. ИИ-продюсер получает всю картину (очередь, что уже вышло, как заходят последние ролики, сколько слотов
+     и активных часов осталось) и решает: выкладывать сейчас или ждать, и какой клип. Второй ИИ-критик проверяет
+     решение. Если ИИ недоступен — то же самое делает детерминированный план.
+  4. Волна: если свежий ролик набирает в разы быстрее нормы, это НЕ повод молчать (каждый ролик площадки
+     оценивают отдельно, а новые зрители идут в профиль) — наоборот, разрешается +1 релиз в сутки.
+
+Что убрано и почему: «остывание» по медиане просмотров. Оно сравнивало новые ролики со старыми (майскими)
+и резало частоту на здоровом канале. Площадки не наказывают за частоту при нормальном качестве; падение
+просмотров на маленьком канале — это шум и качество роликов, а не «бан». Режем только по сигналам самой
+площадки (ошибки спама/лимитов) — их бот видит напрямую.
 """
 from __future__ import annotations
 
 import datetime as dt
-import math
+import json
 from zoneinfo import ZoneInfo
 
 from . import health, learn, releases
@@ -23,25 +29,29 @@ from .platforms import accounts as list_accounts
 from .platforms import client
 from .platforms.base import PlatformError
 from .store import Store
-from .util import log, now_iso, now_utc, parse_iso
+from .util import log, now_utc, parse_iso
 
-MAX_AGE_H = {"tiktok": 72, "youtube": 168, "instagram": 120}
-# ошибка на уровне аккаунта: ролик не сгорает, аккаунт отдыхает (часы)
+
+def _iso(t: dt.datetime) -> str:
+    return t.astimezone(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+BRAIN = "status/brain.json"
 ACCOUNT_COOLDOWN_H = {"rate": 1, "quota": 6, "spam": 24, "blocked": 24, "auth": 168}
+CATCHUP_H = 12          # клип вышел на других площадках, а эта отдыхала — догоняем, если прошло меньше
 
 
-def pick_threshold(ranked: list, remaining: int) -> int:
-    """Сколько сейчас качества, а сколько количества.
+# ── вспомогательное ─────────────────────────────────────────────
+def _local(now: dt.datetime, tz: str) -> dt.datetime:
+    return now.astimezone(ZoneInfo(tz))
 
-    Хороших (7+) хватает на сутки — берём только их. Очередь большая, хороших мало — берём от 6.
-    Очередь пустая — берём от 5. Клипы ниже 5 не публикуем никогда.
-    """
-    strong = sum(1 for _, c, _ in ranked if int(c.get("score", 0)) >= 7)
-    if remaining and strong >= remaining:
-        return 7
-    if len(ranked) >= 2 * max(1, remaining):
-        return 6
-    return 5
+
+def posted_today(a: dict, today: str) -> tuple[int, int]:
+    """(опубликовано, отправлено в черновики) за сегодня по времени аудитории."""
+    by = a.get("count_by_day", {}) or {}
+    dr = a.get("drafts_by_day", {}) or {}
+    total = int(by.get(today, 0))
+    drafts = int(dr.get(today, 0))
+    return max(0, total - drafts), drafts
 
 
 def plan_hours(now_local: dt.datetime, remaining: int, weights: list[float], quiet: set[int], gap_h: float,
@@ -60,128 +70,68 @@ def plan_hours(now_local: dt.datetime, remaining: int, weights: list[float], qui
     return sorted(chosen)
 
 
-def _proven_boost(c: dict, platform: str, stats: dict) -> tuple[float, str | None]:
-    """Если клип уже вышел на другой площадке и там набирает быстрее нормы — поднимаем его здесь."""
-    best = 0.0
-    why = None
-    for plat, post in (c.get("posts") or {}).items():
-        if plat == platform or not post.get("video_id"):
-            continue
-        a = (stats.get("accounts") or {}).get(post.get("account"), {})
-        v = (a.get("videos") or {}).get(str(post["video_id"]))
-        sig = (health.account_signals(list((a.get("videos") or {}).values()), now_utc().timestamp())
-               if v else {})
-        base = sig.get("early_baseline")
-        x = health.views_at_age(v, 2) if v else None
-        if x is not None and base:
-            k = math.log1p(x) - math.log1p(base)
-            if k > best:
-                best, why = k, f"на {plat} набирает в {math.expm1(k) + 1:.1f}× быстрее нормы"
-    return min(best, 1.5), why
+def max_age(c: dict, posting: dict) -> float:
+    base = float(posting.get("max_age_hours", 36))
+    return max(base, 72.0) if int(c.get("score", 0)) >= 9 else base
 
 
-def rank(queue: list[dict], platform: str, policy: dict, recent: list[dict], limits: dict, stats: dict,
-         posting: dict) -> list[tuple[float, dict, list[str]]]:
+def rank(pool: list[dict], policy: dict, recent: list[dict]) -> list[tuple[float, dict, list[str]]]:
     out = []
-    max_age = float((posting.get(platform) or {}).get("max_age_hours", MAX_AGE_H.get(platform, 72)))
-    min_score = limits.get("min_score", 0)
-    max_risk = limits.get("max_risk", 3)
     cats = [r.get("category") for r in recent[:10]]
-    for c in queue:
-        if not pending_for(c, platform) or c.get("status") in ("broken", "skipped", "expired"):
-            continue
+    for c in pool:
         age = age_hours(c)
-        if age > max_age or c.get("score", 0) < min_score or (c.get("risk") or {}).get("level", 0) > max_risk:
-            continue
         why = []
-        key = c.get("score", 0) * (0.82 ** (age / 24)) + 0.15 * float(c.get("signal", 0)) ** 0.5
-        b = learn.category_boost(policy, platform, c.get("category", "other"))
+        key = float(c.get("score", 0)) * (0.85 ** (age / 24)) + 0.1 * float(c.get("signal", 0) or 0) ** 0.5
+        b = learn.category_boost(policy, "all", c.get("category", "other"))
         if b:
-            key += 2.5 * b
+            key += 2.0 * b
             why.append(f"тема {'заходит' if b > 0 else 'заходит хуже'} ({learn._pct(b)})")
-        pb, pwhy = _proven_boost(c, platform, stats)
-        if pb > 0:
-            key += 2.0 * pb
-            why.append(pwhy)
+        if c.get("live_when_made") and age <= 3:
+            key += 0.6
+            why.append("свежак с эфира")
         if recent:
             if recent[0].get("category") == c.get("category"):
-                key -= 0.8
+                key -= 0.6
             share = cats.count(c.get("category")) / max(1, len(cats))
             if share > 0.4 and b <= 0.2:
-                key -= 1.5 * (share - 0.4) * 5
-            if recent[0].get("hook_style") and recent[0].get("hook_style") == ((c["targets"].get(platform) or {}).get("variant") or {}).get("hook_style"):
-                key -= 0.3
-            if any(r.get("vod_id") == c.get("vod_id") and abs(float(r.get("vod_time", -1e9)) - float(c.get("vod_time", 0))) < 600
+                key -= 1.2 * (share - 0.4) * 5
+            if any(r.get("vod_id") == c.get("vod_id") and abs(float(r.get("vod_time") or -1e9) - float(c.get("vod_time") or 0)) < 600
                    for r in recent[:2]):
-                key -= 0.7
-        out.append((key, c, why))
+                key -= 0.6
+        out.append((round(key, 3), c, why))
     out.sort(key=lambda x: -x[0])
     return out
 
 
-def is_hot(c: dict, posting: dict) -> bool:
-    return c.get("score", 0) >= int(posting.get("hot_score", 8)) and c.get("live_when_made") and age_hours(c) <= 4
+def momentum(stats: dict, now_ts: float) -> dict:
+    """Волна: свежий ролик (1–12 ч) набирает ≥3× быстрее обычного для аккаунта."""
+    out = {}
+    for acc, A in (stats.get("accounts") or {}).items():
+        vids = list((A.get("videos") or {}).values())
+        sig = health.account_signals(vids, now_ts)
+        base = sig.get("early_baseline") or 0
+        best = None
+        for v in vids:
+            ct = v.get("create_time") or 0
+            age_h = (now_ts - ct) / 3600
+            if not 1 <= age_h <= 12 or not base:
+                continue
+            x = health.views_at_age(v, min(2, age_h)) or v.get("views", 0)
+            ratio = (x + 1) / (base + 1)
+            if ratio >= 3 and (not best or ratio > best["ratio"]):
+                best = {"video": v.get("id"), "title": (v.get("title") or "")[:60], "ratio": round(ratio, 1), "views": v.get("views", 0)}
+        if best:
+            out[acc] = best
+    return out
 
 
-def decide(acc: dict, cfg: dict, policy: dict, a: dict, hstate: dict, queue: list[dict], stats: dict,
-           now: dt.datetime) -> tuple[str | None, dict | None, dict]:
-    posting = cfg["posting"]
-    plat = acc["platform"]
-    tz = ZoneInfo(posting["timezone"])
-    local = now.astimezone(tz)
-    pc = posting.get(plat) or {}
-    cap = learn.daily_cap(policy, acc, cfg)
-    gap = int(pc.get("min_gap_minutes", posting.get("min_gap_minutes", 80)))
-    mode = "потолок подобран по данным" if f"caps.{acc['id']}" in (policy.get("last_change") or {}) else "обычный режим"
-    limits = {}
-    w = learn.warmup_state(policy, acc["id"], cfg)
-    if w:
-        cap, mode = min(cap, w["cap"]), f"разгон аккаунта, день {w['day']}"
-        limits.update(min_score=w["min_score"], max_risk=w["max_risk"])
-    st = hstate.get("state", "ok")
-    r = health.restrictions(st)
-    if st != "ok" and not (hstate.get("until") and parse_iso(hstate["until"]) < now and st in ("cooldown", "pause")):
-        cap = min(cap, r.get("cap", cap))
-        gap = max(gap, r.get("gap", gap))
-        limits["min_score"] = max(limits.get("min_score", 0), r.get("min_score", 0))
-        limits["max_risk"] = min(limits.get("max_risk", 3), r.get("max_risk", 3))
-        mode = f"режим «{health.label(st)}»: {hstate.get('reason', '')}"
-    paused = (policy.get("paused") or {}).get(acc["id"])
-    if paused and parse_iso(paused) > now:
-        cap, mode = 0, "пауза (вручную)"
-    today = local.date().isoformat()
-    posts_today = a.get("count_by_day", {}).get(today, 0)
-    last = parse_iso(a["last_post_at"]) if a.get("last_post_at") else None
-    since = (now - last).total_seconds() / 60 if last else 1e9
-    quiet = set(posting.get("quiet_hours", [2, 3, 4, 5, 6]))
-    weights = learn.get(policy, f"hours.{plat}") or learn.PRIOR_HOURS
-    remaining = max(0, cap - posts_today)
-    plan = plan_hours(local, remaining, weights, quiet, gap / 60, last.astimezone(tz) if last else None)
-    if w:  # разгон: одни и те же «лучшие» часы каждый день — стабильность помогает новому аккаунту
-        fixed = sorted(sorted(range(24), key=lambda h: -weights[h] if h not in quiet else 9)[:w["cap"]])
-        plan = [h for h in fixed if h >= local.hour][:remaining]
-    info = {"cap": cap, "gap_min": gap, "mode": mode, "posts_today": posts_today,
-            "plan_today": [f"{h:02d}:07" for h in plan], "health": st}
-    if remaining <= 0:
-        return None, None, info
-    recent = a.get("recent", [])
-    ranked = rank(queue, plat, policy, recent, limits, stats, posting)
-    if not ranked:
-        return None, None, info
-    thr = pick_threshold(ranked, remaining)
-    ranked = [x for x in ranked if int(x[1].get("score", 0)) >= max(thr, limits.get("min_score", 0))]
-    info["threshold"] = thr
-    if not ranked:
-        return None, None, info
-    hot = next(((k, c, why) for k, c, why in ranked if is_hot(c, posting)), None)
-    if hot and since >= max(45, gap // 2) and local.hour not in quiet and st in ("ok", "watch") and not w:
-        return "горячий клип во время эфира", hot[1], {**info, "why": hot[2]}
-    if since < gap:
-        return None, None, info
-    _, clip, why = ranked[0]
-    if local.hour not in quiet:
-        return "прошло время между постами", clip, {**info, "why": why}
-    return None, None, info
+def maybe_delete_asset(c: dict, name: str | None):
+    """Файл общий для всех площадок: удаляем, только когда он больше никому не нужен."""
+    if not name:
+        return
+    if any(t.get("asset") == name and pending_for(c, p) for p, t in c.get("targets", {}).items()):
+        return
+    releases.delete(name)
 
 
 def full_caption(t: dict, posting: dict) -> str:
@@ -189,56 +139,132 @@ def full_caption(t: dict, posting: dict) -> str:
     return (t.get("caption", "").strip() + "\n\n" + " ".join(tags)).strip()
 
 
+# ── мозг: продюсер + критик ─────────────────────────────────────
+PRODUCER = """Ты — продюсер каналов с нарезками стримера (TikTok, YouTube Shorts, Instagram Reels; одно и то же видео
+выходит на всех площадках одновременно). Цель — максимальный рост: просмотры, подписчики, охват, без вреда аккаунтам.
+Сейчас {now_local} по времени аудитории ({tz}). Ночь аудитории: {quiet}.
+
+Факты, на которые опирайся:
+• Каждый ролик площадка оценивает отдельно по удержанию первых показов. Частота сама по себе не штрафуется;
+  больше хороших роликов = больше шансов на выстрел. Слабые ролики тянут вниз удержание и доверие к аккаунту.
+• Стабильность (каждый день, похожие часы) важнее рывков. Пик активности аудитории — вечер.
+• Свежесть важна: клип с эфира, пока стример в эфире или только закончил, работает лучше вчерашнего.
+• Если свежий ролик на волне (набирает в разы быстрее нормы) — люди идут в профиль, новый сильный ролик это подхватит.
+• Не ставь подряд два ролика одной темы или с одного места стрима.
+
+Жёсткие ограничения уже применены: в списке только клипы, которые МОЖНО выложить прямо сейчас.
+Состояние:
+{state}
+
+Реши: выкладывать сейчас (post) или ждать (wait), и какой клип. Если ждёшь — объясни, чего именно ждёшь
+(лучший час, более сильный клип с идущего эфира, паузу между роликами), и помни: слоты, не использованные сегодня,
+сгорают, а клипы старше {max_age} ч выбрасываются. Думай как человек, который отвечает за рост канала.
+Ответ строго JSON: {{"action":"post|wait","clip":"id или null","reason":"2–3 предложения по-русски"}}"""
+
+CRITIC = """Ты — второй продюсер, проверяешь решение коллеги перед публикацией. Будь конкретен, без вежливости.
+Состояние:
+{state}
+Решение коллеги: {proposal}
+Согласен? Если нет — дай своё решение. Ответ строго JSON:
+{{"agree":true,"action":"post|wait","clip":"id или null","reason":"1–2 предложения"}}"""
+
+
+def _state_text(ctx: dict) -> str:
+    return json.dumps(ctx, ensure_ascii=False, indent=0)[:9000]
+
+
+def think(cfg: dict, ctx: dict, fallback: dict) -> dict:
+    """ИИ-продюсер + ИИ-критик. Возвращает {"action","clip","reason","thoughts":[...]}. Сбой — fallback."""
+    ai = cfg.get("ai") or {}
+    if not ai.get("planner", True):
+        return {**fallback, "by": "план"}
+    try:
+        from .llm import LLM
+        llm = LLM(cfg["llm"]["providers"])
+    except SystemExit:
+        return {**fallback, "by": "план (нет ключей ИИ)"}
+    model = ai.get("planner_model", "gemini-4-argon")
+    posting = cfg["posting"]
+    state = _state_text(ctx)
+    try:
+        prop = llm.chat_json_model([{"role": "user", "content": PRODUCER.format(
+            now_local=ctx["now_local"], tz=posting["timezone"], quiet=", ".join(f"{h}:00" for h in posting.get("quiet_hours", [])),
+            state=state, max_age=posting.get("max_age_hours", 36))}], model, temperature=0.3, max_tokens=2500)
+        crit = llm.chat_json([{"role": "user", "content": CRITIC.format(state=state, proposal=json.dumps(prop, ensure_ascii=False))}],
+                             temperature=0.2, max_tokens=1500)
+    except Exception as e:  # noqa: BLE001
+        log(f"продюсер недоступен: {str(e)[:160]} — решаю по плану")
+        return {**fallback, "by": "план (ИИ недоступен)"}
+    final = prop if crit.get("agree", True) else crit
+    return {"action": str(final.get("action", "wait")).lower(), "clip": final.get("clip"),
+            "reason": str(final.get("reason", ""))[:400], "by": "ИИ-продюсер" + ("" if crit.get("agree", True) else " (поправил критик)"),
+            "thoughts": [{"who": "продюсер", **{k: prop.get(k) for k in ("action", "clip", "reason")}},
+                         {"who": "критик", **{k: crit.get(k) for k in ("agree", "action", "clip", "reason")}}]}
+
+
+def deterministic(ctx: dict, ranked: list, hot: dict | None, plan: list[int], now_local: dt.datetime) -> dict:
+    if not ranked:
+        return {"action": "wait", "clip": None, "reason": "нет клипов нужного качества — ничего слабого не выкладываю"}
+    if hot:
+        return {"action": "post", "clip": hot["id"], "reason": "сильный клип с идущего эфира — свежесть важнее часа"}
+    best = ranked[0][1]
+    if now_local.hour in plan:
+        return {"action": "post", "clip": best["id"], "reason": f"лучший час по плану ({now_local.hour}:00)"}
+    soon_expire = [c for _, c, _ in ranked if c["_left_h"] <= 3]
+    if soon_expire:
+        return {"action": "post", "clip": soon_expire[0]["id"], "reason": "клип скоро устареет, а слот свободен"}
+    if ctx["slots_left"] >= max(1, ctx["active_hours_left"]):
+        return {"action": "post", "clip": best["id"], "reason": "слотов осталось столько же, сколько активных часов"}
+    return {"action": "wait", "clip": None, "reason": f"жду лучший час: план {', '.join(f'{h}:00' for h in plan) or '—'}"}
+
+
+# ── главный цикл ────────────────────────────────────────────────
 def cmd_post(cfg: dict, store: Store, force: bool = False):
     posting = cfg["posting"]
     policy = learn.load(store, cfg)
-    # Команды из дашборда (отмена клипа и т. п.) выполняем ДО публикации: раньше они ждали часового пересчёта
-    # статистики, и отменённый клип мог успеть уйти на площадку.
     from . import decisions
     if decisions.apply_commands(store, policy):
         learn.save(store, policy)
     pstate = store.read_json("status/post.json", {}) or {}
     accs = pstate.setdefault("accounts", {})
-    hs = store.read_json("status/health.json", {}) or {}
     stats = store.read_json("stats.json", {}) or {}
     now = now_utc()
+    tz = posting["timezone"]
+    local = _local(now, tz)
+    today = local.date().isoformat()
     queue = [normalize(c) for c in store.list_json("queue")]
-    errors = []
+    enabled = cfg.get("platforms") or {"tiktok": 1, "youtube": 1, "instagram": 1}
+    errors: list[str] = []
 
-    # обработка «зависших» публикаций и протухших клипов
+    # 1) протухшие клипы: «на завтра не оставляем» (кроме 9+)
     for c in queue:
         changed = False
         for plat, t in c["targets"].items():
-            mx = float((posting.get(plat) or {}).get("max_age_hours", MAX_AGE_H.get(plat, 72)))
-            if pending_for(c, plat) and age_hours(c) > mx:
+            if pending_for(c, plat) and age_hours(c) > max_age(c, posting):
                 t["status"] = "expired"
-                if t.get("asset"):
-                    releases.delete(t["asset"])
                 changed = True
         if changed:
+            maybe_delete_asset(c, c.get("asset") or next((t.get("asset") for t in c["targets"].values()), None))
             store.write_json(f"queue/{c['id']}.json", c)
 
-    # очередь раздулась: слабые клипы (меньше 6) снимаем, чтобы не копились и не портили выбор
-    from .learn import hard_cap
-    for plat in ("tiktok", "youtube", "instagram"):
-        pend = [c for c in queue if pending_for(c, plat)]
-        if len(pend) > 3 * hard_cap(cfg):
-            for c in pend:
-                if int(c.get("score", 0)) < 6:
-                    t = c["targets"][plat]
-                    t["status"] = "skipped"
-                    if t.get("asset"):
-                        releases.delete(t["asset"])
-                    store.write_json(f"queue/{c['id']}.json", c)
+    # 2) какие площадки сейчас могут принять релиз
+    ready: dict[str, dict] = {}
+    clients = {}
+    daymax = int(posting.get("daily_max", 4))
     for acc in list_accounts(cfg):
         plat = acc["platform"]
         a = accs.setdefault(acc["id"], {"platform": plat})
         cl = client(store, acc)
+        a["connected"] = cl.connected()
+        pub, drafts = posted_today(a, today)
+        a["today"] = {"published": pub, "drafts": drafts, "max": daymax}
         if not cl.connected():
-            a.update(connected=False, plan={"mode": "не подключён"})
+            a["state"] = "не подключён"
             continue
-        a["connected"] = True
-        for c in queue:  # TikTok может досчитывать публикацию — проверим
+        if plat not in enabled:
+            a["state"] = "выключена в настройках"
+            continue
+        for c in queue:  # TikTok может досчитывать публикацию
             p = c["posts"].get(plat)
             if p and p.get("account") == acc["id"] and p.get("status") == "processing":
                 try:
@@ -248,77 +274,184 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
                     log(f"проверка публикации {c['id']}: {e}")
         cd = a.get("cooldown_until")
         if cd and parse_iso(cd) > now:
-            a["plan"] = {"mode": f"пауза до {cd[:16]}: {a.get('cooldown_reason', '')}"}
+            a["state"] = f"отдыхает до {cd[11:16]} UTC: {a.get('cooldown_reason', '')[:120]}"
             continue
-        reason, clip, info = decide(acc, cfg, policy, a, hs.get(acc["id"], {}), queue, stats, now)
-        a["plan"] = info
-        if force and not clip:
-            ranked = rank(queue, plat, policy, a.get("recent", []), {}, stats, posting)
-            if ranked:
-                clip, reason = ranked[0][1], "ручной запуск"
-        if not clip:
-            log(f"{acc['id']}: не сейчас ({info['mode']}, сегодня {info['posts_today']}/{info['cap']}, план {info['plan_today']})")
+        paused = (policy.get("paused") or {}).get(acc["id"])
+        if paused and parse_iso(paused) > now:
+            a["state"] = "пауза (вручную)"
             continue
-        t = clip["targets"][plat]
-        log(f"{acc['id']}: постим {clip['id']} «{t.get('hook')}» — {reason}")
-        try:
-            path = releases.download(t["asset"], WORK_DIR / "post")
-            res = cl.publish(path, {**t, "caption_full": full_caption(t, posting)}, cfg, clip)
-        except PlatformError as e:
-            log(f"❌ {acc['id']}: {e}")
-            health.note_platform_error(store, acc["id"], e.kind)
-            from .diagnose import advice_for
-            a["diagnosis"] = advice_for(plat, e.kind, str(e))  # понятно: что не так и что делать
-            if e.kind in ACCOUNT_COOLDOWN_H:  # беда аккаунта, а не ролика: ролик ждёт, попытки не тратятся
-                hrs = ACCOUNT_COOLDOWN_H[e.kind]
-                a.update(cooldown_until=(now + dt.timedelta(hours=hrs)).isoformat(),
-                         cooldown_reason=str(e)[:160], last_error=f"{e} [{e.kind}]"[:300], last_error_at=now_iso())
-                clip["posts"][plat] = {**(clip["posts"].get(plat) or {}), "account": acc["id"], "status": "retry",
-                                       "error": str(e)[:300], "last_try": now_iso()}
-                store.write_json(f"queue/{clip['id']}.json", clip)
-                log(f"⏸ {acc['id']}: пауза {hrs} ч ({e.kind}), ролики не сгорают")
-                errors.append(f"{acc['id']}: {e}")
-                continue
-            post = clip["posts"].get(plat) or {"tries": 0}
-            post.update(account=acc["id"], error=str(e)[:300], last_try=now_iso(), tries=post.get("tries", 0) + 1)
-            if e.kind == "content" or post["tries"] >= 3:
-                post["status"] = "failed"
-                t["status"] = "failed"
-            else:
-                post["status"] = "retry"
-            clip["posts"][plat] = post
-            a.update(last_error=f"{e} [{e.kind}]"[:300], last_error_at=now_iso())
-            store.write_json(f"queue/{clip['id']}.json", clip)
-            errors.append(f"{acc['id']}: {e}")
-            continue
-        except Exception as e:  # noqa: BLE001 — например, файл пропал из релиза
-            log(f"❌ {acc['id']}: {e}")
-            t["status"] = "failed"
-            clip["posts"][plat] = {"account": acc["id"], "status": "failed", "error": str(e)[:300], "last_try": now_iso()}
-            store.write_json(f"queue/{clip['id']}.json", clip)
-            errors.append(f"{acc['id']}: {e}")
-            continue
-        clip["posts"][plat] = {**res, "account": acc["id"], "posted_at": now_iso(), "reason": reason,
-                               "why": info.get("why") or []}
-        t["status"] = "used"
-        if res.get("status") in ("posted", "inbox"):
-            releases.delete(t["asset"])
-        tz = ZoneInfo(posting["timezone"])
-        today = now.astimezone(tz).date().isoformat()
-        # inbox = файл принят TikTok и лежит в черновиках: это полноценная отправка. Считаем её в дневной лимит и
-        # двигаем таймер, иначе бот шлёт черновик за черновиком и упирается в лимит неподтверждённых у TikTok.
-        cbd = {k: v for k, v in a.get("count_by_day", {}).items() if k >= (now - dt.timedelta(days=10)).date().isoformat()}
-        cbd[today] = cbd.get(today, 0) + 1
-        rec = {"clip": clip["id"], "category": clip.get("category"), "vod_id": clip.get("vod_id"),
-               "vod_time": clip.get("vod_time"), "hook_style": (t.get("variant") or {}).get("hook_style")}
-        a.update(last_post_at=now_iso(), last_clip=clip["id"], last_error=None, count_by_day=cbd,
-                 recent=[rec] + a.get("recent", [])[:19], first_post_at=a.get("first_post_at") or now_iso())
-        store.write_json(f"queue/{clip['id']}.json", clip)
-        log(f"✅ {acc['id']}: {res.get('status')} {res.get('url') or ''}")
+        a["state"] = "готова"
+        ready[plat] = acc
+        clients[plat] = cl
 
-    pstate.update(timezone=posting["timezone"], updated_at=now_iso(),
-                  hour_weights={p: learn.get(policy, f"hours.{p}") for p in ("tiktok", "youtube", "instagram")},
-                  next_check=(now.replace(minute=7, second=0, microsecond=0) + dt.timedelta(hours=1)).isoformat())
+    # 3) счётчики релизов (общие для всех площадок)
+    rs = pstate.setdefault("releases", {})
+    by_day = {k: v for k, v in (rs.get("by_day") or {}).items() if k >= (local.date() - dt.timedelta(days=14)).isoformat()}
+    rel_today = int(by_day.get(today, 0))
+    last_rel = parse_iso(rs["last_at"]) if rs.get("last_at") else None
+    since_min = (now - last_rel).total_seconds() / 60 if last_rel else 1e9
+    gap = int(posting.get("min_gap_minutes", 90))
+    quiet = set(posting.get("quiet_hours", [2, 3, 4, 5, 6]))
+    waves = momentum(stats, now.timestamp())
+    cap = min(int(posting.get("hard_max", 8)), daymax + (1 if waves else 0))
+    slots_left = max(0, cap - rel_today)
+    active_left = len([h for h in range(local.hour, 24) if h not in quiet])
+    weights = learn.get(policy, "hours.youtube") or learn.get(policy, "hours.tiktok") or learn.PRIOR_HOURS
+    plan = plan_hours(local, slots_left, weights, quiet, gap / 60, last_rel.astimezone(ZoneInfo(tz)) if last_rel else None)
+
+    # 4) пул: что можно выложить прямо сейчас хотя бы на одну готовую площадку
+    post_min = int((cfg.get("quality") or {}).get("post_min", 7))
+    pool = []
+    for c in queue:
+        if c.get("status") in ("broken", "skipped", "expired"):
+            continue
+        plats = [p for p in ready if pending_for(c, p)]
+        if not plats:
+            continue
+        posted_elsewhere = any(p.get("status") in ("posted", "inbox", "processing") for p in c["posts"].values())
+        if posted_elsewhere and age_hours(c) > CATCHUP_H and not c.get("force_post"):
+            continue
+        if int(c.get("score", 0)) < post_min and not c.get("force_post"):
+            continue
+        if int((c.get("risk") or {}).get("level", 0)) >= 3:
+            continue
+        c["_plats"] = plats
+        c["_left_h"] = round(max_age(c, posting) - age_hours(c), 1)
+        c["_catchup"] = posted_elsewhere
+        pool.append(c)
+    recent = rs.get("recent", [])
+    ranked = rank(pool, policy, recent)
+    catchup = [c for _, c, _ in ranked if c["_catchup"]]
+    forced = next((c for c in pool if c.get("force_post")), None)
+    hot = next((c for _, c, _ in ranked if c.get("live_when_made") and int(c.get("score", 0)) >= int(posting.get("hot_score", 8))
+                and age_hours(c) <= 3 and posting.get("hot_now", True)), None)
+
+    blocked = None
+    if not ready:
+        blocked = "ни одна площадка сейчас не готова"
+    elif local.hour in quiet and not forced:
+        blocked = f"ночь аудитории ({local.hour}:00 по {tz})"
+    elif slots_left <= 0 and not forced and not catchup:
+        blocked = f"сегодня уже {rel_today} релиз(ов) из {cap}"
+    elif since_min < gap and not forced and not catchup:
+        blocked = f"после прошлого релиза прошло {int(since_min)} мин из {gap}"
+
+    ctx = {"now_local": local.strftime("%Y-%m-%d %H:%M"), "releases_today": rel_today, "daily_max": cap,
+           "slots_left": slots_left, "active_hours_left": active_left,
+           "minutes_since_last_release": None if since_min > 1e8 else int(since_min),
+           "best_hours_plan": plan, "live_now": bool((store.read_json("status/live.json", {}) or {}).get("is_live")),
+           "waves": waves, "platforms_ready": sorted(ready),
+           "last_releases": [{"hook": r.get("hook"), "category": r.get("category"), "at": r.get("at"), "views": r.get("views")}
+                             for r in recent[:5]],
+           "queue": [{"id": c["id"], "score": c.get("score"), "rank": k, "category": c.get("category"),
+                      "hook": c.get("overlay"), "what": (c.get("what") or c.get("why") or "")[:160],
+                      "age_h": round(age_hours(c), 1), "expires_in_h": c["_left_h"], "from_live": bool(c.get("live_when_made")),
+                      "duration": c.get("duration"), "platforms": c["_plats"]} for k, c, _ in ranked[:8]]}
+    decision: dict
+    if force and ranked:
+        decision = {"action": "post", "clip": ranked[0][1]["id"], "reason": "ручной запуск «выложить сейчас»", "by": "владелец"}
+    elif forced:
+        decision = {"action": "post", "clip": forced["id"], "reason": "владелец нажал «Выложить сейчас»", "by": "владелец"}
+    elif catchup and not blocked:
+        decision = {"action": "post", "clip": catchup[0]["id"], "reason": "догоняю площадку, которая отдыхала", "by": "план"}
+    elif blocked:
+        decision = {"action": "wait", "clip": None, "reason": blocked, "by": "правила"}
+    else:
+        fb = deterministic(ctx, ranked, hot, plan, local)
+        decision = think(cfg, ctx, fb) if ranked else {**fb, "by": "план"}
+        if decision.get("action") == "post" and decision.get("clip") not in {c["id"] for c in pool}:
+            decision = {**fb, "by": "план (ИИ выбрал недоступный клип)"}
+    log(f"решение: {decision['action']} {decision.get('clip') or ''} — {decision.get('reason')} [{decision.get('by')}]")
+
+    # 5) релиз: один клип на все готовые площадки подряд
+    released = []
+    if decision["action"] == "post" and decision.get("clip"):
+        clip = next(c for c in pool if c["id"] == decision["clip"])
+        for plat in clip["_plats"]:
+            acc = ready[plat]
+            a = accs[acc["id"]]
+            ok = _publish_one(cfg, store, clients[plat], acc, a, clip, plat, decision, now, today, errors)
+            if ok:
+                released.append(plat)
+        clip.pop("force_post", None)
+        for k in ("_plats", "_left_h", "_catchup"):
+            clip.pop(k, None)
+        store.write_json(f"queue/{clip['id']}.json", clip)
+        if released:
+            first_release = not any(r.get("clip") == clip["id"] for r in recent)
+            if first_release:
+                by_day[today] = by_day.get(today, 0) + 1
+                rs.update(last_at=_iso(now), recent=[{"clip": clip["id"], "category": clip.get("category"),
+                                                      "vod_id": clip.get("vod_id"), "vod_time": clip.get("vod_time"),
+                                                      "hook": clip.get("overlay"), "at": _iso(now),
+                                                      "platforms": released}] + recent[:29])
+    rs["by_day"] = by_day
+    nxt = (now.replace(minute=7, second=0, microsecond=0) + dt.timedelta(hours=1))
+    pstate.update(timezone=tz, updated_at=_iso(now), next_check=nxt.isoformat(),
+                  plan={"today": [f"{h:02d}:07" for h in plan], "slots_left": max(0, cap - int(by_day.get(today, 0))),
+                        "cap": cap, "releases_today": int(by_day.get(today, 0)), "waves": waves,
+                        "up_next": [{"id": c["id"], "hook": c.get("overlay"), "score": c.get("score"),
+                                     "expires_in_h": c.get("_left_h"), "platforms": c.get("_plats")} for _, c, _ in ranked[:5]
+                                    if c["id"] != decision.get("clip")]})
     store.write_json("status/post.json", pstate)
-    health.report(store, "post", "warn" if errors else "ok", "; ".join(errors) if errors else "публикации в норме")
-    store.sync("post")
+    br = store.read_json(BRAIN, {}) or {}
+    feed = br.get("feed", [])
+    feed.append({"at": _iso(now), "local": ctx["now_local"], **{k: decision.get(k) for k in ("action", "clip", "reason", "by")},
+                 "thoughts": decision.get("thoughts") or [], "released": released, "pool": len(pool)})
+    br.update(feed=feed[-120:], last=feed[-1], context=ctx)
+    store.write_json(BRAIN, br)
+    health.report(store, "post", "warn" if errors else "ok", "; ".join(errors) if errors else
+                  (f"выложено: {', '.join(released)}" if released else f"жду: {decision.get('reason', '')[:160]}"))
+    store.sync("post" + (f": {decision.get('clip')} → {', '.join(released)}" if released else ""))
+
+
+def _publish_one(cfg, store: Store, cl, acc: dict, a: dict, clip: dict, plat: str, decision: dict, now: dt.datetime,
+                 today: str, errors: list) -> bool:
+    posting = cfg["posting"]
+    t = clip["targets"][plat]
+    log(f"{acc['id']}: публикую {clip['id']} «{t.get('hook')}»")
+    try:
+        path = releases.download(t["asset"], WORK_DIR / "post")
+        res = cl.publish(path, {**t, "caption_full": full_caption(t, posting)}, cfg, clip)
+    except PlatformError as e:
+        log(f"❌ {acc['id']}: {e}")
+        health.note_platform_error(store, acc["id"], e.kind)
+        from .diagnose import advice_for
+        a["diagnosis"] = advice_for(plat, e.kind, str(e))
+        a.update(last_error=f"{e} [{e.kind}]"[:300], last_error_at=_iso(now))
+        errors.append(f"{acc['id']}: {e}")
+        if e.kind in ACCOUNT_COOLDOWN_H:  # беда аккаунта, а не ролика: ролик ждёт, попытки не тратятся
+            hrs = ACCOUNT_COOLDOWN_H[e.kind]
+            a.update(cooldown_until=(now + dt.timedelta(hours=hrs)).isoformat(), cooldown_reason=str(e)[:160])
+            clip["posts"][plat] = {**(clip["posts"].get(plat) or {}), "account": acc["id"], "status": "retry",
+                                   "error": str(e)[:300], "last_try": _iso(now)}
+            return False
+        post = clip["posts"].get(plat) or {"tries": 0}
+        post.update(account=acc["id"], error=str(e)[:300], last_try=_iso(now), tries=post.get("tries", 0) + 1)
+        post["status"] = "failed" if e.kind == "content" or post["tries"] >= 3 else "retry"
+        if post["status"] == "failed":
+            t["status"] = "failed"
+        clip["posts"][plat] = post
+        return False
+    except Exception as e:  # noqa: BLE001 — например, файл пропал из релиза
+        log(f"❌ {acc['id']}: {e}")
+        t["status"] = "failed"
+        clip["posts"][plat] = {"account": acc["id"], "status": "failed", "error": str(e)[:300], "last_try": _iso(now)}
+        errors.append(f"{acc['id']}: {e}")
+        return False
+    clip["posts"][plat] = {**res, "account": acc["id"], "posted_at": _iso(now), "reason": decision.get("reason"),
+                           "by": decision.get("by")}
+    t["status"] = "used"
+    if res.get("status") in ("posted", "inbox"):
+        maybe_delete_asset(clip, t.get("asset"))
+    cbd = {k: v for k, v in a.get("count_by_day", {}).items() if k >= (now - dt.timedelta(days=14)).date().isoformat()}
+    cbd[today] = cbd.get(today, 0) + 1
+    a["count_by_day"] = cbd
+    if res.get("status") == "inbox":
+        dbd = {k: v for k, v in a.get("drafts_by_day", {}).items() if k >= (now - dt.timedelta(days=14)).date().isoformat()}
+        dbd[today] = dbd.get(today, 0) + 1
+        a["drafts_by_day"] = dbd
+    a.update(last_post_at=_iso(now), last_clip=clip["id"], last_error=None, diagnosis=None)
+    log(f"✅ {acc['id']}: {res.get('status')} {res.get('url') or ''}")
+    return True
+

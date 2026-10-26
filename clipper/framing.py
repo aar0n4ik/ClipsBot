@@ -145,3 +145,28 @@ def x_expr(keys: list[tuple[float, float]], seg_start: float, crop_frac: float) 
         mid = f"(iw*({a:.4f}+({b - a:.4f})*{ease})-ow/2)"
         expr = f"if(lt({T}\\,{ta:.3f})\\,{px(a)}\\,if(lt({T}\\,{tb:.3f})\\,{mid}\\,{expr}))"
     return f"max(0\\,min(iw-ow\\,{expr}))"
+
+
+def static_crop(src: Path, start: float, end: float, crop_frac: float) -> list[tuple[float, float]]:
+    """Камера как в оригинале: ОДНО положение кадра на весь клип, никаких переездов.
+
+    По умолчанию — центр. Сдвигаемся (один раз и навсегда для клипа), только если человек устойчиво
+    оказался бы срезан центральным кадром: больше 60% замеров лица за краем центральной зоны."""
+    lo, hi = crop_frac / 2, 1 - crop_frac / 2
+    if not MODEL.exists():  # без модели лиц не угадываем: запасной способ по цвету кожи ошибается — центр, как в оригинале
+        return [(start, 0.5)]
+    try:
+        dets = detect_subject(src, start, end, step=1.0)
+    except Exception as e:  # noqa: BLE001
+        log(f"кадр: поиск лица не удался ({str(e)[:80]}) — центр")
+        dets = []
+    if len(dets) < max(3, 0.3 * (end - start)):
+        return [(start, 0.5)]
+    xs = np.array([d[1] for d in dets])
+    margin = crop_frac * 0.38                     # лицо должно быть не дальше этого от центра кадра
+    outside = float(np.mean(np.abs(xs - 0.5) > margin))
+    if outside < 0.6:
+        return [(start, 0.5)]
+    pos = float(min(hi, max(lo, np.median(xs))))
+    log(f"кадр: стример сбоку — фиксирую кадр на {pos:.2f} (без движения)")
+    return [(start, pos)]

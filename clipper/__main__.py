@@ -35,7 +35,16 @@ def main():
 
     cfg = load_config()
     store = Store()
+    from . import settings
+    settings.apply(cfg, store)          # настройки из дашборда поверх config.yaml
     dashboard_data.install(store, cfg)
+    sw = settings.switches(store)
+    gate = {"watch": "process", "process": "process", "post": "post", "stats": "stats"}.get(a.cmd)
+    if gate and sw.get(gate):
+        log(f"⏹ «{a.cmd}» остановлен из дашборда ({sw.get('note') or 'без комментария'}) — ничего не делаю")
+        health.report(store, a.cmd, "paused", "остановлено вручную из дашборда")
+        store.sync(f"{a.cmd}: остановлено вручную")
+        return
 
     if a.cmd == "watch":
         from .pipeline import cmd_watch

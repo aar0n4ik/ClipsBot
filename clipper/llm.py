@@ -22,6 +22,11 @@ class LLMError(RuntimeError):
     pass
 
 
+# $ за 1M токенов (вход, выход) — для оценки трат в журнале
+MODEL_PRICES = {"gemini-4-argon": (2.0, 10.0), "gemini-3.8-flash": (0.75, 3.75), "gemini-3.6-flash": (0.5, 3.0),
+                "gemini-3.5-flash-lite": (0.3, 2.5)}
+
+
 def _retry_after(msg: str, default: float) -> float:
     """Groq пишет «try again in 45ms», «try again in 1m30.5s», «try again in 2.5s»."""
     m = re.search(r"try again in\s+(\d+)m([\d.]+)s", msg)
@@ -170,6 +175,109 @@ class LLM:
         except (ValueError, LLMError) as e:  # битый JSON от модели: это ошибка ответа, идём на другой ключ
             raise LLMError(f"bad json: {str(e)[:200]} | {text[:200]}") from e
 
+    # ── Gemini напрямую: видео и звук (OpenAI-совместимый вход их не принимает) ──
+    def gemini_keys(self) -> list[dict]:
+        return [p for p in self.providers if "generativelanguage.googleapis.com" in p.get("base_url", "")]
+
+    def media_json(self, media: list[tuple[str, bytes]], prompt: str, *, model: str,
+                   fallback_models: list[str] | None = None, max_tokens: int = 4000,
+                   temperature: float = 0.3, fps: float | None = None, low_res: bool = True) -> dict:
+        """Gemini смотрит/слушает файл(ы) и отвечает JSON.
+
+        media — [(mime, bytes)], inline (до ~20 МБ на запрос). Ключи идут по кругу, как в chat_json.
+        Если модель недоступна (нет доступа/биллинга/модель не найдена) — пробуем следующую из fallback_models."""
+        import base64
+        keys = self.gemini_keys()
+        if not keys:
+            raise LLMError("нет ни одного ключа Gemini для видео")
+        parts = []
+        for mime, data in media:
+            part = {"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode()}}
+            if fps and mime.startswith("video/"):
+                part["video_metadata"] = {"fps": fps}
+            parts.append(part)
+        parts.append({"text": prompt})
+        gen = {"temperature": temperature, "maxOutputTokens": max_tokens}
+        if low_res:
+            gen["mediaResolution"] = "MEDIA_RESOLUTION_LOW"
+        est = sum(len(d) for _, d in media) // 40 + len(prompt) // 2 + max_tokens  # грубо: 1 токен ≈ 40 байт видео
+        models = [model] + [m for m in (fallback_models or []) if m != model]
+        last: Exception | None = None
+        for m in models:
+            skip: set[str] = set()
+            for _ in range(len(keys) * 3):
+                order = [p for p in self._available(skip) if p in keys]
+                if not order:
+                    break
+                p = order[0]
+                name = f"{p['name']}:{m}"
+                try:
+                    self._wait_for_budget(p, est)
+                    self._sent.setdefault(p["name"], []).append((time.time(), est))
+                    return self._gemini_call(p, m, parts, gen)
+                except LLMError as e:
+                    last = e
+                    msg, low = str(e), str(e).lower()
+                    if any(x in msg for x in ("404", "NOT_FOUND")) or "not found" in low or "billing" in low \
+                            or ("403" in msg and "permission" in low) or "not supported" in low:
+                        log(f"⚠️ {m}: модель недоступна ({msg[:120]}), беру запасную")
+                        break  # эта модель — дальше по списку моделей
+                    if "400" in msg and ("mediaresolution" in low or "video_metadata" in low or "unknown name" in low):
+                        gen.pop("mediaResolution", None)
+                        for part in parts:
+                            part.pop("video_metadata", None)
+                        continue
+                    if re.search(r"per ?day|perday|daily", low) and ("429" in msg or "quota" in low):
+                        self.dead.add(p["name"])
+                        continue
+                    pause = 60.0 if ("429" in msg or "quota" in low) else 120.0 if any(c in msg for c in ("500", "502", "503", "504")) else 30.0
+                    self.cool[p["name"]] = time.time() + pause
+                    skip.add(p["name"])
+                    log(f"↪ {name}: {msg[:120]} — пауза {pause:.0f} с, другой ключ")
+        raise LLMError(f"Gemini (видео) недоступен: {last}")
+
+    def _gemini_call(self, p: dict, model: str, parts: list, gen: dict) -> dict:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": gen}
+        try:
+            r = requests.post(url, json=body, timeout=300,
+                              headers={"x-goog-api-key": os.environ[p["key_env"]], "Content-Type": "application/json"})
+        except requests.RequestException as e:
+            raise LLMError(f"network {e}") from e
+        if r.status_code != 200:
+            raise LLMError(f"{r.status_code} {r.text[:400]}")
+        try:
+            data = r.json()
+            cand = (data.get("candidates") or [{}])[0]
+            text = "".join(x.get("text", "") for x in (cand.get("content") or {}).get("parts", []) if not x.get("thought"))
+        except (ValueError, KeyError, IndexError, TypeError) as e:
+            raise LLMError(f"bad response: {r.text[:300]}") from e
+        if not text:
+            raise LLMError(f"пустой ответ ({cand.get('finishReason')})")
+        u = data.get("usageMetadata") or {}
+        key = f"{p['name']}:{model}"
+        cur = self.usage.setdefault(key, [0, 0, 0])
+        cur[0] += 1
+        cur[1] += int(u.get("promptTokenCount", 0) or 0)
+        cur[2] += int(u.get("candidatesTokenCount", 0) or 0) + int(u.get("thoughtsTokenCount", 0) or 0)
+        try:
+            return parse_json_loose(text)
+        except (ValueError, LLMError) as e:
+            raise LLMError(f"bad json: {str(e)[:200]} | {text[:200]}") from e
+
+    def chat_json_model(self, messages: list[dict], model: str, fallback: bool = True, **kw) -> dict:
+        """Текстовый запрос к конкретной модели Gemini (например, сильной — для решений). Нет доступа — обычный chat_json."""
+        saved = self.providers
+        try:
+            self.providers = [{**p, "model": model, "name": f"{p['name']}@{model}"} for p in self.gemini_keys()] or saved
+            return self.chat_json(messages, **kw)
+        except LLMError:
+            if not fallback:
+                raise
+        finally:
+            self.providers = saved
+        return self.chat_json(messages, **kw)
+
     def totals(self) -> dict[str, list[int]]:
         return {k: list(v) for k, v in self.usage.items()}
 
@@ -177,6 +285,10 @@ class LLM:
         """Сколько ушло с момента снимка before: запросы, токены и оценка стоимости в USD."""
         prices = {p["name"]: (float(p.get("price_in", 0) or 0), float(p.get("price_out", 0) or 0))
                   for p in self.providers}
+        for name in self.usage:
+            if name not in prices:
+                model = name.split(":")[-1].split("@")[-1]
+                prices[name] = MODEL_PRICES.get(model, (0.75, 3.75))
         out, cost = {}, 0.0
         for name, (c1, i1, o1) in self.usage.items():
             c0, i0, o0 = before.get(name, [0, 0, 0])

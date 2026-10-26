@@ -50,11 +50,13 @@ def overall(c: dict) -> str:
         return "processing"
     if c.get("status") in ("broken", "skipped", "expired"):
         return c["status"]
-    if any(t.get("status", "ready") == "ready" for t in c.get("targets", {}).values()):
+    if any(pending_for(c, p) for p in c.get("targets", {})):
         return "ready"
+    if any(s in ("inbox", "inbox_stale") for s in st):  # лежит в черновиках TikTok: нужно опубликовать руками
+        return "inbox"
     if any(s == "failed" for s in st):
         return "failed"
-    if any(s in ("retry", "inbox") for s in st):  # inbox тоже retry в дашборде
+    if any(s == "retry" for s in st):
         return "retry"
     return c.get("status") or "ready"
 

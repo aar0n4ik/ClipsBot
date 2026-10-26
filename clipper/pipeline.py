@@ -11,17 +11,17 @@ from pathlib import Path
 
 import random
 
-from . import decisions, health, learn, releases
+from . import health, learn, releases
 from .audio import inspect_clip_audio
 from .bundles import record_moment
 from .cuts import speech_runs
 from .clips import normalize
 from .config import WORK_DIR, env
-from .judge import edit_clips, fallback_texts, grounded, judge_candidates, review_clip, snap_bounds, target_texts, translate_lines
+from .judge import edit_clips, grounded, judge_candidates, snap_bounds, target_texts
 from .llm import LLM
 from .platforms import connected_platforms
-from .qa import hook_quality, plan_opening, validate_render
-from .render import PANEL_H, W, chunk_words, extract_frames, fit_title, probe, render_clip, thumb_b64
+from .qa import hook_quality, validate_render
+from .render import PANEL_H, W, fit_title, probe, render_clip, thumb_b64
 from .signals import audio_rms_db, find_candidates
 from .store import Store
 from .transcribe import Transcriber, cut_wav
@@ -186,7 +186,11 @@ def cmd_process(cfg: dict, store: Store):
                               cfg["streamer"].get("language", "ru"))
     n = 0
     tried: set[str] = set()
+    from . import settings
     while time.time() - t0 < PROCESS_BUDGET_SEC - 50 * 60:
+        if settings.stopped(store, "process"):
+            log("⏹ нарезка остановлена из дашборда — выхожу после текущего куска")
+            break
         live = tw.live_stream(meta["user_id"])
         update_live(store, live)
         vods = tw.archives(meta["user_id"], 5)
@@ -240,62 +244,116 @@ def record_failure(store: Store, vod: dict, start: float, end: float, err: str) 
     return skipped
 
 
+FUNNEL = "status/funnel.json"
+
+
+def note_reject(store: Store, vod: dict, t_abs: float, stage: str, reason: str, score=None, what: str = ""):
+    """Почему момент НЕ стал клипом — коротко, для дашборда («Почему не взял»). Не засоряет журнал решений."""
+    f = store.read_json(FUNNEL, {}) or {}
+    rej = f.setdefault("rejected", [])
+    rej.append({"at": now_iso(), "vod_id": vod["id"], "t": round(t_abs, 1), "stage": stage, "score": score,
+                "reason": str(reason)[:220], "what": str(what)[:200]})
+    f["rejected"] = rej[-250:]
+    store.write_json(FUNNEL, f)
+
+
+def note_chunk(store: Store, vod: dict, label: str, counts: dict):
+    f = store.read_json(FUNNEL, {}) or {}
+    ch = f.setdefault("chunks", [])
+    ch.append({"at": now_iso(), "vod_id": vod["id"], "vod_title": vod.get("title"), "chunk": label, **counts})
+    f["chunks"] = ch[-60:]
+    store.write_json(FUNNEL, f)
+
+
+def _merge_scout(cands: list[dict], scouted: list[dict], chunk_start: float, length: float, p: dict) -> list[dict]:
+    """Моменты разведчика добавляются к пикам сигналов. Рядом с пиком (±45 с) — пик получает заметку и приоритет."""
+    out = list(cands)
+    for m in scouted:
+        near = [c for c in out if abs(c["peak_abs"] - m["abs"]) < 45]
+        if near:
+            near[0]["scout"] = m
+            continue
+        out.append({"peak_rel": int(m["abs"] - chunk_start), "peak_abs": m["abs"] + 8, "signal": 0.0,
+                    "breakdown": {"chat": 0, "keywords": 0, "spam_wave": 0, "audio": 0, "viewer_clips": 0},
+                    "chat_count": 0, "chat_sample": [], "viewer_clips": [], "scout": m})
+    return out
+
+
 def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcriber, meta: dict,
                   vod: dict, start: float, end: float, final: bool):
-    p, jcfg = cfg["processing"], cfg["judge"]
+    from . import brain
+    from .signals import PATTERNS, _chat_sample
+    p, ai, q = cfg["processing"], cfg.get("ai") or {}, cfg.get("quality") or {}
+    make_min = int(q.get("make_min", 7))
     vid = vod["id"]
     work = WORK_DIR / vid / str(int(start))
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True, exist_ok=True)
     label = f"{fmt_hms(start)}–{fmt_hms(end)}"
-    st = lambda stage, prog=None, **kw: store.set_status("process", state="running", stage=stage, vod_id=vid,
-                                                       vod_title=vod.get("title"), chunk=label, progress=prog, **kw)
+    counts = {"peaks": 0, "scout": 0, "candidates": 0, "text_pass": 0, "video_checked": 0, "video_pass": 0, "made": 0}
+
+    def st(stage_id, stage, prog=None):
+        store.set_status("process", state="running", stage=stage, stage_id=stage_id, vod_id=vid, vod_title=vod.get("title"),
+                         chunk=label, progress=prog, funnel=counts)
     log(f"=== VOD {vid} кусок {label} final={final}")
 
-    st("Скачиваю звук", 5)
+    st("audio", "Скачиваю звук", 4)
     audio = download_audio(vid, start, end, work / "audio.m4a")
     length = int(float(ffprobe_json(audio)["format"].get("duration", end - start)))
 
-    st("Читаю чат и клипы зрителей", 15)
+    st("chat", "Читаю чат и клипы зрителей", 10)
     msgs = download_chat(vid, start, end, work / "chat.json")
     created = parse_iso(vod["created_at"])
     try:
-        vclips = tw.clips(meta["user_id"], (created + dt.timedelta(seconds=start)).isoformat().replace("+00:00", "Z"),
-                          now_iso())
+        vclips = tw.clips(meta["user_id"], (created + dt.timedelta(seconds=start)).isoformat().replace("+00:00", "Z"), now_iso())
         vclips = [c for c in vclips if c.get("video_id") == vid and c.get("vod_offset") is not None
                   and start <= c["vod_offset"] <= end]
     except Exception as e:  # noqa: BLE001
         log(f"клипы зрителей недоступны: {e}")
         vclips = []
-    log(f"клипов зрителей: {len(vclips)}")
 
-    st("Ищу пики реакции", 22)
+    st("peaks", "Ищу пики реакции чата и звука", 14)
     db = audio_rms_db(audio, length)
-    vstate = store.read_json("vods.json", {}) or {}
-    rec = vstate.get(vid, {})
-    tail = 0 if final else int(p["context_after"] + p.get("chat_delay_seconds", 9) + 5)  # хвост доберёт следующий кусок
+    rec = (store.read_json("vods.json", {}) or {}).get(vid, {})
+    tail = 0 if final else int(p["context_after"] + p.get("chat_delay_seconds", 9) + 5)
     cands = find_candidates(cfg, msgs, vclips, db, start, rec.get("candidate_times", []), ignore_tail=tail)
+    counts["peaks"] = len(cands)
 
-    # транскрипция + кадры
+    if ai.get("scout_audio", True):
+        st("scout", "ИИ слушает весь кусок стрима целиком", 18)
+        try:
+            taken = rec.get("candidate_times", [])
+            scouted = [m for m in brain.scout(llm, cfg, audio, length, msgs, start, work, PATTERNS)
+                       if not any(abs(m["abs"] - t) < 60 for t in taken)
+                       and (final or m["abs"] < start + length - tail)]
+        except Exception as e:  # noqa: BLE001 — разведчик не обязателен
+            log(f"разведчик упал: {str(e)[:200]}")
+            scouted = []
+        counts["scout"] = len(scouted)
+        cands = _merge_scout(cands, scouted, start, length, p)
+    cands = cands[: int(p.get("max_candidates_per_chunk", 22))]
+    counts["candidates"] = len(cands)
+
+    # транскрипт окна вокруг каждого кандидата
     for i, c in enumerate(cands):
-        st(f"Расшифровываю речь {i + 1}/{len(cands)}", 25 + int(35 * i / max(1, len(cands))))
-        cs = max(start, c["peak_abs"] - p["context_before"])
-        ce = min(start + length, c["peak_abs"] + p["context_after"])
+        st("speech", f"Расшифровываю речь {i + 1}/{len(cands)}", 22 + int(28 * i / max(1, len(cands))))
+        sc = c.get("scout") or {}
+        before, after = float(p["context_before"]), float(p["context_after"])
+        if sc and sc.get("end_abs") and not c.get("signal"):
+            cs, ce = sc["abs"] - 20, min(sc["abs"] + 130, max(sc["end_abs"] + 15, sc["abs"] + 40))
+        else:
+            cs, ce = c["peak_abs"] - before, c["peak_abs"] + after
+        cs, ce = max(start, cs), min(start + length, ce)
         c.update(id=f"c{i}", ctx_start=cs, ctx_dur=ce - cs, peak_in_ctx=c["peak_abs"] - cs)
+        if not c["chat_sample"]:
+            near = [m for m in msgs if cs <= m["t"] <= ce + 15]
+            c["chat_sample"], c["chat_count"] = _chat_sample(near, c["peak_abs"]), len(near)
         wav = cut_wav(audio, cs - start, ce - cs, work / f"{c['id']}.wav")
         c["words"] = transcriber.words(wav)
         c["frames"] = []
-        if jcfg.get("use_frames"):
-            try:
-                low = download_video(vid, cs, ce, work / f"{c['id']}_low.mp4", max_height=360)
-                c["frames"] = extract_frames(low, [c["peak_in_ctx"] - 8, c["peak_in_ctx"], c["peak_in_ctx"] + 6], work)
-            except Exception as e:  # noqa: BLE001
-                log(f"кадры не получены: {str(e)[:150]}")
-    # пустые моменты (нет речи и почти нет реакции) — даже не показываем ИИ
-    alive = [c for c in cands if len(c["words"]) >= 5 or c["chat_count"] >= 10 or c["breakdown"]["viewer_clips"] >= 1]
-    log(f"живых кандидатов: {len(alive)}/{len(cands)}")
+    alive = [c for c in cands if len(c["words"]) >= 6 or c["breakdown"]["viewer_clips"] >= 1]
 
-    st("ИИ выбирает лучшие моменты", 62)
+    st("judge", f"ИИ оценивает {len(alive)} кандидатов по тексту", 52)
     policy = learn.load(store, cfg)
     try:
         learned = learn.learned_examples(store, cfg)
@@ -304,274 +362,304 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
         learned = {}
     u0 = llm.totals()
     verdicts = judge_candidates(llm, cfg, alive, learned, (policy.get("hints") or {}).get("length", "")) if alive else {}
-    scored = []
+    text_pass = []
     for c in alive:
         v = verdicts.get(c["id"])
-        if not v or not v.get("keep"):
+        if not v:
             continue
+        sc = int(v.get("score", 0) or 0)
         if int((v.get("risk") or {}).get("level", 0)) >= 3:
-            decisions.record(store, "skip", f"Клип {fmt_hms(c['peak_abs'])} не выложен: риск для аккаунта "
-                             f"({', '.join((v.get('risk') or {}).get('flags', [])) or 'высокий'})", reversible=False)
+            note_reject(store, vod, c["peak_abs"], "текст", "риск для аккаунта: " + ", ".join((v.get("risk") or {}).get("flags", [])), sc, v.get("why", ""))
             continue
-        scored.append((c, v))
-    scored.sort(key=lambda x: (-int(x[1].get("score", 0)), -x[0]["signal"]))
-    picked = select_for_chunk(cfg, store, scored, end - start)
-    log(f"к рендеру: {len(picked)} из {len(scored)} подходящих")
+        if sc < make_min - 1:
+            note_reject(store, vod, c["peak_abs"], "текст", v.get("why") or "слабый момент", sc)
+            continue
+        text_pass.append((c, v))
+    text_pass.sort(key=lambda x: (-int(x[1].get("score", 0)), -x[0]["signal"]))
+    finalists = text_pass[: max(2, int(q.get("max_per_chunk", 4)) * 2)]
+    for c, v in text_pass[len(finalists):]:
+        note_reject(store, vod, c["peak_abs"], "текст", "есть моменты сильнее в этом куске", v.get("score"), v.get("why", ""))
+    counts["text_pass"] = len(text_pass)
+    log(f"по тексту прошли {len(text_pass)} из {len(alive)}, на видео-проверку {len(finalists)}")
 
-    # границы → первые секунды (подрезка под первое слово) → второй проход ИИ
+    # режиссёр смотрит видео каждого финалиста
     plans = []
-    for c, v in picked:
+    for k, (c, v) in enumerate(finalists):
+        st("video", f"ИИ смотрит видео финалиста {k + 1}/{len(finalists)}", 58 + int(20 * k / max(1, len(finalists))))
         s0, e0 = snap_bounds(c["words"], v.get("start", 0), v.get("end", c["ctx_dur"]), c["ctx_dur"], cfg)
-        s0, opening = plan_opening(c["words"], s0, e0, cfg)
-        cw = [{"w": w["w"], "s": round(w["s"] - s0, 2), "e": round(w["e"] - s0, 2)} for w in c["words"] if s0 - 0.1 <= w["s"] < e0]
-        plans.append({"c": c, "v": v, "s": s0, "e": e0, "id": c["id"], "words": cw, "dur": e0 - s0, "opening": opening,
-                      "chat_sample": c["chat_sample"], "category": v.get("category"), "why": v.get("why")})
-    if plans:
-        st("ИИ пишет хуки и тексты под площадки", 68)
+        plan = _review_on_video(cfg, store, llm, vod, c, v, s0, e0, work)
+        counts["video_checked"] += 1
+        if plan:
+            plans.append(plan)
+    plans.sort(key=lambda x: -x["score"])
+    counts["video_pass"] = len(plans)
+
+    exc = int(q.get("exceptional", 9))
+    limit = int(q.get("max_per_chunk", 4))
+    picked = [x for x in plans if x["score"] >= make_min][:limit]
+    picked += [x for x in plans if x not in picked and x["score"] >= exc]
+    for x in plans:
+        if x not in picked:
+            note_reject(store, vod, x["abs_s"], "отбор", "в куске есть клипы сильнее (лимит на кусок)", x["score"], x.get("what", ""))
+
     platforms = targets_for(cfg, store)
     made = 0
-    # сначала тексты для всех клипов чанка (быстрый шаг, ИИ), потом монтаж и выкладка строго по одному:
-    # первый готовый клип уходит сразу, не дожидаясь остальных
-    edits = edit_clips(llm, cfg, plans) if plans else {}
-    for k, pl in enumerate(plans):
-        st(f"Монтирую клип {k + 1}/{len(plans)}", 70 + int(28 * k / max(1, len(plans))))
-        ed = edits.get(pl["id"])
-        if not ed and not cfg["clips"].get("allow_fallback_texts", False):
-            log(f"клип {pl['id']} отложен: ИИ-редактор не ответил, а тексты без него не выпускаю")
-            health.report(store, "render", "warn", f"клип {pl['id']} отложен: редактор не ответил")
-            continue
+    for k, pl in enumerate(picked):
+        st("render", f"Монтирую клип {k + 1}/{len(picked)}", 80 + int(18 * k / max(1, len(picked))))
         try:
-            ed = ed or fallback_texts(pl["v"], pl["words"])
-            made += bool(make_clip(cfg, store, llm, policy, vod, pl, ed, platforms, work))
+            made += bool(make_clip(cfg, store, llm, policy, vod, pl, platforms, work))
         except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
             log(f"⚠️ клип не собран: {str(e)[:400]}")
             health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
+    counts["made"] = made
 
     spent = llm.delta(u0)
     if spent["by_model"]:
-        log(f"ИИ за кусок: {sum(x['calls'] for x in spent['by_model'].values())} запросов, ≈${spent['usd']:.4f}, "
-            + ", ".join(f"{k} {v['in']}+{v['out']} ток." for k, v in spent["by_model"].items()))
+        log(f"ИИ за кусок: {sum(x['calls'] for x in spent['by_model'].values())} запросов, ≈${spent['usd']:.4f}")
+    counts["usd"] = spent["usd"]
+    note_chunk(store, vod, label, counts)
+    vstate = store.read_json("vods.json", {}) or {}
+    rec = vstate.get(vid, rec)
     rec.update(title=vod.get("title"), created_at=vod["created_at"], duration=vod["duration_sec"],
-               llm=spent,
+               llm={"usd": round(float((rec.get("llm") or {}).get("usd", 0) or 0) + spent["usd"], 4)},
                processed_until=max(int(rec.get("processed_until", 0)), int(end)), finished=bool(final),
-               candidate_times=(rec.get("candidate_times", []) + [c["peak_abs"] for c in cands])[-300:],
+               candidate_times=(rec.get("candidate_times", []) + [c["peak_abs"] for c in cands])[-400:],
                clips=int(rec.get("clips", 0)) + made, updated_at=now_iso())
     rec["gaps"] = [g for g in rec.get("gaps", []) if not (g["start"] >= start and g["end"] <= end)]
     rec.get("fails", {}).pop(f"{int(start)}-{int(end)}", None)
-    vstate = store.read_json("vods.json", {}) or {}
     vstate[vid] = rec
     store.write_json("vods.json", vstate)
     store.sync(f"vod {vid}: кусок {label}, клипов {made}")
     shutil.rmtree(work, ignore_errors=True)
 
 
+def _review_on_video(cfg, store: Store, llm: LLM, vod: dict, c: dict, v: dict, s0: float, e0: float, work: Path) -> dict | None:
+    """Скачать фрагмент в 360p → проверить зависания → Gemini смотрит и режет → план клипа (или None с причиной)."""
+    from . import brain
+    ai, q = cfg.get("ai") or {}, cfg.get("quality") or {}
+    make_min = int(q.get("make_min", 7))
+    pad = 3.0
+    p0 = max(c["ctx_start"], c["ctx_start"] + s0 - pad)          # начало превью, абсолютное время VOD
+    p1 = c["ctx_start"] + min(c["ctx_dur"], e0 + pad)
+    t_abs = c["ctx_start"] + s0
+    try:
+        low = download_video(vod["id"], p0, p1, work / f"{c['id']}_low.mp4", max_height=480)
+        tech = brain.freeze_report(low)
+    except Exception as e:  # noqa: BLE001
+        log(f"превью {c['id']} не скачалось: {str(e)[:160]}")
+        low, tech = None, {}
+    off = p0 - c["ctx_start"]                                    # секунды окна → секунды превью: x - off
+    if tech.get("frozen_frac", 0) > 0.35:
+        note_reject(store, vod, t_abs, "видео", f"лаги записи: картинка стоит {tech['frozen']} с из {tech['duration']} с",
+                    v.get("score"), v.get("why", ""))
+        return None
+    js = None
+    if ai.get("video_review", True) and low is not None:
+        try:
+            prev = brain.preview_clip(low, work / f"{c['id']}_prev.mp4")
+            words_rel = [{"w": w["w"], "s": round(w["s"] - off, 2), "e": round(w["e"] - off, 2)}
+                         for w in c["words"] if off - 0.1 <= w["s"] <= p1 - c["ctx_start"]]
+            js = brain.direct(llm, cfg, prev, words_rel, c.get("chat_sample", []), v, tech)
+        except Exception as e:  # noqa: BLE001
+            log(f"режиссёр не ответил по {c['id']}: {str(e)[:200]}")
+            js = None
+    if js is None:
+        # без видео-проверки выпускаем только очень уверенные по тексту моменты
+        if int(v.get("score", 0)) < make_min + 1:
+            note_reject(store, vod, t_abs, "видео", "видео-проверка недоступна, а по тексту момент не железный", v.get("score"), v.get("why", ""))
+            return None
+        ed = edit_clips(llm, cfg, [{"id": c["id"], "dur": e0 - s0, "category": v.get("category"), "why": v.get("why"),
+                                     "words": [{"w": w["w"], "s": round(w["s"] - s0, 2), "e": round(w["e"] - s0, 2)} for w in c["words"] if s0 - 0.1 <= w["s"] < e0],
+                                     "chat_sample": c.get("chat_sample", [])}]).get(c["id"])
+        if not ed:
+            note_reject(store, vod, t_abs, "тексты", "ИИ-редактор не ответил", v.get("score"))
+            return None
+        return {"c": c, "v": v, "s": s0, "e": e0, "cuts": [], "ed": ed, "score": int(v.get("score", 0)), "abs_s": t_abs,
+                "what": v.get("why", ""), "brain": {"text": _brief(v), "video": None, "tech": tech}}
+    score = int(js.get("score", 0) or 0)
+    lag = int((js.get("technical") or {}).get("lag", 0) or 0)
+    why_bad = None
+    if str(js.get("verdict", "")).lower() != "post":
+        why_bad = js.get("reject_reason") or "режиссёр не советует публиковать"
+    elif lag >= 2:
+        why_bad = "лаги: " + ", ".join((js.get("technical") or {}).get("issues") or ["картинка тормозит"])
+    elif js.get("standalone") is False:
+        why_bad = "непонятно без контекста стрима"
+    elif score < make_min:
+        why_bad = f"после просмотра видео оценка {score}: {js.get('moment') or js.get('what_happens') or ''}"
+    elif int((js.get("risk") or {}).get("level", 0) or 0) >= 3:
+        why_bad = "риск для аккаунта: " + ", ".join((js.get("risk") or {}).get("flags", []))
+    if why_bad:
+        note_reject(store, vod, t_abs, "видео", why_bad, score, js.get("what_happens", ""))
+        return None
+    # время превью → время окна
+    try:
+        ns, ne = float(js.get("start", s0 - off)) + off, float(js.get("end", e0 - off)) + off
+    except (TypeError, ValueError):
+        ns, ne = s0, e0
+    ns, ne = max(0.0, min(ns, c["ctx_dur"] - 1)), min(c["ctx_dur"], max(ne, ns + 1))
+    s1, e1 = snap_bounds(c["words"], ns, ne, c["ctx_dur"], cfg)
+    cuts = []
+    for cut in js.get("cuts") or []:
+        try:
+            a, b = float(cut[0]) + off, float(cut[1]) + off
+        except (TypeError, ValueError, IndexError):
+            continue
+        if s1 < a < b < e1 and b - a >= 0.6:
+            cuts.append((round(a, 2), round(b, 2)))
+    v2 = {**v, "score": score, "category": js.get("category") or v.get("category"), "risk": js.get("risk") or v.get("risk"),
+          "why": js.get("moment") or v.get("why"), "subscores": js.get("subscores") or {}}
+    return {"c": c, "v": v2, "s": s1, "e": e1, "cuts": cuts, "ed": js, "score": score, "abs_s": c["ctx_start"] + s1,
+            "what": js.get("what_happens", ""),
+            "brain": {"text": _brief(v), "video": {k: js.get(k) for k in ("verdict", "score", "subscores", "what_happens",
+                                                                        "moment", "technical", "standalone")},
+                      "tech": tech}}
+
+
+def _brief(v: dict) -> dict:
+    return {k: v.get(k) for k in ("score", "hook", "payoff", "clarity", "emotion", "rewatch", "why", "category")}
+
+
 def targets_for(cfg: dict, store: Store) -> list[str]:
-    """Под какие площадки рендерить: TikTok всегда + всё, что подключено."""
+    """Под какие площадки готовить тексты: включённые в настройках и подключённые (TikTok — всегда, если включён)."""
+    on = cfg.get("platforms") or {"tiktok": 1, "youtube": 1, "instagram": 1}
     plats = ["tiktok"] + sorted(connected_platforms(cfg, store) - {"tiktok"})
-    return [p for p in plats if p in (cfg.get("platforms") or {"tiktok": 1, "youtube": 1, "instagram": 1})]
+    return [p for p in plats if p in on]
 
 
-def select_for_chunk(cfg: dict, store: Store, scored: list, chunk_s: float) -> list:
-    """Сколько клипов рендерим из куска стрима. Не больше дневной нормы на весь день, а не на кусок:
-    средний стрим ~8 ч, значит кусок в 2 ч — это четверть дня. Слабые клипы не выпускаем, даже если их много.
-    Исключения: очень сильный момент (exceptional_score) и свежая по времени тема (fresh_score) берём сверх лимита."""
-    from datetime import datetime, timedelta, timezone
-    from .platforms import accounts as list_accounts
-    p = cfg["processing"]
-    policy = learn.load(store, cfg)
-    per_plat = {}
-    for a in list_accounts(cfg):
-        per_plat[a["platform"]] = per_plat.get(a["platform"], 0) + learn.daily_cap(policy, a, cfg)
-    day_target = max(per_plat.values() or [4])          # клипов в сутки (каждый выходит на всех площадках)
-    # сколько уже есть: готовые в очереди и выложенные за последние сутки
-    ready, posted = 0, 0
-    since = datetime.now(timezone.utc) - timedelta(hours=24)
-    for raw in store.list_json("queue"):
-        c = normalize(raw)
-        if any(t.get("status", "ready") == "ready" for t in c["targets"].values()):
-            ready += 1
-        for pst in c.get("posts", {}).values():
-            try:
-                ts = datetime.fromisoformat(str(pst.get("posted_at", "")).replace("Z", "+00:00"))
-                if ts.tzinfo is None:
-                    ts = ts.replace(tzinfo=timezone.utc)
-                if ts >= since:
-                    posted += 1
-                    break
-            except ValueError:
-                continue
-    room = day_target - ready - posted
-    share = max(1, round(day_target * (chunk_s / 60) / (float(p.get("expected_stream_hours", 8)) * 60)))
-    hard = int(p.get("max_renders_per_chunk", 3))
-    exc, fresh_bar = int(p.get("exceptional_score", 9)), int(p.get("fresh_score", 8))
-    bar = int(cfg["judge"].get("min_score", 5))
-    limit = min(hard, room, share + 1) if room > 0 else 0   # за кусок не больше share+1, чтобы норма не сгорела в первом куске
-    if room <= 0:
-        bar = max(bar, exc)                              # день уже полон: только по-настоящему сильное
-    def is_exc(v):
-        sc = int(v.get("score", 0))
-        return sc >= exc or (bool(v.get("fresh")) and sc >= fresh_bar)
-    picked = [x for x in scored if int(x[1].get("score", 0)) >= max(bar, 7 if room > 0 else bar)][:limit]
-    for x in scored:
-        if len(picked) >= hard:
-            break
-        if x not in picked and is_exc(x[1]):
-            picked.append(x)
-    if not picked and room > 0 and scored and int(scored[0][1].get("score", 0)) >= 6:
-        picked = scored[:1]                              # хотя бы один лучший, если совсем ничего не прошло
-    log(f"дневная норма {day_target}: в очереди {ready}, выложено за сутки {posted}, осталось {max(room, 0)}; кусок ≈{share} клип(а)")
-    return picked
-
-
-def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, ed: dict, platforms: list[str],
-              work: Path) -> bool:
-    c, v = pl["c"], pl["v"]
+def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, platforms: list[str], work: Path) -> bool:
+    """Один монтаж → один файл → одинаковое видео на всех площадках (разные только тексты под площадку)."""
+    from . import brain
+    from .framing import static_crop
+    c, v, ed = pl["c"], pl["v"], pl["ed"]
     s, e = pl["s"], pl["e"]
     cl = cfg["clips"]
     abs_s, dur = c["ctx_start"] + s, e - s
     clip_id = f"{vod['id']}_{int(abs_s)}"
-    ok, why = review_clip(llm, cfg, pl, ed)
-    if not ok:
-        decisions.record(store, "skip", f"Клип {fmt_hms(abs_s)} не выложен после проверки: {why}", reversible=False)
+    if store.read_json(f"queue/{clip_id}.json"):
+        log(f"{clip_id} уже есть в очереди — пропускаю")
         return False
-    pad = min(3.0, abs_s)
-    src_off = abs_s - pad  # время в записи VOD, с которого начинается скачанный исходник
-    src = download_video(vod["id"], src_off, abs_s + dur + 2, work / f"{clip_id}_src.mp4")
+    pad = min(2.0, abs_s)
+    src_off = abs_s - pad
+    src = download_video(vod["id"], src_off, abs_s + dur + 1.5, work / f"{clip_id}_src.mp4")
 
-    # звук: заглушка Twitch / музыка в фоне
     au = inspect_clip_audio(src, pad, dur, work, cfg)
     if au["action"] == "skip":
-        decisions.record(store, "skip", f"Клип {fmt_hms(abs_s)} пропущен: {au['reason']}", reversible=False)
+        note_reject(store, vod, abs_s, "звук", au["reason"], pl["score"], pl.get("what", ""))
         return False
     risk = dict(v.get("risk") or {"level": 0, "flags": []})
-    if au["action"] in ("vocals", "flag"):
-        decisions.record(store, "audio", f"Клип {fmt_hms(abs_s)}: {au['reason']}", reversible=False)
     if au["action"] == "flag":
         risk["flags"] = sorted(set(risk.get("flags", [])) | {"music"})
 
-    words_src = [{"w": w["w"], "s": w["s"] + pad, "e": w["e"] + pad} for w in pl["words"]]
-
-    # обрезка пауз: длинное молчание и пустые секунды вырезаются, короткие паузы остаются
-    mn = float(cl["min_seconds"])
+    # слова и вырезы — во времени исходника (src)
+    to_src = lambda t: t - s + pad
+    words_src = [{"w": w["w"], "s": round(to_src(w["s"]), 2), "e": round(to_src(w["e"]), 2)}
+                 for w in c["words"] if s - 0.1 <= w["s"] < e]
+    mn = float(cl.get("min_seconds", 10))
+    segs = [(pad, pad + dur)]
     if cl.get("trim_silence", True):
-        segs_main = speech_runs(words_src, pad, pad + dur, max_gap=float(cl.get("trim_gap_seconds", 1.2)))
-        if sum(b - a for a, b in segs_main) < 0.8 * mn:
-            segs_main = [(pad, pad + dur)]
-    else:
-        segs_main = [(pad, pad + dur)]
-    kept = sum(b - a for a, b in segs_main)
-    main = (segs_main[0][0], segs_main[-1][1])
+        runs = speech_runs(words_src, pad, pad + dur, max_gap=float(cl.get("trim_gap_seconds", 1.2)))
+        if sum(b - a for a, b in runs) >= 0.75 * mn:
+            segs = runs
+    if pl.get("cuts"):
+        cut = brain.apply_cuts(segs, [(to_src(a), to_src(b)) for a, b in pl["cuts"]])
+        if sum(b - a for a, b in cut) >= 0.75 * mn:
+            segs = cut
+    kept = sum(b - a for a, b in segs)
+    from .render import words_to_output
+    words_final = words_to_output(words_src, segs)
 
-    co = ed.get("cold_open") or {}
-    co_seg = None
+    # хуки: правдивые, не скопированные из примеров; критик — последний голос
+    tr = " ".join(w["w"] for w in words_final)
+    orig = [h for h in (ed.get("hooks") or []) if isinstance(h, dict)]
     try:
-        a, b = float(co.get("start", -1)), float(co.get("end", -1))
-        if co.get("use") and 5 <= a < b <= dur and b - a <= 3.0 and dur >= 16:
-            co_seg = (pad + a, pad + b)
-    except (TypeError, ValueError):
-        pass
-    if pl["opening"].get("speech_start") is None and co_seg is None and v.get("payoff_at"):
-        pa = float(v["payoff_at"]) - s  # в начале нет речи — показываем развязку первой
-        if 5 <= pa <= dur - 1:
-            co_seg = (pad + pa - 0.3, pad + min(dur, pa + 2.0))
-    # контекстные подписи сверху (белые, временные) по умолчанию выключены
-    notes = ([n for n in (ed.get("notes") or []) if isinstance(n, dict)][:2]
-             if cl.get("context_notes", False) else [])
+        pick_text = orig[int(ed.get("pick", 0) or 0)].get("text")
+    except (IndexError, ValueError, TypeError):
+        pick_text = None
+    hooks = [h for h in orig if h.get("text") and not brain.leaked(h["text"])]
+    if not hooks:
+        note_reject(store, vod, abs_s, "тексты", "нет нормального заголовка", pl["score"], pl.get("what", ""))
+        return False
+    pick = next((i for i, h in enumerate(hooks) if h.get("text") == pick_text), 0)
+    ed = {**ed, "hooks": hooks, "pick": pick}
+    rng = random.Random(clip_id)
+    variant = learn.choose_variant(policy, "all", cfg, rng)
+    if variant.get("hook_style") not in {h.get("style") for h in hooks}:
+        variant["hook_style"] = hooks[pick].get("style")
+    tx0 = target_texts(ed, "tiktok", variant.get("hook_style"), cfg)
+    crit = brain.criticize(llm, cfg, ed, words_final, tx0["hook"])
+    if not crit.get("ok", True) or crit.get("title_matches") is False or crit.get("makes_sense") is False:
+        fix = (crit.get("fix_hook") or "").strip()
+        if crit.get("makes_sense") is False or not fix or brain.leaked(fix):
+            note_reject(store, vod, abs_s, "критик", "; ".join(crit.get("problems") or ["заголовок не совпадает с роликом"]),
+                        pl["score"], pl.get("what", ""))
+            return False
+        hooks = [{"style": tx0["hook_style"], "text": fix}] + [h for h in hooks if h.get("text") != tx0["hook"]
+                                                              and h.get("style") != tx0["hook_style"]]
+        variant["hook_style"] = tx0["hook_style"]
+        if crit.get("fix_title"):
+            ed = {**ed, "youtube": {**(ed.get("youtube") or {}), "title": crit["fix_title"]}}
+        ed = {**ed, "hooks": hooks, "pick": 0}
+    for key, field in (("tiktok", "caption"), ("youtube", "title"), ("instagram", "caption")):
+        pp = ed.get(key) or {}
+        if grounded(pp.get(field, ""), tr + " " + str(pl.get("what", ""))) < 0.4:
+            ed[key] = {**pp, field: hooks[0]["text"]}
+
     out_dir = work / "out"
     out_dir.mkdir(exist_ok=True)
-    from .framing import detect_subject, plan_pan
-    panel_asp = W_PANEL_ASPECT
     sw, sh, _ = probe(src)
-    crop_frac = min(1.0, (sh * panel_asp) / sw) if sw else 1.0
-    pan = (plan_pan(detect_subject(src, main[0], main[1]), main[0], main[1], crop_frac)
-           if cl.get("follow_subject", True) and crop_frac < 0.98 and sh <= sw * 1.2 else None)
-    # хук и тексты должны опираться на то, что реально сказано: иначе ролик врёт про стримера
-    tr = " ".join(w["w"] for w in pl["words"])
-    hooks_ok = [h for h in (ed.get("hooks") or []) if isinstance(h, dict) and grounded(h.get("text", ""), tr) >= 0.6]
-    if not hooks_ok:
-        decisions.record(store, "skip", f"Клип {fmt_hms(abs_s)} не выложен: хуки не совпадают с речью стримера",
-                         reversible=False)
+    crop_frac = min(1.0, (sh * W_PANEL_ASPECT) / sw) if sw else 1.0
+    pan = static_crop(src, segs[0][0], segs[-1][1], crop_frac) if crop_frac < 0.98 and sh <= sw * 1.2 else None
+    tx_all = {plat: target_texts(ed, plat, variant.get("hook_style"), cfg) for plat in platforms}
+    lead = tx_all.get("tiktok") or next(iter(tx_all.values()))
+    title = fit_title(*lead["hook_alts"])
+    out = out_dir / f"{clip_id}.mp4"
+    problems = []
+    for attempt in range(2):
+        try:
+            render_clip(src, segs, words_src, title, cfg, out, variant={}, audio_override=au.get("audio_override"),
+                        pan_keys=pan)
+            problems = validate_render(out, kept, "instagram")
+        except Exception as ex:  # noqa: BLE001
+            problems = [f"рендер упал: {str(ex)[:160]}"]
+        if not problems:
+            break
+        log(f"⚠️ {clip_id}: {problems} — попытка {attempt + 2}")
+    if problems:
+        health.report(store, "render", "warn", f"{clip_id}: " + "; ".join(problems))
+        note_reject(store, vod, abs_s, "монтаж", "; ".join(problems), pl["score"])
         return False
-    ed = {**ed, "hooks": hooks_ok}
-    for key, field in (("tiktok", "caption"), ("youtube", "title"), ("instagram", "caption")):
-        p = ed.get(key) or {}
-        if grounded(p.get(field, ""), tr) < 0.5:
-            ed[key] = {**p, field: hooks_ok[0]["text"]}
-    rng = random.Random(clip_id)
-    targets, thumb, en_cache = {}, None, {}
-    for plat in platforms:
-        variant = learn.choose_variant(policy, plat, cfg, rng)
-        tx = target_texts(ed, plat, variant.get("hook_style"), cfg)
-        use_cold = bool(co_seg and variant.get("cold_open", True))
-        segs = ([co_seg] if use_cold else []) + segs_main
-        variant["cold_open"] = use_cold
-        lag = (co_seg[1] - co_seg[0]) if use_cold else 0.0
-        pnotes = [{"t": float(n.get("t", 0)) + lag, "text": n.get("text", "")} for n in notes]
-        en = None
-        if variant.get("subtitles") == "both" and pl["words"]:
-            if "en" not in en_cache:
-                try:
-                    en_cache["en"] = translate_lines(llm, [" ".join(x["w"] for x in ch)
-                                                           for ch in chunk_words(pl["words"])])
-                except Exception as ex:  # noqa: BLE001
-                    log(f"перевод недоступен: {ex}")
-                    en_cache["en"] = None
-            en = en_cache["en"]
-            if not en:
-                variant["subtitles"] = "ru"
-        title = fit_title(*tx["hook_alts"])
-        out = out_dir / f"{clip_id}_{plat}.mp4"
-        total = sum(b - a for a, b in segs)
-        problems = []
-        for attempt in range(2):
-            try:
-                render_clip(src, segs, words_src, title, cfg, out, notes=pnotes, variant=variant,
-                            audio_override=au.get("audio_override"), en_lines=en, pan_keys=pan)
-                problems = validate_render(out, total, plat)
-            except Exception as ex:  # noqa: BLE001
-                problems = [f"рендер упал: {str(ex)[:160]}"]
-            if not problems:
-                break
-            log(f"⚠️ {clip_id} {plat}: {problems} — попытка {attempt + 2}")
-            variant = {**variant, "progress_bar": False}
-        if problems:
-            health.report(store, "render", "warn", f"{clip_id} {plat}: " + "; ".join(problems))
-            continue
-        if thumb is None:
-            thumb = thumb_b64(out, at=min(1.0, total / 2))
-        hq = hook_quality(pl["opening"], use_cold, title[0])
+    thumb = thumb_b64(out, at=min(1.2, kept / 2))
+    asset = releases.upload(out)
+    hq = hook_quality({"speech_start": (words_final[0]["s"] if words_final else None)}, False, title[0])
+    targets = {}
+    for plat, tx in tx_all.items():
         targets[plat] = {**{k: val for k, val in tx.items() if k != "hook_alts"}, "hook_alts": tx["hook_alts"][:4],
-                         "asset": releases.upload(out), "size": out.stat().st_size, "duration": round(total, 1),
-                         "variant": variant, "hook_quality": hq, "status": "ready",
-                         "comment": humanize_comment(ed.get("comment", "")), "cover_ms": 600}
-    if not targets:
-        decisions.record(store, "skip", f"Клип {fmt_hms(abs_s)} не собран ни под одну площадку (рендер/проверка)",
-                         reversible=False)
-        return False
+                         "hook": lead["hook"], "hook_style": lead["hook_style"],
+                         "asset": asset, "size": out.stat().st_size, "duration": round(kept, 1),
+                         "variant": {"hook_style": lead["hook_style"]}, "hook_quality": hq, "status": "ready",
+                         "comment": humanize_comment(ed.get("comment", "")), "cover_ms": 500}
     store.write_json(f"queue/{clip_id}.json", {
         "id": clip_id, "vod_id": vod["id"], "vod_title": vod.get("title"), "vod_time": round(abs_s, 1),
-        "duration": round(kept, 1), "score": int(v.get("score", 0)),
-        "subscores": {k: v.get(k) for k in ("hook", "payoff", "clarity", "emotion", "relate")},
-        "category": v.get("category", "other"), "risk": risk, "why": v.get("why", ""),
-        "overlay": next(iter(targets.values()))["hook"], "signal": c["signal"], "breakdown": c["breakdown"],
+        "duration": round(kept, 1), "score": int(pl["score"]), "subscores": v.get("subscores") or {},
+        "category": v.get("category", "other"), "risk": risk, "why": v.get("why", ""), "what": pl.get("what", ""),
+        "overlay": lead["hook"], "signal": c.get("signal", 0), "breakdown": c.get("breakdown", {}),
         "audio": {k: au[k] for k in ("muted", "music", "action") if k in au} | {"reason": au.get("reason")},
-        "opening": pl["opening"], "notes": notes, "transcript": " ".join(w["w"] for w in pl["words"])[:600],
-        "thumb": thumb, "targets": targets, "posts": {}, "created_at": now_iso(),
-        "live_when_made": bool((store.read_json("status/live.json", {}) or {}).get("is_live")),
-        "uid": uuid.uuid4().hex[:8],
-        "vod_url": f"https://www.twitch.tv/videos/{vod['id']}?t={_hms(src_off + segs_main[0][0])}",
+        "brain": {**pl.get("brain", {}), "critic": {k: crit.get(k) for k in ("ok", "problems", "fix_hook", "skipped")},
+                  "cuts": len(segs) - 1, "trimmed_s": round(dur - kept, 1)},
+        "transcript": tr[:700], "thumb": thumb, "targets": targets, "posts": {}, "created_at": now_iso(),
+        "live_when_made": bool((store.read_json("status/live.json", {}) or {}).get("is_live")), "fresh": bool(v.get("fresh")),
+        "uid": uuid.uuid4().hex[:8], "asset": asset,
+        "vod_url": f"https://www.twitch.tv/videos/{vod['id']}?t={_hms(src_off + segs[0][0])}",
     })
-    # для связок: где в записи лежат куски и какие в них слова (абсолютное время VOD)
     record_moment(store, {
         "id": clip_id, "vod_id": vod["id"], "vod_title": vod.get("title"), "created_at": now_iso(),
-        "t": round(src_off + segs_main[0][0], 2), "category": v.get("category", "other"),
-        "score": int(v.get("score", 0)), "text": " ".join(w["w"] for w in pl["words"])[:400],
-        "segments": [[round(src_off + a, 2), round(src_off + b, 2)] for a, b in segs_main],
-        "words": [[w["w"], round(src_off + w["s"], 2), round(src_off + w["e"], 2)] for w in words_src][:120],
+        "t": round(src_off + segs[0][0], 2), "category": v.get("category", "other"), "score": int(pl["score"]),
+        "text": tr[:400], "segments": [[round(src_off + a, 2), round(src_off + b, 2)] for a, b in segs],
+        "words": [[w["w"], round(src_off + w["s"], 2), round(src_off + w["e"], 2)] for w in words_src][:160],
     })
-    store.sync(f"клип {clip_id} готов (score {v.get('score')}, площадки: {', '.join(targets)})")
-    hooks = ", ".join(p + ": «" + t["hook"] + "»" for p, t in targets.items())
-    log(f"✅ {clip_id} score={v.get('score')} {kept:.0f}с → {hooks}")
+    store.sync(f"клип {clip_id} готов (оценка {pl['score']}, {kept:.0f} с)")
+    log(f"✅ {clip_id} оценка={pl['score']} {kept:.0f}с (вырезано {dur - kept:.1f} с) «{lead['hook']}»")
     return True
 
 
