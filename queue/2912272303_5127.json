@@ -1,0 +1,200 @@
+{
+ "id": "2912272303_5127",
+ "vod_id": "2912272303",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 5127.1,
+ "duration": 18.9,
+ "span": 32.8,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 7,
+  "clarity": 8,
+  "emotion": 7,
+  "rewatch": 5
+ },
+ "category": "funny",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Стример надевает ковбойскую шляпу и драматично цитирует фильм Горбатая гора.",
+ "what": "Стример находит ковбойскую шляпу в магазине костюмов и эмоционально отыгрывает сцену из фильма Горбатая гора.",
+ "overlay": "Нашёл ковбойскую шляпу",
+ "signal": 0.0,
+ "breakdown": {
+  "chat": 0,
+  "keywords": 0,
+  "spam_wave": 0,
+  "audio": 0,
+  "viewer_clips": 0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.381,
+   "stability": 0.378,
+   "tonal": 0.0,
+   "beat": 0.148
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "brain": {
+  "text": {
+   "score": 7,
+   "hook": 7,
+   "payoff": 7,
+   "clarity": 8,
+   "emotion": 7,
+   "rewatch": 6,
+   "why": "Стример находит ковбойскую шляпу в хэллоуинском магазине и смешно отыгрывает сцену из 'Горбатой горы'. Понятный юмор без контекста стрима.",
+   "category": "funny"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 7,
+    "payoff": 7,
+    "clarity": 8,
+    "emotion": 7,
+    "rewatch": 5
+   },
+   "what_happens": "Стример находит ковбойскую шляпу в магазине костюмов и эмоционально отыгрывает сцену из фильма Горбатая гора.",
+   "moment": "Стример надевает ковбойскую шляпу и драматично цитирует фильм Горбатая гора.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 57.9,
+   "frozen": 0.9,
+   "frozen_frac": 0.016,
+   "freezes": [
+    [
+     15.5,
+     16.5
+    ]
+   ],
+   "black": 0
+  },
+  "proofread": [],
+  "length": null,
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 5,
+  "trimmed_s": 13.9
+ },
+ "transcript": "Сука, чисто чисто, блядь, горбатая гора. Мы могли быть счастливы. Мы могли быть счастливы, если бы ты если бы ты не там не это того. Кто смотрел, тот понял. Мы могли быть счастливы на этой горбатой горе. С тобой, вдвоём. Не, ну есть же что-то.",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Нашёл ковбойскую шляпу",
+   "hook_style": "tease",
+   "caption": "Примерил ковбойскую шляпу в магазине и вошёл в образ #ковбой #горбатаягора #стрим #юмор",
+   "hashtags": [
+    "#ковбой",
+    "#горбатаягора",
+    "#стример",
+    "#юмор"
+   ],
+   "hook_alts": [
+    "Нашёл ковбойскую шляпу",
+    "Ковбой в магазине",
+    "1 шляпа меняет всё",
+    "Чисто Горбатая гора"
+   ],
+   "asset": "2912272303_5127.mp4",
+   "size": 15707336,
+   "duration": 18.9,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Шляпа ему реально идет?",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Нашёл ковбойскую шляпу",
+   "hook_style": "tease",
+   "caption": "Нашёл ковбойскую шляпу",
+   "hashtags": [
+    "#ковбой",
+    "#горбатаягора",
+    "#юмор",
+    "#магазинкостюмов"
+   ],
+   "hook_alts": [
+    "Нашёл ковбойскую шляпу",
+    "Ковбой в магазине",
+    "1 шляпа меняет всё",
+    "Чисто Горбатая гора"
+   ],
+   "asset": "2912272303_5127.mp4",
+   "size": 15707336,
+   "duration": 18.9,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Шляпа ему реально идет?",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Нашёл ковбойскую шляпу",
+   "hook_style": "tease",
+   "title": "Стример примерил ковбойскую шляпу",
+   "description": "Стример находит ковбойскую шляпу в хэллоуинском магазине и разыгрывает драматичную сцену\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "стрим",
+    "ковбой",
+    "горбатая гора",
+    "юмор",
+    "прикол",
+    "магазин"
+   ],
+   "caption": "Стример примерил ковбойскую шляпу",
+   "hook_alts": [
+    "Нашёл ковбойскую шляпу",
+    "Ковбой в магазине",
+    "1 шляпа меняет всё",
+    "Чисто Горбатая гора"
+   ],
+   "asset": "2912272303_5127.mp4",
+   "size": 15707336,
+   "duration": 18.9,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Шляпа ему реально идет?",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-27T19:35:15Z",
+ "live_when_made": true,
+ "fresh": false,
+ "uid": "f7eed421",
+ "asset": "2912272303_5127.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2912272303?t=1h25m27s"
+}
