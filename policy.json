@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updated_at": "2026-10-27T11:05:13Z",
+ "updated_at": "2026-10-27T17:02:03Z",
  "frozen": true,
  "pins": {},
  "paused": {},
@@ -168,9 +168,9 @@
  "hints": {},
  "last_change": {},
  "stats": {
-  "rows": 30,
-  "with_residual": 26,
-  "noise": 1.402
+  "rows": 32,
+  "with_residual": 27,
+  "noise": 1.84
  },
  "evidence": {
   "instagram": {
