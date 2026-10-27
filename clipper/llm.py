@@ -257,7 +257,7 @@ class LLM:
 
     # ── сборка запроса ──────────────────────────────────────────
     def _gen(self, model: str, *, max_tokens: int, temperature, schema, thinking, low_res, json_out=True) -> dict:
-        un = lambda f: (model, f) in self.unsupported
+        un = lambda f: (model, f) in self.unsupported or (self._strip_all() and f != "temperature")
         gen: dict = {}
         if json_out:
             gen["responseMimeType"] = "application/json"
@@ -303,10 +303,15 @@ class LLM:
                 last = e.last
         raise LLMError(f"{what}: все модели и ключи недоступны: {last}", getattr(last, "kind", "temp"))
 
+    def _strip_all(self) -> bool:
+        return bool(getattr(self._local, "strip_all", False))
+
     def _run_once(self, *, chain: list[str], build, parse, est: int, what: str):
         last: Exception | None = None
         for model in chain:
+            self._local.strip_all = False
             skip: set[str] = set()
+            bad = 0
             strips = 0
             for _ in range(max(3, len(self.gemini_keys()) * 3)):
                 p = self._pick(model, skip)
@@ -326,7 +331,10 @@ class LLM:
                         if kind in ("rate", "server", "temp"):
                             raise _Paused(f"{r.status_code} {r.text[:300]}", kind, pause)
                         raise LLMError(f"{r.status_code} {r.text[:500]}", kind)
-                    js = r.json()
+                    try:
+                        js = r.json()
+                    except ValueError as e:
+                        raise LLMError(f"ответ не JSON: {r.text[:160]}", "bad_json") from e
                     self._account(p, model, js.get("usageMetadata") or {})
                     return parse(p, model, js)
                 except _Paused as e:
@@ -358,15 +366,17 @@ class LLM:
                         break
                     elif e.kind == "feature":
                         feat = next((f for f, keys in FEATURE_HINTS if any(k in msg for k in keys)), None)
-                        if feat is None and strips == 0:
-                            feat = "all"
+                        if feat is None and not self._strip_all():
+                            # непонятный 400: один повтор «голым» запросом, но ничего не запоминаем навсегда
+                            self._local.strip_all = True
+                            log(f"ИИ: {model} отклонил запрос без пояснения — повторяю без доп. полей")
+                            continue
                         if feat is None or strips >= 4:
                             log(f"⚠️ {what}: {model} отклонил запрос: {str(e)[:200]}")
                             break
                         strips += 1
                         with self._lock:
-                            for f in ([x for x, _ in FEATURE_HINTS] if feat == "all" else [feat]):
-                                self.unsupported.add((model, f))
+                            self.unsupported.add((model, feat))   # только то поле, которое Google назвал
                         log(f"ИИ: {model} не принимает «{feat}» — отключаю и повторяю")
                     elif e.kind == "blocked":
                         raise
@@ -376,8 +386,10 @@ class LLM:
                         with self._lock:
                             self.cool[(p["name"], model)] = time.time() + 15
                         skip.add(p["name"])
-                    else:  # bad_json и прочее: другой ключ/повтор
-                        skip.add(p["name"])
+                    else:  # bad_json и прочее: один повтор тем же ключом, дальше — другой ключ
+                        bad += 1
+                        if bad >= 2:
+                            skip.add(p["name"])
                         log(f"↪ {what}: {p['name']}:{model} {e.kind}: {str(e)[:140]}")
         raise _ChainExhausted(last)
 
@@ -490,6 +502,14 @@ class LLM:
 
     # ── Files API (файлы > 90 МБ) ───────────────────────────────
     def _upload_file(self, p: dict, mime: str, data: bytes) -> str:
+        try:
+            return self._upload_file_raw(p, mime, data)
+        except LLMError:
+            raise
+        except Exception as e:  # noqa: BLE001 — сеть/битый ответ → обычная ошибка ИИ, вызывающие ловят LLMError
+            raise LLMError(f"Files API: {str(e)[:160]}", "temp") from e
+
+    def _upload_file_raw(self, p: dict, mime: str, data: bytes) -> str:
         key = (p["name"], hashlib.sha1(data).hexdigest())
         with self._lock:
             if key in self._files:

@@ -193,6 +193,12 @@ def fetch_range(playlist_url: str, start: float, end: float, raw: Path, workers:
     return raw, max(0.0, start - need[0][0])
 
 
+def _cleanup(out: Path, dst: Path):
+    dst.unlink(missing_ok=True)
+    for p in out.parent.glob(out.stem + ".raw*"):
+        p.unlink(missing_ok=True)
+
+
 def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
     """Звук куска VOD: параллельная загрузка сегментов + точная обрезка без перекодирования."""
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -211,6 +217,7 @@ def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
         return dst
     except Exception as e:  # noqa: BLE001
         log(f"звук: свой загрузчик не справился ({str(e)[:160]}) — yt-dlp")
+        _cleanup(out, dst)
     tmpl = str(out.with_suffix("")) + ".%(ext)s"
     run(["yt-dlp", "-q", "--no-warnings", "--no-part", "-f", "Audio_Only/audio_only/bestaudio/worst",
          "--download-sections", _section(start, end), "-o", tmpl, f"https://www.twitch.tv/videos/{vod_id}"], timeout=3600)
@@ -237,6 +244,7 @@ def download_video(vod_id: str, start: float, end: float, out: Path, max_height:
         return dst
     except Exception as e:  # noqa: BLE001
         log(f"видео: свой загрузчик не справился ({str(e)[:160]}) — yt-dlp")
+        _cleanup(out, dst)   # недописанный файл yt-dlp счёл бы «уже скачанным»
     tmpl = str(out.with_suffix("")) + ".%(ext)s"
     fmt = (f"best[height<={max_height}][fps<=60]/best[height<={max_height}]/best" if max_height
            else "best[fps<=60]/best")  # без потолка: исходное качество записи

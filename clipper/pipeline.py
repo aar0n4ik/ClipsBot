@@ -420,13 +420,23 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
         if x not in picked:
             note_reject(store, vod, x["abs_s"], "отбор", "в куске есть клипы сильнее (лимит на кусок)", x["score"], x.get("what", ""))
 
+    # один момент, найденный дважды (пик + разведчик, перекрытие кусков), монтируем один раз
+    uniq = []
+    for x in picked:
+        xa, xb = x["c"]["ctx_start"] + x["s"], x["c"]["ctx_start"] + x["e"]
+        same = next((u for u in uniq if min(xb, u[2]) - max(xa, u[1]) >= 0.4 * max(1.0, min(xb - xa, u[2] - u[1]))), None)
+        if same:
+            note_reject(store, vod, xa, "дубль", f"тот же момент, что и {clip_key(vod, same[0])}", x["score"], x.get("what", ""))
+        else:
+            uniq.append((x, xa, xb))
+    picked = [u[0] for u in uniq]
     platforms = targets_for(cfg, store)
     made = 0
     # исходники всех отобранных качаем параллельно заранее; монтаж (CPU) идёт по очереди
     pre = ThreadPoolExecutor(max_workers=3)
-    for pl in picked:
+    for k, pl in enumerate(picked):
         a, b = source_range(pl)
-        pl["_src"] = pre.submit(download_video, vod["id"], a, b, work / f"{clip_key(vod, pl)}_src.mp4")
+        pl["_src"] = pre.submit(download_video, vod["id"], a, b, work / f"{clip_key(vod, pl)}_pre{k}.mp4")   # свои имена файлов
     try:
         for k, pl in enumerate(picked):
             st("render", f"Монтирую клип {k + 1}/{len(picked)}", 80 + int(18 * k / max(1, len(picked))))

@@ -198,8 +198,7 @@ class Store:
             if not self.is_git:  # локальный режим (тесты)
                 for hook in self.on_sync:
                     hook(self)
-                self.pending.clear()
-                self.base.clear()
+                self._synced()
                 return
             for i in range(attempts):
                 try:
@@ -212,18 +211,24 @@ class Store:
                         junk.unlink(missing_ok=True)
                     self._git("add", "-A")
                     if not self._git("status", "--porcelain").stdout.strip():
-                        self.pending.clear()
-                        self.base.clear()
+                        self._synced()
                         return
                     self._git("commit", "-q", "-m", message[:200])
                     if self._git("push", "-q", "origin", "HEAD:data", check=False).returncode == 0:
-                        self.pending.clear()
-                        self.base.clear()
+                        self._synced()
                         return
                 except RuntimeError as e:
                     log(f"sync попытка {i + 1}: {e}")
                 time.sleep(min(30, 1.5 * 2 ** min(i, 4)) + (hash((message, i)) % 1000) / 1000)
             raise RuntimeError("Не удалось сохранить состояние в ветку data")
+
+    def _synced(self):
+        """После синка: база записанных нами файлов — то, что мы записали (наш объект в памяти от неё и идёт).
+        Базы прочитанных, но не записанных файлов НЕ трогаем: если модуль держит объект, прочитанный до синка,
+        и запишет его позже, разница посчитается от того, что он реально читал, — чужие правки не откатятся."""
+        for rel, data in self.pending.items():
+            self.base[rel] = data
+        self.pending.clear()
 
     def squash_history(self) -> bool:
         """Сжать ветку data в один коммит (история не нужна боту, а репозиторий растёт от каждого sync).

@@ -115,8 +115,15 @@ class YouTube(Platform):
                 if r is not None and r.status_code in (200, 201):
                     return r.json()
                 if r is not None and r.status_code == 308:
-                    offset = _next_offset(r.headers.get("Range"))
-                    fails = 0
+                    new = _next_offset(r.headers.get("Range"))
+                    if new > offset:
+                        offset, fails = new, 0
+                        continue
+                    fails += 1      # 308 без продвижения — не крутимся вечно
+                    if fails > 6:
+                        raise PlatformError("YouTube: загрузка не продвигается", "temp")
+                    offset = new
+                    time.sleep(min(60, 2 ** fails))
                     continue
                 if r is not None and r.status_code in (400, 401, 403, 404):
                     raise PlatformError(f"YouTube upload {r.status_code}: {r.text[:200]}",

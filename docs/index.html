@@ -665,7 +665,7 @@ async function copy(text, btn) {
 const PL = { tiktok: "TikTok", youtube: "Shorts", instagram: "Reels" };
 const plChip = p => `<span class="pl ${esc(p)}" title="${esc(PL[p] || p)}"></span>`;
 const PSTAT = { ready: ["ждёт релиза", "acc"], inbox: ["в черновиках — опубликуй", "warn"], inbox_stale: ["черновик так и не опубликован", "warn"],
-  posted: ["вышел", "good"], processing: ["обрабатывается", ""], failed: ["ошибка", "bad"], expired: ["устарел", ""], used: ["вышел", "good"],
+  posted: ["вышел", "good"], processing: ["обрабатывается", ""], uploading: ["выкладывается", ""], failed: ["ошибка", "bad"], expired: ["устарел", ""], used: ["вышел", "good"],
   retry: ["повтор", "warn"], skipped: ["отменён", ""], removed_by_user: ["удалён тобой", ""] };
 const CATS = { funny: "Смешное", conflict: "Конфликт", money: "Деньги", america: "Америка", customer: "Клиенты", road: "Дорога", emotional: "Эмоции", chat: "Чат", story: "История", other: "Другое" };
 const VALS = { tease: "недосказанность", conflict: "конфликт", number: "цифра", quote: "цитата" };
@@ -903,7 +903,7 @@ function clipBucket(c) {
   if (ps.some(p => p.status === "failed") || Object.values(c.targets || {}).some(t => t.status === "failed")) return "problems";
   if (ps.some(p => p.status === "inbox")) return "drafts";
   if (c.status === "ready") return "ready";
-  if (ps.some(p => ["posted", "inbox_stale", "processing"].includes(p.status))) return "out";
+  if (ps.some(p => ["posted", "inbox_stale", "processing", "uploading"].includes(p.status))) return "out";
   return "other";
 }
 function clipCard(c) {

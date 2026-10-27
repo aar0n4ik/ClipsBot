@@ -310,9 +310,11 @@ def keepalive():
         return
     from .util import run
     for wf in ("watch.yml", "process.yml", "post.yml", "stats.yml", "doctor.yml"):
+        st = run(["gh", "api", f"repos/{repo}/actions/workflows/{wf}", "--jq", ".state"], check=False, quiet=True)
+        if (st.stdout or "").strip() != "disabled_inactivity":
+            continue   # выключенный вручную (disabled_manually) не трогаем
         r = run(["gh", "api", "-X", "PUT", f"repos/{repo}/actions/workflows/{wf}/enable"], check=False, quiet=True)
-        if r.returncode != 0 and "404" not in (r.stderr or ""):
-            log(f"keepalive {wf}: {(r.stderr or '')[-160:]}")
+        log(f"keepalive: {wf} снова включён" if r.returncode == 0 else f"keepalive {wf}: {(r.stderr or '')[-160:]}")
 
 
 def maybe_squash(cfg: dict, store: Store):
@@ -324,7 +326,6 @@ def maybe_squash(cfg: dict, store: Store):
     last = st.get("squashed_at")
     if last and (now_utc() - parse_iso(last)).total_seconds() < days * 86400:
         return
-    st["squashed_at"] = now_iso()
-    store.write_json("status/storage.json", st)
-    store.sync("storage: отметка сжатия")
-    store.squash_history()
+    if store.squash_history():   # не вышло (кто-то пушил) — попробуем при следующей проверке
+        store.update_json("status/storage.json", lambda x: {**(x or {}), "squashed_at": now_iso()}, {})
+        store.sync("storage: ветка сжата")

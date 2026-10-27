@@ -480,6 +480,67 @@ def test_summary_markdown():
     assert "| 0:00:00–1:00:00 | 6 |" in md and "скучно" in md
 
 
+def test_stale_object_written_after_sync_does_not_revert_foreign_change():
+    """Ревью: модуль прочитал файл, потом был sync (другого файла), потом он пишет — чужая правка не откатывается."""
+    from clipper.store import Store
+    tmp = Path(tempfile.mkdtemp())
+    bare = tmp / "r.git"
+    _git("init", "-q", "--bare", str(bare))
+    seed = tmp / "seed"
+    _git("init", "-q", str(seed))
+    for k, v in (("user.name", "t"), ("user.email", "t@t")):
+        _git("config", k, v, cwd=seed)
+    (seed / "queue").mkdir()
+    (seed / "queue" / "x.json").write_text(json.dumps({"note": "orig", "posts": {}}))
+    _git("checkout", "-q", "-b", "data", cwd=seed)
+    _git("add", "-A", cwd=seed)
+    _git("commit", "-q", "-m", "init", cwd=seed)
+    _git("push", "-q", f"file://{bare}", "data", cwd=seed)
+    st = []
+    for n in ("a", "b"):
+        _git("clone", "-q", "--branch", "data", f"file://{bare}", str(tmp / n))
+        for k, v in (("user.name", "t"), ("user.email", "t@t")):
+            _git("config", k, v, cwd=tmp / n)
+        st.append(Store(tmp / n))
+    a, b = st
+    x = a.read_json("queue/x.json")                         # A прочитал
+    b.write_json("queue/x.json", {**b.read_json("queue/x.json"), "note": "changed by B"})
+    b.sync("B")
+    a.write_json("status/other.json", {"k": 1})
+    a.sync("A other")                                       # синк другого файла посередине
+    x["posts"]["tiktok"] = {"status": "uploading"}
+    a.write_json("queue/x.json", x)                         # A пишет устаревший объект
+    a.sync("A x")
+    _git("fetch", "-q", "origin", "data", cwd=tmp / "b")
+    final = json.loads(_git("show", "FETCH_HEAD:queue/x.json", cwd=tmp / "b"))
+    assert final == {"note": "changed by B", "posts": {"tiktok": {"status": "uploading"}}}, final
+
+
+def test_llm_generic_400_does_not_poison_model():
+    seen = []
+
+    def fn(method, path, headers, body):
+        if "generateContent" not in path:
+            return 200, {}, {"models": [{"name": "models/gemini-3.8-flash"}]}
+        js = json.loads(body)
+        seen.append("responseJsonSchema" in js["generationConfig"])
+        if len(seen) == 1:
+            return 400, {}, {"error": {"code": 400, "message": "Request contains an invalid argument."}}
+        if len(seen) == 3:
+            return 200, {}, b"<html>not json</html>"
+        return 200, {}, _gemini_ok({"ok": True})
+    srv = Server(fn)
+    try:
+        llm = _llm(srv.url, n_keys=1)
+        from clipper import schemas
+        assert llm.chat_json([{"role": "user", "content": "a"}], schema=schemas.REVIEW) == {"ok": True}
+        assert seen == [True, False] and not llm.unsupported                # повтор «голым», но без последствий
+        assert llm.chat_json([{"role": "user", "content": "b"}], schema=schemas.REVIEW) == {"ok": True}
+        assert seen[2:] == [True, True]                                       # схема снова на месте; не-JSON → LLMError → повтор
+    finally:
+        srv.close()
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):
