@@ -1,0 +1,199 @@
+{
+ "id": "2912272303_1556",
+ "vod_id": "2912272303",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 1556.5,
+ "duration": 36.5,
+ "span": 41.0,
+ "score": 7,
+ "subscores": {
+  "hook": 8,
+  "payoff": 7,
+  "clarity": 9,
+  "emotion": 6,
+  "rewatch": 5
+ },
+ "category": "funny",
+ "risk": {
+  "level": 0,
+  "flags": [
+   "music"
+  ]
+ },
+ "why": "Стример объясняет, почему еда становится вкуснее, если чавкать во время еды.",
+ "what": "Стример ест из сковороды и утверждает, что чавкать полезно, так как благодаря воздуху лучше раскрывается вкус еды.",
+ "overlay": "Когда чавкаешь еда вкуснее",
+ "signal": 12.09,
+ "breakdown": {
+  "chat": 2.02,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.0,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.591,
+   "stability": 0.499,
+   "tonal": 0.0,
+   "beat": 0.108
+  },
+  "action": "flag",
+  "reason": "в фоне слышна музыка — звук оставлен как есть, клип помечен"
+ },
+ "brain": {
+  "text": {
+   "score": 7,
+   "hook": 7,
+   "payoff": 7,
+   "clarity": 9,
+   "emotion": 7,
+   "rewatch": 7,
+   "why": "Провокационный и байтовый тейк о том, что чавкать вкусно. Отлично провоцирует комментарии и споры зрителей.",
+   "category": "funny"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 8,
+    "payoff": 7,
+    "clarity": 9,
+    "emotion": 6,
+    "rewatch": 5
+   },
+   "what_happens": "Стример ест из сковороды и утверждает, что чавкать полезно, так как благодаря воздуху лучше раскрывается вкус еды.",
+   "moment": "Стример объясняет, почему еда становится вкуснее, если чавкать во время еды.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 48.7,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "proofread": [
+   "поверьте → поверите"
+  ],
+  "length": null,
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 3,
+  "trimmed_s": 4.5
+ },
+ "transcript": "Кстати, вы, наверное, не поверите мне, если я вам скажу, но когда чавкаешь, вкуснее еда. Блядь, просто проверьте и всё. И потом вы напишите, типа ты был прав, Альберт, ебать. Я всю всю жизнь ошибался. Просто поверьте мне и попробуйте. Когда Чем больше чавкаешь, тем вкуснее и тем сильнее раскрывается вкус еды. Я вам отвечаю. Просто попробуйте. Потом спасибо скажете. Просто попадает воздух, типа на язык или как? Ну ты чавкаешь, открываешь рот. Да, это выглядит, как будто ты мразь, но ты кайфуешь от еды больше, потому что вкус раскрывается больше.",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Когда чавкаешь еда вкуснее",
+   "hook_style": "quote",
+   "caption": "Почему нужно чавкать за едой",
+   "hashtags": [
+    "#жизненныйлайфхак",
+    "#еда",
+    "#лайфхаки",
+    "#полезныйсовет"
+   ],
+   "hook_alts": [
+    "Когда чавкаешь еда вкуснее",
+    "Почему нужно чавкать за едой",
+    "Чавкать за едой это правильно",
+    "Главное правило вкусной еды"
+   ],
+   "asset": "2912272303_1556.mp4",
+   "size": 23066787,
+   "duration": 36.5,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы чавкаете когда едите дома в одиночестве?",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Когда чавкаешь еда вкуснее",
+   "hook_style": "quote",
+   "caption": "Почему нужно чавкать за едой",
+   "hashtags": [
+    "#лайфхак",
+    "#еда",
+    "#совет",
+    "#жиза"
+   ],
+   "hook_alts": [
+    "Когда чавкаешь еда вкуснее",
+    "Почему нужно чавкать за едой",
+    "Чавкать за едой это правильно",
+    "Главное правило вкусной еды"
+   ],
+   "asset": "2912272303_1556.mp4",
+   "size": 23066787,
+   "duration": 36.5,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы чавкаете когда едите дома в одиночестве?",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Когда чавкаешь еда вкуснее",
+   "hook_style": "quote",
+   "title": "Почему нужно чавкать за едой",
+   "description": "Стример делится своим мнением о том, почему чавканье во время еды помогает лучше раскрыть ее вкус\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "еда",
+    "лайфхак",
+    "советы",
+    "юмор",
+    "мнение",
+    "нарезки"
+   ],
+   "caption": "Почему нужно чавкать за едой",
+   "hook_alts": [
+    "Когда чавкаешь еда вкуснее",
+    "Почему нужно чавкать за едой",
+    "Чавкать за едой это правильно",
+    "Главное правило вкусной еды"
+   ],
+   "asset": "2912272303_1556.mp4",
+   "size": 23066787,
+   "duration": 36.5,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы чавкаете когда едите дома в одиночестве?",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-27T19:24:07Z",
+ "live_when_made": true,
+ "fresh": false,
+ "uid": "e8fcd7f3",
+ "asset": "2912272303_1556.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2912272303?t=0h25m56s"
+}
