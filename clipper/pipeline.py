@@ -510,6 +510,7 @@ def _review_on_video(cfg, store: Store, llm: LLM, vod: dict, c: dict, v: dict, s
         if not ed:
             note_reject(store, vod, t_abs, "тексты", "ИИ-редактор не ответил", v.get("score"))
             return None
+        e0, _ = cap_kept(s0, e0, [], 60.0)   # без просмотра видео длинное не выпускаем
         return {"c": c, "v": v, "s": s0, "e": e0, "cuts": [], "ed": ed, "score": int(v.get("score", 0)), "abs_s": t_abs,
                 "what": v.get("why", ""), "brain": {"text": _brief(v), "video": None, "tech": tech}}
     score = int(js.get("score", 0) or 0)
@@ -555,23 +556,28 @@ def _review_on_video(cfg, store: Store, llm: LLM, vod: dict, c: dict, v: dict, s
         if s1 < a < b < e1 and b - a >= 0.6:
             cuts.append((round(a, 2), round(b, 2)))
     length_note = None
-    if (e1 - s1) - sum(b - a for a, b in cuts) > 60:
+    if kept_len(s1, e1, cuts) > 60:
         # длиннее минуты — только после отдельной строгой проверки: держит ли ролик внимание всё время
         try:
             lc = brain.check_length(llm, cfg, prev, words_rel, s1 - off, e1 - off, [[a - off, b - off] for a, b in cuts],
                                     float(tech.get("duration") or (p1 - p0)))
             if not lc.get("keep_long"):
-                ns2, ne2 = float(lc.get("start", s1 - off)) + off, float(lc.get("end", e1 - off)) + off
+                try:
+                    ns2, ne2 = float(lc.get("start")) + off, float(lc.get("end")) + off
+                except (TypeError, ValueError):
+                    ns2, ne2 = s1, e1
                 if s1 - 0.5 <= ns2 < ne2 <= e1 + 0.5 and ne2 - ns2 >= float(cfg["clips"]["min_seconds"]):
                     s1, e1 = snap_bounds(c["words"], ns2, ne2, c["ctx_dur"], cfg)
                     cuts = [(round(float(x[0]) + off, 2), round(float(x[1]) + off, 2)) for x in lc.get("cuts") or []
                             if isinstance(x, (list, tuple)) and len(x) == 2 and s1 < float(x[0]) + off < float(x[1]) + off < e1
                             and float(x[1]) - float(x[0]) >= 0.6]
+                # «не держит длинный хронометраж» — значит, в итоге не длиннее минуты, что бы ни вернула модель
+                e1, cuts = cap_kept(s1, e1, cuts, 60.0)
             length_note = {"keep_long": bool(lc.get("keep_long")), "why": str(lc.get("why", ""))[:200],
-                           "final_s": round((e1 - s1) - sum(b - a for a, b in cuts), 1)}
+                           "final_s": round(kept_len(s1, e1, cuts), 1)}
         except Exception as e:  # noqa: BLE001 — проверка недоступна: длинное не выпускаем, режем до минуты
             log(f"проверка длины {c['id']} недоступна ({str(e)[:120]}) — ограничиваю минутой")
-            e1 = min(e1, s1 + 60 + sum(b - a for a, b in cuts))
+            e1, cuts = cap_kept(s1, e1, cuts, 60.0)
             length_note = {"keep_long": False, "why": "проверка недоступна — ограничено минутой"}
     if ai.get("proofread", True) and low is not None:
         js = _proofread(cfg, store, llm, c, js, low, off, p1, work)   # субтитры и тексты = то, что реально сказано
@@ -616,7 +622,9 @@ def _proofread(cfg, store: Store, llm: LLM, c: dict, js: dict, low: Path, off: f
     if pairs:
         PR.learn(store, pairs)
         log(f"корректор {c['id']}: " + ", ".join(f"{a}→{b}" for a, b in pairs[:10]))
-        js = PR.fix_texts(js, {PR.norm(a): b for a, b in pairs if len(b.split()) == 1})
+        still = {PR.norm(w["w"]) for w in c["words"]}   # слово ещё звучит в ролике правильно — в текстах не трогаем
+        js = PR.fix_texts(js, {PR.norm(a): b for a, b in pairs
+                               if len(b.split()) == 1 and len(PR.norm(a)) >= 4 and PR.norm(a) not in still})
     js["proofread"] = [f"{a} → {b}" for a, b in pairs][:20] + [f"EN: {s['en'][:60]} — «{s['ru'][:60]}»" for s in english][:5]
     return js
 
@@ -787,6 +795,25 @@ def proofread_terms(store: Store, cfg: dict) -> list[str]:
         return PR.terms(store, cfg)
     except Exception:  # noqa: BLE001
         return []
+
+
+def kept_len(s: float, e: float, cuts: list) -> float:
+    """Длина ролика после вырезов (учитываются только вырезы внутри [s, e])."""
+    return (e - s) - sum(max(0.0, min(b, e) - max(a, s)) for a, b in cuts)
+
+
+def cap_kept(s: float, e: float, cuts: list, limit: float) -> tuple[float, list]:
+    """Сдвинуть конец так, чтобы после вырезов осталось не больше limit секунд. → (новый конец, вырезы внутри)."""
+    if kept_len(s, e, cuts) <= limit:
+        return e, [(a, b) for a, b in cuts if s < a < b < e]
+    pos, left, inside = s, limit, []
+    for a, b in sorted((a, b) for a, b in cuts if s < a < b < e):
+        if a - pos >= left:
+            break
+        left -= a - pos
+        inside.append((a, b))
+        pos = b
+    return round(pos + left, 2), inside
 
 
 def clip_key(vod: dict, pl: dict) -> str:

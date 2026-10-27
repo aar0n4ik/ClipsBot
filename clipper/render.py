@@ -27,7 +27,7 @@ TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 300, 860, (64, 60, 56, 52, 48)
 VS_RE = re.compile(r"^(.+?)\s+vs\.?\s+(.+)$", re.I)
 VS_SIZES = (56, 52, 48, 44)  # три строки (A / VS / B) должны уместиться над панелью
 PANEL_Y, PANEL_H = 480, 960
-SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1365, 54, 900
+SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1365, 54, 760   # x 160…920: справа ниже y≈1000 кнопки TikTok
 SUB_BOTTOM, TR_BOTTOM, TR_SIZE = 1400, 1456, 40      # низ строки субтитров и строки перевода (выше плашки канала)
 TEXT_ROLE = "note"                                     # спокойный жирный гротеск вместо «плакатного» шрифта
 BRAND_CENTER, BRAND_LOGO, BRAND_TEXT = 1512, 100, 58
@@ -216,8 +216,8 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Title,{f},{title_size},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,5,0,8,110,110,{TITLE_TOP},1
-Style: Sub,{f},{SUB_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4.5,0,2,90,90,{H - SUB_BOTTOM},1
-Style: Tr,{f},{TR_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,3.5,0,2,90,90,{H - TR_BOTTOM},1
+Style: Sub,{f},{SUB_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4.5,0,2,160,160,{H - SUB_BOTTOM},1
+Style: Tr,{f},{TR_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,3.5,0,2,160,160,{H - TR_BOTTOM},1
 Style: Note,{f},42,{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4,0,8,170,170,{NOTE_Y},1
 
 [Events]
@@ -446,8 +446,10 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     cmd += ["-filter_complex", ";".join(fc), "-map", "[vout]"]
     if audio:
         cmd += ["-map", "[aout]", "-c:a", "aac", "-b:a", "192k"]
-    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-maxrate", "14M",
-            "-bufsize", "28M", "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
+    # битрейт под длину: файл должен влезть в самый строгий лимит площадок (Instagram ~100 МБ) с запасом
+    vmax = int(max(2.5e6, min(14e6, 0.88 * 95 * 1024 * 1024 * 8 / max(dur, 1.0) - 220e3)))
+    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-maxrate", str(vmax),
+            "-bufsize", str(vmax * 2), "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
     prev = os.getcwd()
     os.chdir(work)  # ass-фильтр читает файл относительно текущей папки
     try:

@@ -37,7 +37,6 @@ def _iso(t: dt.datetime) -> str:
 
 BRAIN = "status/brain.json"
 ACCOUNT_COOLDOWN_H = {"rate": 1, "quota": 6, "spam": 24, "blocked": 24, "auth": 168}
-UPLOAD_STALE_H = 3      # маркер «выкладываю» висит дольше — раннер умер посреди загрузки (защита от дублей)
 RELEASED = ("posted", "inbox", "inbox_stale", "processing", "uploading")
 
 
@@ -138,11 +137,42 @@ def momentum(stats: dict, now_ts: float) -> dict:
 
 
 def partial_plats(c: dict, active: dict) -> list[str]:
-    """Клип уже вышел на части площадок, а на этих (включённых) ещё нет и ждёт повтора — их надо дотянуть."""
+    """Клип вышел на части площадок, а на этих загрузка в момент релиза не удалась (статус retry) — дотянуть.
+    Площадки, которых не было в релизе (пауза/отключена), сюда не попадают: их цели помечены skipped_sync."""
     posts = c.get("posts") or {}
     if not any(p.get("status") in RELEASED for p in posts.values()):
         return []
-    return [p for p in active if pending_for(c, p)]
+    return [p for p in active if (posts.get(p) or {}).get("status") == "retry" and pending_for(c, p)]
+
+
+def skip_absent(c: dict, plats: list[str]) -> None:
+    """Площадки без релиза (пауза владельца, отключена, выключена) этот клип не получат никогда —
+    иначе после возвращения площадка начала бы выкладывать всё старьё по одному в час."""
+    for p, t in (c.get("targets") or {}).items():
+        if p not in plats and t.get("status", "ready") == "ready" and not (c.get("posts") or {}).get(p):
+            t["status"] = "skipped_sync"
+
+
+def reconcile_upload(c: dict, plat: str, cl) -> str:
+    """Маркер «выкладываю» остался от упавшего раннера (публикации идут строго по одной, таймаут 40 мин).
+    Проверяем на площадке: ролик вышел → posted; не нашли → retry (перезалить безопасно).
+    TikTok-черновики не видны в API — перезаливаем: лишний черновик безвреден."""
+    import re as _re
+    post = c["posts"][plat]
+    if plat == "tiktok" or not hasattr(cl, "list_videos"):
+        post.update(status="retry", error="загрузка прервалась — перезалью")
+        return "retry"
+    t = (c.get("targets") or {}).get(plat) or {}
+    norm = lambda x: _re.sub(r"[^\wа-яё]+", " ", (x or "").lower()).strip()
+    key = norm(t.get("caption") or t.get("title"))[:40]
+    started = parse_iso(post["started_at"]).timestamp() - 3600 if post.get("started_at") else 0
+    for v in cl.list_videos():
+        hay = norm(v.get("description", "")) + " " + norm(v.get("title", ""))
+        if key and key in hay and (v.get("create_time") or 0) >= started:
+            post.update(status="posted", video_id=str(v["id"]), url=v.get("url"), posted_at=post.get("started_at"))
+            return "posted"
+    post.update(status="retry", error="загрузка прервалась, ролика на площадке нет — перезалью")
+    return "retry"
 
 
 def ensure_targets(c: dict, active: dict) -> bool:
@@ -243,7 +273,7 @@ def _cooldown(store: Store, a: dict, acc: dict, e: PlatformError, now: dt.dateti
     from .diagnose import advice_for
     a["diagnosis"] = advice_for(acc["platform"], e.kind, str(e))
     a.update(last_error=f"{e} [{e.kind}]"[:300], last_error_at=_iso(now))
-    hrs = ACCOUNT_COOLDOWN_H.get(e.kind, 1)
+    hrs = ACCOUNT_COOLDOWN_H.get(e.kind, 0.25)
     a.update(cooldown_until=(now + dt.timedelta(hours=hrs)).isoformat(), cooldown_reason=str(e)[:160])
 
 
@@ -265,16 +295,6 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     enabled = cfg.get("platforms") or {"tiktok": 1, "youtube": 1, "instagram": 1}
     errors: list[str] = []
 
-    # 0) публикации, прерванные на середине: не повторяем вслепую (возможен дубль). Stats свяжет ролик,
-    #    если он вышел; если нет — «Повторить» в дашборде.
-    for c in queue:
-        hung = [pl for pl, p in c["posts"].items() if p.get("status") == "uploading" and p.get("started_at")
-                and (now - parse_iso(p["started_at"])).total_seconds() > UPLOAD_STALE_H * 3600]
-        for pl in hung:
-            c["posts"][pl].update(status="failed", error="публикация прервалась на середине — проверь, вышел ли ролик "
-                                                         "на площадке; если нет, нажми «Повторить»")
-        if hung:
-            store.write_json(f"queue/{c['id']}.json", c)
 
     # 1) площадки: включённые (active) и готовые прямо сейчас (ready)
     ready: dict[str, dict] = {}
@@ -317,6 +337,21 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         a["state"] = "готова"
         ready[plat] = acc
 
+    # 1b) «выкладываю» на старте = прошлый раннер умер посреди загрузки (публикации строго по одной):
+    #     сверяем с площадкой сразу — без дублей и без зависших клипов
+    for c in queue:
+        hung = [pl for pl, p in c["posts"].items() if p.get("status") == "uploading"]
+        for pl in hung:
+            acc = active.get(pl)
+            if not acc:
+                continue
+            try:
+                log(f"{c['id']}: прерванная загрузка на {pl} → {reconcile_upload(c, pl, clients[pl])}")
+            except Exception as e:  # noqa: BLE001 — площадка не ответила: проверю в следующий запуск
+                log(f"{c['id']}: не смог сверить {pl}: {str(e)[:120]}")
+        if hung:
+            store.write_json(f"queue/{c['id']}.json", c)
+
     # 2) расписание дня: N слотов в лучшие часы аудитории (строится раз в день, волна добавляет слот)
     rs = pstate.setdefault("releases", {})
     by_day = {k: v for k, v in (rs.get("by_day") or {}).items() if k >= (local.date() - dt.timedelta(days=14)).isoformat()}
@@ -326,7 +361,8 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     gap = int(posting.get("min_gap_minutes", 120))
     quiet = set(posting.get("quiet_hours", [2, 3, 4, 5, 6]))
     waves = momentum(stats, now.timestamp())
-    cap = min(int(posting.get("hard_max", 6)), daymax + (1 if waves else 0))
+    hard = max(int(posting.get("hard_max", 6)), daymax + 1)     # настройка дашборда главнее потолка из config
+    cap = min(hard, daymax + (1 if waves else 0))
     weights = learn.get(policy, "hours.youtube") or learn.get(policy, "hours.tiktok") or learn.PRIOR_HOURS
     sch = pstate.get("schedule") or {}
     if sch.get("date") != today:
@@ -391,6 +427,8 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         if miss:
             decision["reason"] = (f"клип {c['id']} вышел не везде — жду {', '.join(miss)}, чтобы дотянуть; "
                                   "новые клипы не выходят, пока площадки не сравняются")
+        elif local.hour in quiet:
+            decision["reason"] = f"ночь аудитории — дотяну {', '.join(c['_plats'])} утром; новые клипы ждут"
         else:
             decision = {"action": "post", "clip": c["id"], "by": "синхрон",
                         "reason": f"дотягиваю {', '.join(c['_plats'])}: клип уже вышел на других площадках"}
@@ -405,7 +443,7 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         decision["reason"] = f"ночь аудитории ({local.hour}:00 по {tz})"
     elif slots_left <= 0:
         decision["reason"] = f"сегодня уже {rel_today} релиз(ов) из {cap} — лучшие из очереди уйдут завтра"
-    elif since_min < gap:
+    elif since_min < gap - 20:   # запуск по расписанию GitHub опаздывает на минуты — слот из-за этого не теряем
         decision["reason"] = f"после прошлого релиза прошло {int(since_min)} мин из {gap}"
     elif slots_due > 0 or hot:
         fb = {"action": "post", "clip": (hot or ranked[0][1])["id"],
@@ -429,7 +467,12 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         bad = []
         for plat in plats:
             try:
-                preflight(clients[plat])
+                try:
+                    preflight(clients[plat])
+                except PlatformError:
+                    raise
+                except Exception as ex:  # noqa: BLE001 — сбой проверки = площадка сейчас не готова
+                    raise PlatformError(f"проверка не прошла: {str(ex)[:160]}", "temp") from ex
             except PlatformError as e:
                 acc = active[plat]
                 _cooldown(store, accs[acc["id"]], acc, e, now)
@@ -473,6 +516,7 @@ def _release(cfg, store: Store, clip: dict, plats: list[str], active: dict, clie
     for plat in plats:
         clip["posts"][plat] = {**(clip["posts"].get(plat) or {}), "account": active[plat]["id"], "status": "uploading",
                                "started_at": _iso(now)}
+    skip_absent(clip, list(clip["posts"]))
     store.write_json(f"queue/{clip['id']}.json", {k: v for k, v in clip.items() if not k.startswith("_")})
     store.sync(f"post: выкладываю {clip['id']} → {', '.join(plats)}")
     files = {}
@@ -484,8 +528,12 @@ def _release(cfg, store: Store, clip: dict, plats: list[str], active: dict, clie
 
     def one(plat):
         acc = active[plat]
-        return _publish_one(cfg, store, clients[plat], acc, accs[acc["id"]], clip, plat, decision, now, today, errors,
-                            files.get(clip["targets"][plat].get("asset")))
+        ok = _publish_one(cfg, store, clients[plat], acc, accs[acc["id"]], clip, plat, decision, now, today, errors,
+                          files.get(clip["targets"][plat].get("asset")))
+        with store.lock:   # результат каждой площадки сохраняется сразу: упадёт раннер — не потеряется
+            store.write_json(f"queue/{clip['id']}.json", {k: v for k, v in clip.items() if not k.startswith("_")})
+            store.sync(f"post: {clip['id']} → {plat}: {clip['posts'][plat].get('status')}")
+        return ok
     with ThreadPoolExecutor(max_workers=len(plats) or 1) as ex:   # релиз во все площадки в одну минуту
         oks = list(ex.map(one, plats))
     released = [p for p, ok in zip(plats, oks) if ok]
@@ -501,15 +549,29 @@ def _release(cfg, store: Store, clip: dict, plats: list[str], active: dict, clie
 
 def _publish_one(cfg, store: Store, cl, acc: dict, a: dict, clip: dict, plat: str, decision: dict, now: dt.datetime,
                  today: str, errors: list, path=None) -> bool:
+    """Загрузка идёт параллельно; изменения общего клипа — под замком (их сохраняют соседние потоки)."""
     posting = cfg["posting"]
     t = clip["targets"][plat]
     log(f"{acc['id']}: публикую {clip['id']} «{t.get('hook')}»")
+    res, err = None, None
     try:
         if isinstance(path, Exception):
             raise path
         if path is None:
             path = releases.download(t["asset"], WORK_DIR / "post")
         res = cl.publish(path, {**t, "caption_full": full_caption(t, posting)}, cfg, clip)
+    except Exception as e:  # noqa: BLE001
+        err = e
+    with store.lock:
+        return _apply_result(store, acc, a, clip, plat, decision, now, today, errors, res, err)
+
+
+def _apply_result(store: Store, acc: dict, a: dict, clip: dict, plat: str, decision: dict, now: dt.datetime,
+                  today: str, errors: list, res, err) -> bool:
+    t = clip["targets"][plat]
+    try:
+        if err is not None:
+            raise err
     except PlatformError as e:
         log(f"❌ {acc['id']}: {e}")
         health.note_platform_error(store, acc["id"], e.kind)
