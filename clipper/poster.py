@@ -39,7 +39,10 @@ def _iso(t: dt.datetime) -> str:
 BRAIN = "status/brain.json"
 ACCOUNT_COOLDOWN_H = {"rate": 1, "quota": 6, "spam": 24, "blocked": 24, "auth": 168}
 UPLOAD_STALE_H = 3      # «выкладываю» дольше этого — раннер умер посреди публикации
-CATCHUP_H = 12          # клип вышел на других площадках, а эта отдыхала — догоняем, если прошло меньше
+# Синхрон: один клип = один релиз сразу везде, одинаковое число роликов на каждой площадке.
+SYNC_WAIT_H = 3         # площадка отдыхает не дольше этого — релиз ЖДЁТ её (лучше чуть позже, но везде вместе)
+SYNC_REPAIR_H = 2       # площадка не приняла ролик в момент релиза — дотягиваем её не позже чем через столько часов,
+                        # дальше клип на ней пропускается навсегда (никаких «догонялок» через полдня)
 
 
 # ── вспомогательное ─────────────────────────────────────────────
@@ -125,6 +128,23 @@ def momentum(stats: dict, now_ts: float) -> dict:
         if best:
             out[acc] = best
     return out
+
+
+def first_release_at(c: dict) -> dt.datetime | None:
+    """Когда клип впервые ушёл хоть на одну площадку (None — ещё никуда)."""
+    ts = [p.get("posted_at") or p.get("started_at") for p in (c.get("posts") or {}).values()
+          if p.get("status") in ("posted", "inbox", "inbox_stale", "processing", "uploading")]
+    ts = [parse_iso(t) for t in ts if t]
+    return min(ts) if ts else None
+
+
+def mark_sync_skip(c: dict, plat: str, why: str):
+    t = (c.get("targets") or {}).get(plat)
+    if t and t.get("status", "ready") == "ready":
+        t["status"] = "skipped_sync"
+        t["skip_reason"] = why
+        if (c.get("posts") or {}).get(plat, {}).get("status") == "retry":
+            c["posts"][plat]["status"] = "skipped_sync"
 
 
 def maybe_delete_asset(c: dict, name: str | None):
@@ -263,6 +283,8 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
 
     # 2) какие площадки сейчас могут принять релиз
     ready: dict[str, dict] = {}
+    active: dict[str, dict] = {}            # подключена, включена, не на ручной паузе
+    resting: dict[str, dt.datetime] = {}    # площадка → до когда отдыхает (ошибка лимита/спама/входа)
     clients = {}
     daymax = int(posting.get("daily_max", 4))
     for acc in list_accounts(cfg):
@@ -286,13 +308,15 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
                     store.write_json(f"queue/{c['id']}.json", c)
                 except PlatformError as e:
                     log(f"проверка публикации {c['id']}: {e}")
+        paused = (policy.get("paused") or {}).get(acc["id"])
+        if paused and parse_iso(paused) > now:
+            a["state"] = "пауза (вручную)"   # решение владельца: остальные площадки не ждут
+            continue
+        active[plat] = acc
         cd = a.get("cooldown_until")
         if cd and parse_iso(cd) > now:
             a["state"] = f"отдыхает до {cd[11:16]} UTC: {a.get('cooldown_reason', '')[:120]}"
-            continue
-        paused = (policy.get("paused") or {}).get(acc["id"])
-        if paused and parse_iso(paused) > now:
-            a["state"] = "пауза (вручную)"
+            resting[plat] = parse_iso(cd)
             continue
         a["state"] = "готова"
         ready[plat] = acc
@@ -322,8 +346,13 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         plats = [p for p in ready if pending_for(c, p)]
         if not plats:
             continue
-        posted_elsewhere = any(p.get("status") in ("posted", "inbox", "processing", "uploading") for p in c["posts"].values())
-        if posted_elsewhere and age_hours(c) > CATCHUP_H and not c.get("force_post"):
+        released_at = first_release_at(c)
+        posted_elsewhere = released_at is not None
+        if posted_elsewhere and (now - released_at).total_seconds() > SYNC_REPAIR_H * 3600 and not c.get("force_post"):
+            for p in plats:   # окно синхрона прошло: на этой площадке клип не выходит вообще, счёт остаётся равным
+                mark_sync_skip(c, p, "релиз на других площадках был больше 2 ч назад — не выкладываю вразнобой")
+            maybe_delete_asset(c, (c["targets"].get(plats[0]) or {}).get("asset"))
+            store.write_json(f"queue/{c['id']}.json", c)
             continue
         if int(c.get("score", 0)) < post_min and not c.get("force_post"):
             continue
@@ -336,6 +365,8 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     recent = rs.get("recent", [])
     ranked = rank(pool, policy, recent)
     catchup = [c for _, c, _ in ranked if c["_catchup"]]
+    # площадка отдыхает недолго → новый релиз ждёт её, чтобы ролик вышел везде одновременно
+    soon = {p: t for p, t in resting.items() if (t - now).total_seconds() <= SYNC_WAIT_H * 3600}
     forced = next((c for c in pool if c.get("force_post")), None)
     hot = next((c for _, c, _ in ranked if c.get("live_when_made") and int(c.get("score", 0)) >= int(posting.get("hot_score", 8))
                 and age_hours(c) <= 3 and posting.get("hot_now", True)), None)
@@ -343,6 +374,9 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     blocked = None
     if not ready:
         blocked = "ни одна площадка сейчас не готова"
+    elif soon and not forced and not catchup:
+        blocked = ("жду " + ", ".join(f"{p} (отдыхает до {t.astimezone(ZoneInfo(tz)):%H:%M})" for p, t in soon.items())
+                   + " — новый клип выйдет на всех площадках одновременно")
     elif local.hour in quiet and not forced:
         blocked = f"ночь аудитории ({local.hour}:00 по {tz})"
     elif slots_left <= 0 and not forced and not catchup:
@@ -367,7 +401,8 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     elif forced:
         decision = {"action": "post", "clip": forced["id"], "reason": "владелец нажал «Выложить сейчас»", "by": "владелец"}
     elif catchup and not blocked:
-        decision = {"action": "post", "clip": catchup[0]["id"], "reason": "догоняю площадку, которая отдыхала", "by": "план"}
+        decision = {"action": "post", "clip": catchup[0]["id"], "by": "синхрон",
+                    "reason": f"дотягиваю {', '.join(catchup[0]['_plats'])}: релиз вышел на других площадках, эта не успела"}
     elif blocked:
         decision = {"action": "wait", "clip": None, "reason": blocked, "by": "правила"}
     else:
@@ -382,6 +417,11 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     if decision["action"] == "post" and decision.get("clip"):
         clip = next(c for c in pool if c["id"] == decision["clip"])
         plats = list(clip["_plats"])
+        was_catchup = bool(clip["_catchup"])   # починка опоздавшей площадки — не новый релиз, лимит дня не тратит
+        if not was_catchup:
+            for p in resting:   # отдыхает долго (лимит на сутки, бан, вход) — этот клип на ней не выйдет вообще
+                if p not in plats and pending_for(clip, p):
+                    mark_sync_skip(clip, p, f"{p} была недоступна в момент релиза")
         # маркер «выкладываю» сохраняется ДО загрузки: умрёт раннер посреди — следующий запуск не сделает дубль
         for plat in plats:
             clip["posts"][plat] = {**(clip["posts"].get(plat) or {}), "account": ready[plat]["id"], "status": "uploading",
@@ -410,7 +450,7 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
             clip.pop(k, None)
         store.write_json(f"queue/{clip['id']}.json", clip)
         if released:
-            first_release = not any(r.get("clip") == clip["id"] for r in recent)
+            first_release = not was_catchup and not any(r.get("clip") == clip["id"] for r in recent)
             if first_release:
                 by_day[today] = by_day.get(today, 0) + 1
                 rs.update(last_at=_iso(now), recent=[{"clip": clip["id"], "category": clip.get("category"),

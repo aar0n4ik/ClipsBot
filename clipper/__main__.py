@@ -40,6 +40,8 @@ def main():
         print(summary(store, a.job))
         return
     from . import settings
+    if a.cmd in ("post", "process", "stats", "doctor"):
+        settings.migrate(store)          # новые значения по умолчанию для тех, кто их не менял
     settings.apply(cfg, store)          # настройки из дашборда поверх config.yaml
     dashboard_data.install(store, cfg)
     sw = settings.switches(store)

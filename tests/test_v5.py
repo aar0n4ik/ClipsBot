@@ -541,6 +541,143 @@ def test_llm_generic_400_does_not_poison_model():
         srv.close()
 
 
+# ── синхрон: одинаково и одновременно на всех площадках ────────
+def _sync_env(m, now):
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import _post_env
+    _post_env(m, now)
+    cfg = json.loads(json.dumps(CFG))
+    cfg["ai"]["planner"] = False
+    return cfg
+
+
+def test_release_waits_for_short_rest_and_skips_on_long_outage():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _iso, _monkey
+    import clipper.poster as P
+    m, undo = _monkey()
+    now = dt.datetime(2026, 10, 25, 16, 7, tzinfo=dt.timezone.utc)
+    try:
+        cfg = _sync_env(m, now)
+        st = _store()
+        st.write_json("queue/a.json", _clip("a", 8, now - dt.timedelta(hours=1)))
+        st.write_json("status/post.json", {"accounts": {"ig_main": {"platform": "instagram",
+                                           "cooldown_until": _iso(now + dt.timedelta(hours=1)), "cooldown_reason": "лимит"}}})
+        P.cmd_post(cfg, st)
+        assert not FakeClient.published                                         # ждём Reels: отдых всего час
+        assert "одновременно" in st.read_json(P.BRAIN)["last"]["reason"]
+        ps = st.read_json("status/post.json")
+        ps["accounts"]["ig_main"]["cooldown_until"] = _iso(now + dt.timedelta(hours=20))   # бан на сутки
+        st.write_json("status/post.json", ps)
+        P.cmd_post(cfg, st)
+        assert sorted(p for p, _ in FakeClient.published) == ["tiktok", "youtube"], FakeClient.published
+        q = st.read_json("queue/a.json")
+        assert q["targets"]["instagram"]["status"] == "skipped_sync"            # не догонит через полдня
+    finally:
+        undo()
+
+
+def test_failed_platform_repaired_only_within_sync_window():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _iso, _monkey
+    import clipper.clips as C
+    import clipper.poster as P
+    m, undo = _monkey()
+    now = dt.datetime(2026, 10, 25, 16, 7, tzinfo=dt.timezone.utc)
+    try:
+        cfg = _sync_env(m, now)
+        st = _store()
+        a = _clip("a", 8, now - dt.timedelta(hours=1))
+        a["posts"] = {"tiktok": {"account": "tt_main", "status": "inbox", "posted_at": _iso(now - dt.timedelta(minutes=40))},
+                      "instagram": {"account": "ig_main", "status": "posted", "posted_at": _iso(now - dt.timedelta(minutes=40))},
+                      "youtube": {"account": "yt_main", "status": "retry"}}
+        st.write_json("queue/a.json", a)
+        b = _clip("b", 8, now - dt.timedelta(hours=5), vod_time=5000)
+        b["posts"] = {"tiktok": {"account": "tt_main", "status": "inbox", "posted_at": _iso(now - dt.timedelta(hours=3))},
+                      "youtube": {"account": "yt_main", "status": "retry"}}
+        st.write_json("queue/b.json", b)
+        st.write_json("status/post.json", {"releases": {"last_at": _iso(now - dt.timedelta(minutes=40)), "by_day": {"2026-10-25": 1}}})
+        P.cmd_post(cfg, st)
+        assert FakeClient.published == [("youtube", "a")], FakeClient.published  # дотянули в окне синхрона
+        assert st.read_json("queue/b.json")["targets"]["youtube"]["status"] == "skipped_sync"   # 3 ч назад — нет
+        assert st.read_json("status/post.json")["releases"]["by_day"]["2026-10-25"] == 1        # починка ≠ новый релиз
+    finally:
+        undo()
+
+
+def test_cadence_migration_respects_user_choice():
+    from clipper import settings
+    st = _store()
+    st.write_json(settings.SETTINGS, {"values": {"posting.daily_max": 4, "posting.min_gap_minutes": 60}})
+    assert settings.migrate(st) == ["v5_cadence"]
+    v = st.read_json(settings.SETTINGS)["values"]
+    assert v["posting.daily_max"] == 5 and v["posting.min_gap_minutes"] == 60         # своё значение 60 не трогаем
+    st.write_json(settings.SETTINGS, {"values": {"posting.daily_max": 4}})              # владелец вернул 4 сам
+    assert settings.migrate(st) == [] and st.read_json(settings.SETTINGS)["values"]["posting.daily_max"] == 4
+    cfg = json.loads(json.dumps(CFG))
+    st.write_json(settings.SETTINGS, {"values": {"clips.monetize_long": True}})
+    settings.apply(cfg, st)
+    assert cfg["clips"]["max_seconds"] >= 90
+    from clipper.brain import length_rule
+    assert "1 минуты" in length_rule(cfg) and "1 минуты" not in length_rule(CFG)
+
+
+# ── корректор субтитров ─────────────────────────────────────────
+def test_glossary_learns_and_fixes_words_and_texts():
+    from clipper import proofread as PR
+    st = _store()
+    cfg = json.loads(json.dumps(CFG))
+    words = [{"w": "Лутка,", "s": 0, "e": 0.4}, {"w": "опять", "s": 0.5, "e": 0.8}, {"w": "барон", "s": 0.9, "e": 1.2}]
+    assert PR.apply_known(words, PR.known_fixes(st, cfg)) == 1 and words[0]["w"] == "Лудка,"   # из config.spelling
+    assert PR.known_fixes(st, cfg).get("барон") is None
+    PR.learn(st, [("барон", "баран")])
+    assert "барон" not in PR.known_fixes(st, cfg)                                      # один раз — ещё не правило
+    PR.learn(st, [("Барон.", "баран")])
+    assert PR.known_fixes(st, cfg)["барон"] == "баран"                                  # два раза — правило
+    assert PR.apply_known(words, PR.known_fixes(st, cfg)) == 1 and words[2]["w"] == "баран"
+    assert "баран" in PR.terms(st, cfg)
+    ed = PR.fix_texts({"hooks": [{"style": "quote", "text": "Опять лутка!"}], "youtube": {"title": "Лутка и барон", "tags": ["лутка"]}},
+                      PR.known_fixes(st, cfg))
+    assert ed["hooks"][0]["text"] == "Опять лудка!" and ed["youtube"]["title"] == "Лудка и баран" and ed["youtube"]["tags"] == ["лудка"]
+
+
+def test_proofreader_listens_and_fixes_subtitles_and_hooks():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import DIRECTOR_OK, _cand, _monkey, _patch_pipeline
+    import clipper.pipeline as P
+    from clipper import schemas
+
+    class L:
+        def __init__(self):
+            self.calls = []
+
+        def media_json(self, media, prompt, **kw):
+            self.calls.append((media[0][0], kw.get("schema")))
+            if kw.get("schema") is schemas.PROOF:
+                assert media[0][0] in ("audio/ogg", "audio/mp3") and "0:" in prompt
+                import re
+                i = int(re.search(r"(\d+):охранник", prompt).group(1))
+                return {"fixes": [{"i": i, "w": "охранница"}, {"i": 9999, "w": "мусор"}]}
+            return {**DIRECTOR_OK, "hooks": [{"style": "tease", "text": "Охранник против меня"}] + DIRECTOR_OK["hooks"][1:]}
+
+        def chat_json(self, messages, **kw):
+            return {"ok": True}
+    m, undo = _monkey()
+    try:
+        d = Path(tempfile.mkdtemp())
+        _patch_pipeline(m, d)
+        st = _store()
+        vod = {"id": "v1", "title": "t", "created_at": "2026-10-25T00:00:00Z"}
+        c = _cand()
+        plan = P._review_on_video(CFG, st, L(), vod, c, {"score": 7, "why": "x"}, 3, 30, d)
+        assert plan and "охранница" in " ".join(w["w"] for w in c["words"])            # субтитры исправлены
+        assert plan["ed"]["hooks"][0]["text"] == "Охранница против меня"                # и заголовок тоже
+        assert plan["brain"]["proofread"] and "охранник → охранница" in plan["brain"]["proofread"][0]
+        assert st.read_json("glossary.json")["fixes"]["охранник"]["to"] == "охранница"
+    finally:
+        undo()
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

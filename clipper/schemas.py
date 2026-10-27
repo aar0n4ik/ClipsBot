@@ -59,3 +59,5 @@ BUNDLES = obj({"groups": {"type": "array", "items": obj({"ids": STRS, "title": S
                                                           "category": {"type": "string", "enum": CATS}})}})
 
 TRANSLATE = obj({"lines": STRS})
+
+PROOF = obj({"fixes": {"type": "array", "items": obj({"i": I, "w": S, "why": S}, ["i", "w"])}})

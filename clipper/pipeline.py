@@ -186,7 +186,7 @@ def cmd_process(cfg: dict, store: Store):
     wh = cfg.get("whisper", {})
     transcriber = Transcriber(wh.get("model", "large-v3-turbo"), wh.get("compute_type", "int8"),
                               cfg["streamer"].get("language", "ru"), engine=(cfg.get("transcribe") or {}).get("engine", "auto"),
-                              llm=llm, hotwords=wh.get("hotwords", ""))
+                              llm=llm, hotwords=" ".join([wh.get("hotwords", "")] + proofread_terms(store, cfg)).strip())
     n = 0
     tried: set[str] = set()
     from . import settings
@@ -361,8 +361,11 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
             c["chat_sample"], c["chat_count"] = _chat_sample(near, c["peak_abs"]), len(near)
         items.append((cut_wav(audio, cs - start, ce - cs, work / f"{c['id']}.wav"), ce - cs))
     used0 = dict(transcriber.used)
+    from . import proofread as PR
+    known = PR.known_fixes(store, cfg)   # выученные исправления словаря — сразу и бесплатно, до оценки ИИ
     for c, words in zip(cands, transcriber.words_many(items)):
         c["words"], c["frames"] = words, []
+        counts["spell"] = counts.get("spell", 0) + PR.apply_known(words, known)
     counts["asr"] = {k: v - used0.get(k, 0) for k, v in transcriber.used.items() if v - used0.get(k, 0)}
     alive = [c for c in cands if len(c["words"]) >= 6 or c["breakdown"]["viewer_clips"] >= 1]
 
@@ -554,13 +557,42 @@ def _review_on_video(cfg, store: Store, llm: LLM, vod: dict, c: dict, v: dict, s
             continue
         if s1 < a < b < e1 and b - a >= 0.6:
             cuts.append((round(a, 2), round(b, 2)))
+    if ai.get("proofread", True) and low is not None:
+        js = _proofread(cfg, store, llm, c, js, low, off, p1, work)   # субтитры и тексты = то, что реально сказано
     v2 = {**v, "score": score, "category": js.get("category") or v.get("category"), "risk": js.get("risk") or v.get("risk"),
           "why": js.get("moment") or v.get("why"), "subscores": js.get("subscores") or {}}
     return {"c": c, "v": v2, "s": s1, "e": e1, "cuts": cuts, "ed": js, "score": score, "abs_s": c["ctx_start"] + s1,
             "what": js.get("what_happens", ""),
             "brain": {"text": _brief(v), "video": {k: js.get(k) for k in ("verdict", "score", "subscores", "what_happens",
                                                                         "moment", "technical", "standalone")},
-                      "tech": tech}}
+                      "tech": tech, "proofread": js.get("proofread") or []}}
+
+
+def _proofread(cfg, store: Store, llm: LLM, c: dict, js: dict, low: Path, off: float, p1: float, work: Path) -> dict:
+    """ИИ слушает звук финалиста и правит ошибки распознавания в словах (→ субтитры) и в текстах режиссёра."""
+    from . import proofread as PR
+    idx = [i for i, w in enumerate(c["words"]) if off - 0.1 <= w["s"] <= p1 - c["ctx_start"]]
+    if not idx:
+        return js
+    try:
+        audio = PR.audio_of(low, work / f"{c['id']}_proof.ogg")
+        fixes = PR.proofread(llm, cfg, audio, [c["words"][i] for i in idx], what=js.get("what_happens", ""),
+                             chat=c.get("chat_sample"), glossary=PR.terms(store, cfg))
+    except Exception as e:  # noqa: BLE001 — корректор не обязателен
+        log(f"корректор {c['id']} недоступен: {str(e)[:140]}")
+        return js
+    if not fixes:
+        return js
+    pairs = []
+    for k, new in sorted(fixes.items()):
+        w = c["words"][idx[k]]
+        pairs.append((w["w"], new))
+        w["w"] = PR._keep_punct(w["w"], new)
+    PR.learn(store, pairs)
+    log(f"корректор {c['id']}: " + ", ".join(f"{a}→{b}" for a, b in pairs[:10]))
+    js = PR.fix_texts(js, {PR.norm(a): b for a, b in pairs if len(b.split()) == 1})
+    js["proofread"] = [f"{a} → {b}" for a, b in pairs][:20]
+    return js
 
 
 def _brief(v: dict) -> dict:
@@ -579,6 +611,8 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     from . import brain
     from .framing import static_crop
     c, v, ed = pl["c"], pl["v"], pl["ed"]
+    from . import proofread as PR
+    ed = PR.fix_texts(ed, PR.known_fixes(store, cfg))   # известные ошибки распознавания не попадут и в тексты
     s, e = pl["s"], pl["e"]
     cl = cfg["clips"]
     abs_s, dur = c["ctx_start"] + s, e - s
@@ -624,6 +658,11 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
         if sum(b - a for a, b in cut) >= 0.75 * mn:
             segs = cut
     kept = sum(b - a for a, b in segs)
+    if cl.get("monetize_long") and dur >= 61.5 and kept < 61:
+        # длинный ролик задуман ради монетизации TikTok (> 1 мин) — вырезка пауз не должна опустить его ниже минуты
+        cut = brain.apply_cuts([(pad, pad + dur)], [(to_src(a), to_src(b)) for a, b in pl.get("cuts") or []])
+        segs = cut if sum(b - a for a, b in cut) >= 61 else [(pad, pad + dur)]
+        kept = sum(b - a for a, b in segs)
     from .render import words_to_output
     words_final = words_to_output(words_src, segs)
 
@@ -719,6 +758,14 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     store.sync(f"клип {clip_id} готов (оценка {pl['score']}, {kept:.0f} с)")
     log(f"✅ {clip_id} оценка={pl['score']} {kept:.0f}с (вырезано {dur - kept:.1f} с) «{lead['hook']}»")
     return True
+
+
+def proofread_terms(store: Store, cfg: dict) -> list[str]:
+    from . import proofread as PR
+    try:
+        return PR.terms(store, cfg)
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def clip_key(vod: dict, pl: dict) -> str:
