@@ -20,9 +20,10 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+from concurrent.futures import ThreadPoolExecutor
 from zoneinfo import ZoneInfo
 
-from . import health, learn, releases
+from . import health, learn, releases, schemas
 from .clips import age_hours, normalize, pending_for
 from .config import WORK_DIR
 from .platforms import accounts as list_accounts
@@ -37,6 +38,7 @@ def _iso(t: dt.datetime) -> str:
 
 BRAIN = "status/brain.json"
 ACCOUNT_COOLDOWN_H = {"rate": 1, "quota": 6, "spam": 24, "blocked": 24, "auth": 168}
+UPLOAD_STALE_H = 3      # «выкладываю» дольше этого — раннер умер посреди публикации
 CATCHUP_H = 12          # клип вышел на других площадках, а эта отдыхала — догоняем, если прошло меньше
 
 
@@ -180,7 +182,7 @@ def think(cfg: dict, ctx: dict, fallback: dict) -> dict:
         return {**fallback, "by": "план"}
     try:
         from .llm import LLM
-        llm = LLM(cfg["llm"]["providers"])
+        llm = LLM(cfg["llm"]["providers"], text_chain=[ai["text_model"]] if ai.get("text_model") else None)
     except SystemExit:
         return {**fallback, "by": "план (нет ключей ИИ)"}
     model = ai.get("planner_model", "gemini-4-argon")
@@ -189,9 +191,10 @@ def think(cfg: dict, ctx: dict, fallback: dict) -> dict:
     try:
         prop = llm.chat_json_model([{"role": "user", "content": PRODUCER.format(
             now_local=ctx["now_local"], tz=posting["timezone"], quiet=", ".join(f"{h}:00" for h in posting.get("quiet_hours", [])),
-            state=state, max_age=posting.get("max_age_hours", 36))}], model, temperature=0.3, max_tokens=2500)
+            state=state, max_age=posting.get("max_age_hours", 36))}], model, max_tokens=1500,
+            schema=schemas.PRODUCER, thinking="medium")
         crit = llm.chat_json([{"role": "user", "content": CRITIC.format(state=state, proposal=json.dumps(prop, ensure_ascii=False))}],
-                             temperature=0.2, max_tokens=1500)
+                             max_tokens=1000, schema=schemas.PRODUCER_CRITIC, thinking="low")
     except Exception as e:  # noqa: BLE001
         log(f"продюсер недоступен: {str(e)[:160]} — решаю по плану")
         return {**fallback, "by": "план (ИИ недоступен)"}
@@ -235,6 +238,17 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     queue = [normalize(c) for c in store.list_json("queue")]
     enabled = cfg.get("platforms") or {"tiktok": 1, "youtube": 1, "instagram": 1}
     errors: list[str] = []
+
+    # 0) публикации, прерванные на середине (раннер умер после загрузки, но до записи результата):
+    #    не повторяем сами — иначе возможен дубль на площадке. Stats свяжет ролик, если он всё-таки вышел.
+    for c in queue:
+        hung = [pl for pl, p in c["posts"].items() if p.get("status") == "uploading" and p.get("started_at")
+                and (now - parse_iso(p["started_at"])).total_seconds() > UPLOAD_STALE_H * 3600]
+        for pl in hung:
+            c["posts"][pl].update(status="failed", error="публикация прервалась на середине — проверь, вышел ли ролик "
+                                                         "на площадке; если нет, нажми «Повторить»")
+        if hung:
+            store.write_json(f"queue/{c['id']}.json", c)
 
     # 1) протухшие клипы: «на завтра не оставляем» (кроме 9+)
     for c in queue:
@@ -308,7 +322,7 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         plats = [p for p in ready if pending_for(c, p)]
         if not plats:
             continue
-        posted_elsewhere = any(p.get("status") in ("posted", "inbox", "processing") for p in c["posts"].values())
+        posted_elsewhere = any(p.get("status") in ("posted", "inbox", "processing", "uploading") for p in c["posts"].values())
         if posted_elsewhere and age_hours(c) > CATCHUP_H and not c.get("force_post"):
             continue
         if int(c.get("score", 0)) < post_min and not c.get("force_post"):
@@ -367,12 +381,30 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     released = []
     if decision["action"] == "post" and decision.get("clip"):
         clip = next(c for c in pool if c["id"] == decision["clip"])
-        for plat in clip["_plats"]:
+        plats = list(clip["_plats"])
+        # маркер «выкладываю» сохраняется ДО загрузки: умрёт раннер посреди — следующий запуск не сделает дубль
+        for plat in plats:
+            clip["posts"][plat] = {**(clip["posts"].get(plat) or {}), "account": ready[plat]["id"], "status": "uploading",
+                                   "started_at": _iso(now)}
+        store.write_json(f"queue/{clip['id']}.json", {k: v for k, v in clip.items() if not k.startswith("_")})
+        store.sync(f"post: выкладываю {clip['id']} → {', '.join(plats)}")
+        files = {}
+        for asset in dict.fromkeys(clip["targets"][p].get("asset") for p in plats):
+            try:
+                files[asset] = releases.download(asset, WORK_DIR / "post")
+            except Exception as e:  # noqa: BLE001 — например, файл пропал из релиза
+                files[asset] = e
+
+        def one(plat):
             acc = ready[plat]
-            a = accs[acc["id"]]
-            ok = _publish_one(cfg, store, clients[plat], acc, a, clip, plat, decision, now, today, errors)
-            if ok:
-                released.append(plat)
+            return _publish_one(cfg, store, clients[plat], acc, accs[acc["id"]], clip, plat, decision, now, today, errors,
+                                files.get(clip["targets"][plat].get("asset")))
+        with ThreadPoolExecutor(max_workers=len(plats) or 1) as ex:   # релиз во все площадки в одну минуту
+            oks = list(ex.map(one, plats))
+        released = [p for p, ok in zip(plats, oks) if ok]
+        for asset in dict.fromkeys(clip["targets"][p].get("asset") for p in released
+                                   if clip["posts"][p].get("status") in ("posted", "inbox")):
+            maybe_delete_asset(clip, asset)   # файл общий: удаляется, только когда никому больше не нужен
         clip.pop("force_post", None)
         for k in ("_plats", "_left_h", "_catchup"):
             clip.pop(k, None)
@@ -406,12 +438,15 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
 
 
 def _publish_one(cfg, store: Store, cl, acc: dict, a: dict, clip: dict, plat: str, decision: dict, now: dt.datetime,
-                 today: str, errors: list) -> bool:
+                 today: str, errors: list, path=None) -> bool:
     posting = cfg["posting"]
     t = clip["targets"][plat]
     log(f"{acc['id']}: публикую {clip['id']} «{t.get('hook')}»")
     try:
-        path = releases.download(t["asset"], WORK_DIR / "post")
+        if isinstance(path, Exception):
+            raise path
+        if path is None:
+            path = releases.download(t["asset"], WORK_DIR / "post")
         res = cl.publish(path, {**t, "caption_full": full_caption(t, posting)}, cfg, clip)
     except PlatformError as e:
         log(f"❌ {acc['id']}: {e}")
@@ -442,8 +477,6 @@ def _publish_one(cfg, store: Store, cl, acc: dict, a: dict, clip: dict, plat: st
     clip["posts"][plat] = {**res, "account": acc["id"], "posted_at": _iso(now), "reason": decision.get("reason"),
                            "by": decision.get("by")}
     t["status"] = "used"
-    if res.get("status") in ("posted", "inbox"):
-        maybe_delete_asset(clip, t.get("asset"))
     cbd = {k: v for k, v in a.get("count_by_day", {}).items() if k >= (now - dt.timedelta(days=14)).date().isoformat()}
     cbd[today] = cbd.get(today, 0) + 1
     a["count_by_day"] = cbd

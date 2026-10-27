@@ -523,7 +523,7 @@ async function decrypt(env, password) {
   return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64d(env.iv) }, key, b64d(env.ct))));
 }
 async function encrypt(obj, password) {
-  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 250000;
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 600000;
   const key = await keyFrom(password, salt, iter, "encrypt");
   const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(obj))));
   return JSON.stringify({ v: 1, iter, salt: b64e(salt), iv: b64e(iv), ct: b64e(ct) });
@@ -854,7 +854,7 @@ function renderOverview() {
   if (P.chunk) rows.push(["Кусок", `<span class="mono">${esc(P.chunk)}</span>`]);
   rows.push(["Обновлено", ago(P.updated_at)]);
   const vs = (D.settings || {}).values || {};
-  rows.push(["Отбор", `монтирую от ${vs["quality.make_min"] ?? 7}/10, максимум ${vs["quality.max_per_chunk"] ?? 4} из 2 ч; видео смотрит ${esc(vs["ai.video_review"] === false ? "никто (выключено)" : vs["ai.video_model"] || "Gemini")}`]);
+  rows.push(["Отбор", `монтирую от ${vs["quality.make_min"] ?? 7}/10, максимум ${vs["quality.max_per_chunk"] ?? 3} из часа стрима; видео смотрит ${esc(vs["ai.video_review"] === false ? "никто (выключено)" : vs["ai.video_model"] || "Gemini")}`]);
   $("procKv").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
   const ch = ((D.status.funnel || {}).chunks || []).slice(-8).reverse();
   $("chunks").innerHTML = ch.length ? ch.map(c => `<tr><td><span class="mono">${esc(c.chunk)}</span><br><span class="muted small">${ago(c.at)}</span></td><td class="r num">${c.candidates ?? "—"}</td><td class="r num">${c.text_pass ?? "—"}</td><td class="r num">${c.video_pass ?? "—"}</td><td class="r"><b class="num">${c.made ?? 0}</b></td></tr>`).join("")
@@ -1207,14 +1207,16 @@ const SET_UI = [
   ["Отбор моментов", [
     ["quality.make_min", "С какой оценки монтировать клип", "финальная оценка после того, как ИИ посмотрел видео (1–10)"],
     ["quality.post_min", "С какой оценки выкладывать", "ниже не выйдет никогда, даже если выкладывать нечего"],
-    ["quality.max_per_chunk", "Максимум клипов из 2 часов стрима", "обычно выходит 0–2: лучше меньше, но сильнее"],
+    ["quality.max_per_chunk", "Максимум клипов из часа стрима", "обычно выходит 0–2: лучше меньше, но сильнее"],
     ["quality.exceptional", "Исключительный момент", "с такой оценкой берём сверх всех лимитов"]]],
   ["Мозг", [
     ["ai.scout_audio", "ИИ слушает весь стрим целиком", "находит истории и тихие панчлайны, которые чат не заметил"],
     ["ai.video_review", "ИИ смотрит видео каждого финалиста", "лаги, есть ли момент, где резать, правдив ли заголовок"],
     ["ai.video_model", "Модель для видео", "gemini-4-argon умнее, gemini-3.8-flash дешевле и быстрее"],
     ["ai.planner", "ИИ-продюсер решает, когда выкладывать", "выключено — работает простой план по лучшим часам"],
-    ["ai.planner_model", "Модель продюсера", ""]]],
+    ["ai.planner_model", "Модель продюсера", ""],
+    ["ai.second_opinion", "Второе мнение на границе порога", "клип ровно на пороге ИИ смотрит ещё раз независимо, итог — среднее"],
+    ["transcribe.engine", "Расшифровка речи", "auto — облако Gemini (быстро и точнее), при сбое Whisper; whisper — только локально"]]],
   ["Монтаж", [
     ["clips.min_seconds", "Минимальная длина, с", ""], ["clips.max_seconds", "Максимальная длина, с", ""],
     ["clips.trim_silence", "Вырезать паузы и молчание", "паузы, которые ИИ отметил по видео, вырезаются всегда"],
@@ -1269,7 +1271,7 @@ function renderSettings() {
   $("sys").innerHTML = rows.join("");
   $("sysNote").textContent = stg.assets != null ? `файлов клипов на GitHub: ${stg.assets} (${(stg.bytes / 1048576).toFixed(0)} МБ)` : "";
 }
-const sysName = k => ({ watch: "Проверка Twitch", process: "Нарезка", post: "Публикация", stats: "Статистика", doctor: "Ежедневная проверка", render: "Монтаж" }[k] || k);
+const sysName = k => ({ watch: "Проверка Twitch", process: "Нарезка", post: "Публикация", stats: "Статистика", doctor: "Ежедневная проверка", render: "Монтаж", ai: "ИИ (ключи и модели)" }[k] || k);
 async function saveSettings() {
   const dr = ui.setDraft || {}, v = setValues();
   const names = Object.fromEntries(SET_UI.flatMap(([, it]) => it.map(([k, t]) => [k, t])));

@@ -87,15 +87,18 @@ def link_clips(store: Store, acc_id: str, platform: str, A: dict, queue: list[di
     claimed = {str(p.get("video_id")) for c in queue for p in c["posts"].values() if p.get("video_id")}
     for c in queue:
         p = c["posts"].get(platform)
-        if not p or p.get("account") != acc_id or p.get("video_id") or p.get("status") not in ("inbox", "posted", "processing"):
+        if not p or p.get("account") != acc_id or p.get("video_id") or \
+                p.get("status") not in ("inbox", "posted", "processing", "uploading"):
             continue
         key = _norm((c["targets"].get(platform) or {}).get("caption", ""))[:40]
-        posted = int(parse_iso(p["posted_at"]).timestamp()) if p.get("posted_at") else 0
+        when = p.get("posted_at") or p.get("started_at")
+        posted = int(parse_iso(when).timestamp()) if when else 0
         hit = None
         for vid, v in A["videos"].items():
             if vid in claimed or not key:
                 continue
-            if key in _norm(v.get("description", "")) and (v.get("create_time") or 0) >= posted - 3600:
+            hay = _norm(v.get("description", "")) + " " + _norm(v.get("title", ""))   # YouTube: подпись = название
+            if key in hay and (v.get("create_time") or 0) >= posted - 3600:
                 hit = vid
                 break
         if not hit and platform == "tiktok" and p.get("status") == "inbox":
@@ -239,10 +242,89 @@ def cmd_doctor(cfg: dict, store: Store):
         for a in stale:
             releases.delete(a["name"])
         size = sum(a.get("size", 0) for a in assets if a not in stale)
-        store.write_json("status/storage.json", {"assets": len(assets) - len(stale), "bytes": size, "cleaned": len(stale),
-                                                 "at": now_iso()})
+        prev = store.read_json("status/storage.json", {}) or {}
+        store.write_json("status/storage.json", {**prev, "assets": len(assets) - len(stale), "bytes": size,
+                                                 "cleaned": len(stale), "at": now_iso()})
     except Exception as e:  # noqa: BLE001
         warns.append(f"релиз: {e}")
+    try:
+        ai_issues = check_ai(cfg, store)
+        warns += ai_issues
+    except Exception as e:  # noqa: BLE001
+        warns.append(f"проверка ИИ: {str(e)[:160]}")
+    keepalive()
     level = "error" if issues else "warn" if warns else "ok"
     health.report(store, "doctor", level, "; ".join(issues + warns) or "всё проверено, проблем нет")
     store.sync("doctor")
+    maybe_squash(cfg, store)
+
+
+def check_ai(cfg: dict, store: Store) -> list[str]:
+    """Каждый ключ Gemini жив? Модели из настроек существуют? Итог — в дашборд (Система) и status/ai.json.
+    Так видно заранее, что Google выключил модель или ключ умер, а не по пустой очереди через день."""
+    import os
+
+    import requests
+    ai = cfg.get("ai") or {}
+    wanted = {k: ai.get(k) for k in ("text_model", "scout_model", "video_model", "planner_model") if ai.get(k)}
+    if (cfg.get("transcribe") or {}).get("engine", "auto") != "whisper":
+        wanted["transcribe_model"] = "gemini-3.5-transcribe"
+    keys, models, problems = {}, set(), []
+    for p in (cfg.get("llm") or {}).get("providers", []):
+        key = os.environ.get(p.get("key_env", ""))
+        if not key:
+            keys[p["name"]] = "нет секрета"
+            continue
+        try:
+            r = requests.get("https://generativelanguage.googleapis.com/v1beta/models", params={"pageSize": 1000},
+                             headers={"x-goog-api-key": key}, timeout=30)
+            if r.status_code == 200:
+                keys[p["name"]] = "ok"
+                models |= {m.get("name", "").split("/", 1)[-1] for m in r.json().get("models", [])}
+            else:
+                keys[p["name"]] = f"ошибка {r.status_code}"
+        except requests.RequestException as e:
+            keys[p["name"]] = f"сеть: {str(e)[:60]}"
+    dead = [k for k, v in keys.items() if v not in ("ok", "нет секрета")]
+    if dead:
+        problems.append(f"ИИ: ключи не работают: {', '.join(dead)}")
+    if not any(v == "ok" for v in keys.values()):
+        problems.append("ИИ: ни один ключ Gemini не отвечает — отбор и тексты стоят")
+    missing = {k: m for k, m in wanted.items() if models and m not in models}
+    if missing:
+        problems.append("ИИ: модели недоступны (бот берёт запасные): " + ", ".join(f"{k}={m}" for k, m in missing.items()))
+    store.write_json("status/ai.json", {"at": now_iso(), "keys": keys, "missing": missing, "models": len(models),
+                                         "latest": sorted(m for m in models if m.startswith("gemini-") and
+                                                          not any(x in m for x in ("tts", "image", "embedding", "live")))[-12:]})
+    health.report(store, "ai", "warn" if problems else "ok", "; ".join(problems) or
+                  f"ключей живо: {sum(v == 'ok' for v in keys.values())}/{len(keys)}, модели на месте")
+    return problems
+
+
+def keepalive():
+    """GitHub выключает расписание публичного репозитория после 60 дней без активности.
+    Раз в несколько часов «включаем» рабочие воркфлоу заново — для уже включённых это ничего не меняет."""
+    import os
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    if not repo:
+        return
+    from .util import run
+    for wf in ("watch.yml", "process.yml", "post.yml", "stats.yml", "doctor.yml"):
+        r = run(["gh", "api", "-X", "PUT", f"repos/{repo}/actions/workflows/{wf}/enable"], check=False, quiet=True)
+        if r.returncode != 0 and "404" not in (r.stderr or ""):
+            log(f"keepalive {wf}: {(r.stderr or '')[-160:]}")
+
+
+def maybe_squash(cfg: dict, store: Store):
+    """Раз в N дней сжать историю ветки data в один коммит (по умолчанию 7)."""
+    days = float((cfg.get("maintenance") or {}).get("squash_days", 7))
+    if days <= 0:
+        return
+    st = store.read_json("status/storage.json", {}) or {}
+    last = st.get("squashed_at")
+    if last and (now_utc() - parse_iso(last)).total_seconds() < days * 86400:
+        return
+    st["squashed_at"] = now_iso()
+    store.write_json("status/storage.json", st)
+    store.sync("storage: отметка сжатия")
+    store.squash_history()

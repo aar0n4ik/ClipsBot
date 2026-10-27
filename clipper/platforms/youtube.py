@@ -34,6 +34,14 @@ def exchange_code(code: str, redirect_uri: str) -> dict:
             "issued_at": int(time.time())}
 
 
+def _next_offset(rng: str | None) -> int:
+    """«bytes=0-12345» → 12346 (следующий байт); заголовка нет — ничего не дошло."""
+    try:
+        return int(str(rng).split("-")[-1]) + 1 if rng else 0
+    except ValueError:
+        return 0
+
+
 class YouTube(Platform):
     name, label = "youtube", "YouTube Shorts"
 
@@ -84,14 +92,49 @@ class YouTube(Platform):
             reason = ((js.get("error") or {}).get("errors") or [{}])[0].get("reason", r.text[:200])
             kind = "quota" if "quota" in str(reason).lower() or "uploadLimit" in str(reason) else "auth" if r.status_code in (401, 403) else "temp"
             raise PlatformError(f"YouTube init {r.status_code}: {reason}", kind)
-        with open(path, "rb") as f:
-            up = http("PUT", r.headers["Location"], data=f, timeout=1800,
-                      headers={"Content-Type": "video/mp4", "Content-Length": str(size)})
-        if up.status_code not in (200, 201):
-            raise PlatformError(f"YouTube upload {up.status_code}: {up.text[:200]}", "temp")
-        vid = up.json()["id"]
+        vid = self._upload(r.headers["Location"], path, size)["id"]
         return {"status": "posted", "video_id": vid, "url": f"https://youtube.com/shorts/{vid}",
                 "privacy": meta["status"]["privacyStatus"]}
+
+    def _upload(self, session: str, path: Path, size: int, chunk: int = 16 * 1024 * 1024) -> dict:
+        """Возобновляемая загрузка кусками (кратно 256 КБ). Обрыв или 5xx — спрашиваем у Google, сколько байт
+        дошло (Content-Range: bytes */size → 308 Range), и докачиваем с этого места, а не с нуля."""
+        import requests
+        offset, fails = 0, 0
+        with open(path, "rb") as f:
+            while True:
+                f.seek(offset)
+                data = f.read(chunk)
+                end = offset + len(data) - 1
+                try:
+                    r = requests.put(session, data=data, timeout=600, headers={
+                        "Content-Length": str(len(data)), "Content-Type": "video/mp4",
+                        "Content-Range": f"bytes {offset}-{end}/{size}"})
+                except requests.RequestException:
+                    r = None
+                if r is not None and r.status_code in (200, 201):
+                    return r.json()
+                if r is not None and r.status_code == 308:
+                    offset = _next_offset(r.headers.get("Range"))
+                    fails = 0
+                    continue
+                if r is not None and r.status_code in (400, 401, 403, 404):
+                    raise PlatformError(f"YouTube upload {r.status_code}: {r.text[:200]}",
+                                        "auth" if r.status_code in (401, 403) else "temp")
+                fails += 1
+                if fails > 6:
+                    raise PlatformError("YouTube: загрузка не докачалась после 6 попыток", "temp")
+                time.sleep(min(60, 2 ** fails))
+                try:
+                    q = requests.put(session, timeout=60, headers={"Content-Range": f"bytes */{size}", "Content-Length": "0"})
+                except requests.RequestException:
+                    continue
+                if q.status_code in (200, 201):
+                    return q.json()
+                if q.status_code == 308:
+                    offset = _next_offset(q.headers.get("Range"))
+                elif q.status_code == 404:
+                    raise PlatformError("YouTube: сессия загрузки истекла", "temp")
 
     def list_videos(self) -> list[dict]:
         me = self.tok.get("user") or {}

@@ -18,6 +18,7 @@ import re
 import subprocess
 from pathlib import Path
 
+from . import schemas
 from .llm import LLM, LLMError
 from .transcribe import words_to_timed_text
 from .util import fmt_hms, log
@@ -133,19 +134,27 @@ def scout(llm: LLM, cfg: dict, audio: Path, length: float, msgs: list[dict], chu
     """Моменты от разведчика: [{"abs": секунда VOD, "end_abs", "guess", "what"}]."""
     st = cfg["streamer"]
     out = []
-    for t0, part in export_audio_parts(audio, length, work):
+    model = (cfg.get("ai") or {}).get("scout_model", "gemini-3.8-flash")
+
+    def listen(item):
+        t0, part = item
         dur = min(3600.0, length - t0)
         sub = [m for m in msgs if chunk_start + t0 <= m["t"] < chunk_start + t0 + dur]
         prompt = SCOUT.format(dur_min=int(dur // 60), persona=st["persona"].strip(), audience=st.get("audience", "").strip(),
                               chat=chat_digest(sub, chunk_start + t0, int(dur), patterns), scale=SCALE)
         mime = "audio/ogg" if part.suffix == ".ogg" else "audio/mp3"
         try:
-            js = llm.media_json([(mime, part.read_bytes())], prompt, model=(cfg.get("ai") or {}).get("scout_model", "gemini-3.8-flash"),
-                                fallback_models=["gemini-3.8-flash", "gemini-3.6-flash"], max_tokens=12000, temperature=0.2,
-                                low_res=False)
+            return t0, dur, llm.media_json([(mime, part.read_bytes())], prompt, model=model,
+                                           fallback_models=["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest"],
+                                           max_tokens=8000, low_res=False, schema=schemas.SCOUT, thinking="medium")
         except LLMError as e:
             log(f"разведчик: часть {fmt_hms(t0)} пропущена ({str(e)[:140]})")
-            continue
+            return t0, dur, {}
+    from concurrent.futures import ThreadPoolExecutor
+    parts = export_audio_parts(audio, length, work)
+    with ThreadPoolExecutor(max_workers=max(1, len(parts))) as ex:   # части часа слушаются одновременно
+        results = list(ex.map(listen, parts))
+    for t0, dur, js in results:
         for m in js.get("moments") or []:
             a = _ts(m.get("at"))
             if a is None or not 0 <= a <= dur + 5:
@@ -292,7 +301,8 @@ def direct(llm: LLM, cfg: dict, preview: Path, words_rel: list[dict], chat_rel: 
                              pre_score=pre.get("score", "?"), pre_why=str(pre.get("why", ""))[:200], tech=tech_text(tech),
                              scale=SCALE, style=STYLE_RULES, risk=RISK)
     return llm.media_json([("video/mp4", preview.read_bytes())], prompt, model=model,
-                          fallback_models=["gemini-3.8-flash", "gemini-3.6-flash"], max_tokens=16000, temperature=0.3)
+                          fallback_models=["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest"],
+                          max_tokens=6000, schema=schemas.DIRECTOR, thinking="high")
 
 
 def criticize(llm: LLM, cfg: dict, js: dict, words_final: list[dict], hook: str) -> dict:
@@ -300,7 +310,7 @@ def criticize(llm: LLM, cfg: dict, js: dict, words_final: list[dict], hook: str)
     prompt = CRITIC.format(what=js.get("what_happens", "")[:400], moment=js.get("moment", "")[:200], transcript=tr or "(речи нет)",
                            hook=hook, yt=(js.get("youtube") or {}).get("title", ""), tt=(js.get("tiktok") or {}).get("caption", ""))
     try:
-        return llm.chat_json([{"role": "user", "content": prompt}], temperature=0.1, max_tokens=1500)
+        return llm.chat_json([{"role": "user", "content": prompt}], max_tokens=1200, schema=schemas.CRITIC, thinking="low")
     except LLMError as e:
         log(f"критик недоступен: {str(e)[:120]}")
         return {"ok": True, "skipped": True}

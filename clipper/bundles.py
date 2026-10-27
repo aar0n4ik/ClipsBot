@@ -54,8 +54,9 @@ def propose(llm: LLM, moments: list[dict]) -> list[dict]:
         lines.append(f"- id={m['id']} время={fmt_hms(m['t'])} категория={m.get('category')} "
                      f"текст: «{m.get('text', '')[:220]}»")
     try:
+        from . import schemas
         js = llm.chat_json([{"role": "user", "content": PROMPT + "\n".join(lines)}],
-                           max_tokens=1200, temperature=0.3)
+                           max_tokens=1200, schema=schemas.BUNDLES, thinking="medium")
     except LLMError as e:
         log(f"связки: ИИ недоступен ({str(e)[:120]})")
         return []

@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
+      PYTHONUNBUFFERED: "1"
       TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
       TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
       YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
@@ -39,11 +40,15 @@ jobs:
       MONEY_CONFIG: ${{ vars.MONEY_CONFIG }}
     steps:
       - name: Hide code in logs
-        run: echo "::add-mask::${{ inputs.code }}"
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        run: echo "::add-mask::$CODE"          # через env, а не подстановкой в скрипт: без инъекции в shell
+        env:
+          CODE: ${{ inputs.code }}
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with: {python-version: "3.12"}
-      - run: pip install -q -r requirements-light.txt
+      - uses: astral-sh/setup-uv@v7          # uv: установка зависимостей в разы быстрее pip
+        with: {enable-cache: true, cache-dependency-glob: "requirements-light.txt"}
+      - run: uv pip install --system -q -r requirements-light.txt
       - run: bash scripts/mount_state.sh
       - name: Exchange code
         run: python -m clipper auth --platform "$PLATFORM" --account "$ACCOUNT" --code "$CODE"
