@@ -1376,6 +1376,12 @@ dialog video { width: 100%; border-radius: 16px; background: #000 }
 .noimg { display: block; background: repeating-linear-gradient(135deg, #cfd8ea 0 10px, #e3e9f5 10px 20px) }
 .dk .noimg { background: repeating-linear-gradient(135deg, #202b47 0 10px, #26335275 10px 20px) }
 .m-cp .noimg { position: absolute; inset: 0 }
+/* кадр клипа: слот ровно 9:16, картинка заполняет его целиком */
+.m-cp{aspect-ratio:9/16}
+.m-cp img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
+a.m-cp img{transition:transform .35s ease}
+a.m-cp:hover img{transform:scale(1.06)}
+.tbl-wrap .vid .th{height:60px}
 .scenes .s1c .cm p b { font-weight: 700 }
 .scenes .s2h .mute { margin-left: auto }
 .scenes .wf { gap: 3px }
@@ -1465,28 +1471,10 @@ dialog video { width: 100%; border-radius: 16px; background: #000 }
         </div>
 
         <div class="m-top">
-          <div class="m-head"><div><h2>Лучшие клипы</h2><span class="m-sub">За всё время. Платим за площадку, где клип набрал больше всего</span></div></div>
+          <div class="m-head"><div><h2>Лучшие клипы</h2></div></div>
           <div class="m-cg m-cg5" id="topClips"></div>
         </div>
 
-        <div class="panel">
-          <div class="ph2"><h3>Сегодня по времени аудитории</h3><span class="mute small" id="dayNote"></span></div>
-          <div class="day" id="day"></div>
-          <div class="next-line" id="nextLine"></div>
-        </div>
-
-        <div class="grid2">
-          <div class="panel">
-            <div class="ph2"><h3>Нарезка стрима</h3><span class="chip" id="procChip">—</span></div>
-            <div id="procNow"></div>
-            <div class="funnel" id="funnel"></div>
-            <dl class="kv" id="procKv"></dl>
-          </div>
-          <div class="panel">
-            <div class="ph2"><h3>Последние куски стрима</h3></div>
-            <div class="tbl-wrap"><table><thead><tr><th>Кусок</th><th class="r">Кандидатов</th><th class="r">Прошли текст</th><th class="r">Прошли видео</th><th class="r">Клипов</th></tr></thead><tbody id="chunks"></tbody></table></div>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -1496,7 +1484,6 @@ dialog video { width: 100%; border-radius: 16px; background: #000 }
         <div class="seg" id="clipSeg" role="group" aria-label="Какие клипы">
           <button type="button" data-c="ready">Ждут выкладки</button><button type="button" data-c="drafts">Черновики TikTok</button><button type="button" data-c="out">Вышли</button><button type="button" data-c="problems">Ошибки</button><button type="button" data-c="rejected">Не взял</button>
         </div>
-        <span class="muted small" id="clipsNote"></span>
       </div>
       <div class="alert info" id="draftHint" hidden><b>TikTok пока без аудита API</b> <span class="msg">— бот кладёт ролик в черновики TikTok в ту же минуту, что и на Shorts и Reels. Открой TikTok → Профиль → Черновики (Входящие) и нажми «Опубликовать», чтобы вышло одновременно.</span></div>
       <div class="clips" id="clipList"></div>
@@ -1943,7 +1930,6 @@ function renderTabs() {
 }
 
 /* ── ОБЗОР ───────────────────────────────────────── */
-let cdTimer = null;
 function audTz() { return (D.status.post || {}).timezone || (D.posting || {}).timezone || "Europe/Moscow"; }
 function hourIn(tz, d = new Date()) { const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d).map(x => [x.type, x.value])); return (+p.hour % 24) + (+p.minute) / 60; }
 function dayIn(tz, d = new Date()) { return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
@@ -2141,8 +2127,6 @@ function sceneHtml(idx) {
 
 function renderOverview() {
   const tz = audTz(), S = D.status.post || {}, plan = S.plan || {}, today = dayIn(tz);
-  const quiet = new Set(((D.settings || {}).values || {})["posting.quiet_hours"] || (D.posting || {}).quiet_hours || [2, 3, 4, 5, 6]);
-  const nowH = hourIn(tz);
   const P = D.status.process || {}, L = D.status.live || {};
 
   /* ── герой: состояние, подпись, воронка последнего куска ── */
@@ -2194,28 +2178,6 @@ function renderOverview() {
     ? `<div class="pbn"><div class="pbn-t"><b>Выкладка на паузе: ${paused.map(([a]) => esc(accName(a))).join(", ")}</b><span>Поиск и монтаж идут дальше. Снять паузу — вкладка «Помощь» или «Настройки».</span></div></div>`
     : "";
 
-  /* ── лента дня ── */
-  const rels = D.clips.map(c => { const ts = Object.values(c.posts || {}).map(p => p.posted_at).filter(Boolean).sort()[0]; return ts && dayIn(tz, new Date(ts)) === today ? { c, ts } : null; }).filter(Boolean);
-  let h = `<div class="track">`;
-  for (let i = 0; i < 24; i++) if (quiet.has(i)) h += `<span class="night" style="left:${i / 24 * 100}%;width:${100 / 24}%"></span>`;
-  h += `</div>`;
-  for (const t of plan.today || []) { const [hh, mm] = t.split(":").map(Number); const x = (hh + mm / 60) / 24 * 100; if (hh + mm / 60 > nowH) h += `<span class="slot" style="left:${x}%" title="план: ${t}"></span>`; }
-  for (const r of rels) h += `<span class="rel" style="left:${hourIn(tz, new Date(r.ts)) / 24 * 100}%" title="${esc(r.c.overlay || "")} · ${fmtDT(r.ts)}" data-jump="${esc(r.c.id)}"></span>`;
-  h += `<span class="now" style="left:${nowH / 24 * 100}%" data-t="${String(Math.floor(nowH)).padStart(2, "0")}:${String(Math.round(nowH % 1 * 60)).padStart(2, "0")}"></span>`;
-  h += `<div class="hrs">${[0, 3, 6, 9, 12, 15, 18, 21, 24].map(x => `<span>${x}</span>`).join("")}</div>`;
-  $("day").innerHTML = h;
-  const tzName = tz === "Europe/Moscow" ? "МСК" : tz;
-  $("dayNote").textContent = `${tzName} · релизов ${plan.releases_today ?? rels.length} из ${plan.cap ?? "—"}${Object.keys(plan.waves || {}).length ? " · волна: +1 релиз" : ""}`;
-  const last = ((D.status.brain || {}).last) || {};
-  const next = (plan.today || []).find(t => { const [a, b] = t.split(":").map(Number); return a + b / 60 > nowH; });
-  const up = (plan.up_next || [])[0];
-  const target = next ? nextAt(tz, next) : null;
-  $("nextLine").innerHTML = `<span class="muted small">Следующий слот</span><span class="muted small">Продюсер сейчас</span>
-    <span class="when" id="countdown">${next ? "—" : "нет"}</span>
-    <span>${last.action === "post" ? "<b>выложил</b> " : last.action ? "<b>ждёт:</b> " : ""}${esc(last.reason || "ещё не решал")}${up ? `<br><span class="muted small">кандидат: «${esc(up.hook || up.id)}» · ${up.score}/10 · устареет через ${Math.max(0, Math.round(up.expires_in_h || 0))} ч</span>` : ""}</span>`;
-  const tick = () => { const t = target ? target - Date.now() : NaN; const el = $("countdown"); if (!el) return; if (!(t > 0)) { el.textContent = target ? "сейчас" : "нет"; return; } el.textContent = `${Math.floor(t / 36e5)}:${String(Math.floor(t % 36e5 / 6e4)).padStart(2, "0")}:${String(Math.floor(t % 6e4 / 1e3)).padStart(2, "0")}`; };
-  tick(); clearInterval(cdTimer); cdTimer = setInterval(tick, 1000);
-
   /* ── деньги ── */
   const [d1, d2] = periodRange();
   const gain = M.periodGain(G, d1, d2, addDays, dayKey);
@@ -2227,8 +2189,8 @@ function renderOverview() {
       <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="12"/>
       <circle cx="70" cy="70" r="60" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"
         stroke-dasharray="${(pctRing * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 70 70)"/>
-      <text x="70" y="70" text-anchor="middle" font-size="${money(O.sum.total).length > 7 ? 21 : 26}" font-weight="800">${esc(money(O.sum.total))}</text>
-      <text x="70" y="92" text-anchor="middle" font-size="12.5" font-weight="500">${Math.round(pctRing * 100)}% из ${esc(money(O.min))}</text>
+      <text x="70" y="68" text-anchor="middle" font-size="${Math.max(15, Math.min(28, Math.round(150 / Math.max(4, money(O.sum.total).length))))}" font-weight="800">${esc(money(O.sum.total))}</text>
+      <text x="70" y="91" text-anchor="middle" font-size="12" font-weight="500">${Math.round(pctRing * 100)}% из ${esc(money(O.min))}</text>
     </svg>`;
   $("owedSub").textContent = ready ? `Можно выводить — порог ${money(O.min)} набран.` : `До вывода ещё ${money(O.min - O.sum.total)} · минимум ${money(O.min)}.`;
   $("moneySub").textContent = `${money(rate())} за 1 000 просмотров лучшей площадки`;
@@ -2256,7 +2218,8 @@ function renderOverview() {
 
   /* ── площадки ── */
   const toks = D.status.tokens || {};
-  const nextSlot = (plan.today || []).find(t2 => { const [h2, m2] = t2.split(":").map(Number); return h2 + m2 / 60 > nowH; });
+  const nowH_ = hourIn(tz);
+  const nextSlot = (plan.today || []).find(t2 => { const [h2, m2] = t2.split(":").map(Number); return h2 + m2 / 60 > nowH_; });
   $("connChip").textContent = nextSlot ? `Пост в ${nextSlot}` : `${Object.values(toks).filter(t => t.connected).length} из ${D.accounts.length} подключено`;
   const byPlat = {};
   for (const g of Object.values(G)) for (const p of g.posts) byPlat[p.platform] = (byPlat[p.platform] || 0) + (p.views || 0);
@@ -2272,7 +2235,7 @@ function renderOverview() {
       <span class="m-pi"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="${PLG[a.platform] || ""}"></use></svg></span>
       <div class="m-pm"><div class="m-pn">${esc(a.name)} ${chip}</div>
         <small>${fmtInt(v)} просмотров</small>
-        ${sa.last_error ? `<small style="color:var(--bad)">${esc((sa.diagnosis || sa.last_error).slice(0, 120))}</small>` : ""}</div>
+        ${sa.last_error ? `<small style="color:var(--bad)">${esc(String(sa.diagnosis || sa.last_error).replace(/\s*\[[^\]]*\]\s*$/, "").slice(0, 90))}</small>` : ""}</div>
       <b class="m-pinc">${money(v * rate() / 1000)}</b></div>`;
   }).join("") || `<p class="empty">Площадок пока нет.</p>`;
 
@@ -2291,34 +2254,9 @@ function renderOverview() {
       <div class="m-cs2">лучшая: ${PL[best.platform] || "—"} ${fmtInt(g.bestViews)}</div></div>`;
   }).join("") : `<p class="empty">Клипов ещё нет.</p>`;
 
-  /* ── нарезка ── */
-  const state = P.state || "idle", fn = P.funnel || {};
-  $("procChip").className = "chip " + ({ running: "acc", error: "bad", idle: "good" }[state] || "");
-  $("procChip").textContent = { running: "работает", error: "ошибка", idle: "ждёт стрим" }[state] || state;
-  $("procNow").innerHTML = `<div style="font-weight:650">${esc(state === "running" ? P.stage : P.stage || "Жду новый кусок стрима")}</div>${state === "running" && P.progress != null ? `<div class="meter" style="margin-top:8px"><i style="width:${P.progress}%"></i></div>` : ""}`;
-  const order = ["peaks", "scout", "speech", "judge", "video", "render"];
-  const cur_ = order.indexOf(P.stage_id);
-  const cells = [["пики чата и звука", fn.peaks, 0], ["нашёл ИИ на слух", fn.scout, 1], ["кандидатов", fn.candidates, 2], ["прошли текст", fn.text_pass, 3], ["прошли видео", fn.video_pass, 4], ["клипов", fn.made, 5]];
-  $("funnel").innerHTML = state === "running" ? cells.map(([t, v, i]) => `<div class="${i === cur_ ? "now" : ""} ${i === 5 ? "last" : ""}"><b>${v ?? "·"}</b>${t}</div>`).join("") : "";
-  const rows = [];
-  if (P.vod_title) rows.push(["Стрим", esc(P.vod_title)]);
-  if (P.chunk) rows.push(["Кусок", `<span class="mono">${esc(P.chunk)}</span>`]);
-  rows.push(["Обновлено", ago(P.updated_at)]);
-  const vs = (D.settings || {}).values || {};
-  rows.push(["Отбор", `монтирую от ${vs["quality.make_min"] ?? 7}/10, максимум ${vs["quality.max_per_chunk"] ?? 3} из часа стрима; видео смотрит ${esc(vs["ai.video_review"] === false ? "никто (выключено)" : vs["ai.video_model"] || "Gemini")}`]);
-  $("procKv").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
-  const ch = ((D.status.funnel || {}).chunks || []).slice(-8).reverse();
-  $("chunks").innerHTML = ch.length ? ch.map(c => `<tr><td><span class="mono">${esc(c.chunk)}</span><br><span class="muted small">${ago(c.at)}</span></td><td class="r num">${c.candidates ?? "—"}</td><td class="r num">${c.text_pass ?? "—"}</td><td class="r num">${c.video_pass ?? "—"}</td><td class="r"><b class="num">${c.made ?? 0}</b></td></tr>`).join("")
-    : `<tr><td colspan="5" class="muted">Появится после первого куска с новым мозгом.</td></tr>`;
   renderChart(G, d1, d2);
 }
 
-function nextAt(tz, hm) {
-  const now = new Date(), [h, m] = hm.split(":").map(Number);
-  let diff = (h * 60 + m) - Math.round(hourIn(tz, now) * 60);
-  if (diff < 0) diff += 1440;
-  return new Date(now.getTime() + diff * 6e4 - now.getSeconds() * 1000);
-}
 function renderChart(FG, d1, d2) {
   /* Столбики как в макете: один столбик — день, последний подсвечен. */
   const span = daysBetween(d1, d2) + 1, show = Math.max(7, Math.min(span, 60));
@@ -2397,8 +2335,6 @@ function renderClips() {
   $("draftHint").hidden = seg !== "drafts" || !by.drafts.length;
   $("rejPanel").hidden = seg !== "rejected";
   $("clipList").hidden = seg === "rejected";
-  const notes = { ready: "Лучшие клипы после отбора. Продюсер выложит их на все площадки сразу, когда выгодно.", drafts: "", out: "Вышли за последние сутки (старше — в Аналитике).", problems: "Публикация не прошла. Можно повторить.", rejected: "" };
-  $("clipsNote").textContent = notes[seg] || "";
   if (seg === "rejected") return renderRejected();
   const list = by[seg] || [];
   $("clipList").innerHTML = list.length ? list.map(clipCard).join("") : `<p class="empty">${{ ready: "Сейчас нечего выкладывать — слабое бот не выпускает. Новые клипы придут со следующим куском стрима.", drafts: "Черновиков TikTok нет.", out: "За последние сутки ничего не вышло.", problems: "Ошибок нет." }[seg]}</p>`;
@@ -2782,8 +2718,7 @@ const SET_UI = [
   ["Публикация", [
     ["posting.daily_max", "Релизов в сутки", "расписание слотов на день; в слот уходит лучший клип очереди, остальные не пропадают"],
     ["posting.min_gap_minutes", "Пауза между релизами, мин", ""],
-    ["posting.hot_now", "Сильный клип с эфира — сразу", "свежесть важнее идеального часа"],
-    ["posting.quiet_hours", "Ночь аудитории", "часы по времени аудитории, когда не выкладываем"]]],
+    ["posting.hot_now", "Сильный клип с эфира — сразу", "свежесть важнее идеального часа"]]],
   ["Площадки", [["platforms.tiktok", "TikTok", ""], ["platforms.youtube", "YouTube Shorts", ""], ["platforms.instagram", "Instagram Reels", ""]]],
 ];
 const setValues = () => ({ ...((D.settings || {}).values || {}), ...((live.settings || {}).values || {}) });
