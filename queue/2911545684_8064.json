@@ -144,7 +144,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "А вы доверяете автопилоту на дороге?",
    "cover_ms": 500
   },
@@ -205,9 +205,14 @@
    "by": "владелец"
   },
   "instagram": {
+   "status": "posted",
+   "video_id": "18035377046894926",
+   "url": "https://www.instagram.com/reel/DfAnne9AA7Y/",
+   "privacy": "public",
    "account": "ig_main",
-   "status": "uploading",
-   "started_at": "2026-10-27T19:33:19Z"
+   "posted_at": "2026-10-27T19:33:19Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   }
  },
  "created_at": "2026-10-27T06:47:00Z",
