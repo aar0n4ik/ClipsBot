@@ -361,11 +361,8 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
             c["chat_sample"], c["chat_count"] = _chat_sample(near, c["peak_abs"]), len(near)
         items.append((cut_wav(audio, cs - start, ce - cs, work / f"{c['id']}.wav"), ce - cs))
     used0 = dict(transcriber.used)
-    from . import proofread as PR
-    known = PR.known_fixes(store, cfg)   # выученные исправления словаря — сразу и бесплатно, до оценки ИИ
     for c, words in zip(cands, transcriber.words_many(items)):
         c["words"], c["frames"] = words, []
-        counts["spell"] = counts.get("spell", 0) + PR.apply_known(words, known)
     counts["asr"] = {k: v - used0.get(k, 0) for k, v in transcriber.used.items() if v - used0.get(k, 0)}
     alive = [c for c in cands if len(c["words"]) >= 6 or c["breakdown"]["viewer_clips"] >= 1]
 
@@ -557,6 +554,25 @@ def _review_on_video(cfg, store: Store, llm: LLM, vod: dict, c: dict, v: dict, s
             continue
         if s1 < a < b < e1 and b - a >= 0.6:
             cuts.append((round(a, 2), round(b, 2)))
+    length_note = None
+    if (e1 - s1) - sum(b - a for a, b in cuts) > 60:
+        # длиннее минуты — только после отдельной строгой проверки: держит ли ролик внимание всё время
+        try:
+            lc = brain.check_length(llm, cfg, prev, words_rel, s1 - off, e1 - off, [[a - off, b - off] for a, b in cuts],
+                                    float(tech.get("duration") or (p1 - p0)))
+            if not lc.get("keep_long"):
+                ns2, ne2 = float(lc.get("start", s1 - off)) + off, float(lc.get("end", e1 - off)) + off
+                if s1 - 0.5 <= ns2 < ne2 <= e1 + 0.5 and ne2 - ns2 >= float(cfg["clips"]["min_seconds"]):
+                    s1, e1 = snap_bounds(c["words"], ns2, ne2, c["ctx_dur"], cfg)
+                    cuts = [(round(float(x[0]) + off, 2), round(float(x[1]) + off, 2)) for x in lc.get("cuts") or []
+                            if isinstance(x, (list, tuple)) and len(x) == 2 and s1 < float(x[0]) + off < float(x[1]) + off < e1
+                            and float(x[1]) - float(x[0]) >= 0.6]
+            length_note = {"keep_long": bool(lc.get("keep_long")), "why": str(lc.get("why", ""))[:200],
+                           "final_s": round((e1 - s1) - sum(b - a for a, b in cuts), 1)}
+        except Exception as e:  # noqa: BLE001 — проверка недоступна: длинное не выпускаем, режем до минуты
+            log(f"проверка длины {c['id']} недоступна ({str(e)[:120]}) — ограничиваю минутой")
+            e1 = min(e1, s1 + 60 + sum(b - a for a, b in cuts))
+            length_note = {"keep_long": False, "why": "проверка недоступна — ограничено минутой"}
     if ai.get("proofread", True) and low is not None:
         js = _proofread(cfg, store, llm, c, js, low, off, p1, work)   # субтитры и тексты = то, что реально сказано
     v2 = {**v, "score": score, "category": js.get("category") or v.get("category"), "risk": js.get("risk") or v.get("risk"),
@@ -565,7 +581,7 @@ def _review_on_video(cfg, store: Store, llm: LLM, vod: dict, c: dict, v: dict, s
             "what": js.get("what_happens", ""),
             "brain": {"text": _brief(v), "video": {k: js.get(k) for k in ("verdict", "score", "subscores", "what_happens",
                                                                         "moment", "technical", "standalone")},
-                      "tech": tech, "proofread": js.get("proofread") or []}}
+                      "tech": tech, "proofread": js.get("proofread") or [], "length": length_note}}
 
 
 def _proofread(cfg, store: Store, llm: LLM, c: dict, js: dict, low: Path, off: float, p1: float, work: Path) -> dict:
@@ -576,22 +592,32 @@ def _proofread(cfg, store: Store, llm: LLM, c: dict, js: dict, low: Path, off: f
         return js
     try:
         audio = PR.audio_of(low, work / f"{c['id']}_proof.ogg")
-        fixes = PR.proofread(llm, cfg, audio, [c["words"][i] for i in idx], what=js.get("what_happens", ""),
-                             chat=c.get("chat_sample"), glossary=PR.terms(store, cfg))
+        fixes, english = PR.proofread(llm, cfg, audio, [c["words"][i] for i in idx], what=js.get("what_happens", ""),
+                                      chat=c.get("chat_sample"), past=PR.hints(store))
     except Exception as e:  # noqa: BLE001 — корректор не обязателен
         log(f"корректор {c['id']} недоступен: {str(e)[:140]}")
         return js
-    if not fixes:
-        return js
     pairs = []
+    eng_idx = {idx[k] for seg in english for k in range(seg["from"], seg["to"] + 1)}
     for k, new in sorted(fixes.items()):
+        if idx[k] in eng_idx:
+            continue                                  # английский участок перепишется целиком ниже
         w = c["words"][idx[k]]
         pairs.append((w["w"], new))
         w["w"] = PR._keep_punct(w["w"], new)
-    PR.learn(store, pairs)
-    log(f"корректор {c['id']}: " + ", ".join(f"{a}→{b}" for a, b in pairs[:10]))
-    js = PR.fix_texts(js, {PR.norm(a): b for a, b in pairs if len(b.split()) == 1})
-    js["proofread"] = [f"{a} → {b}" for a, b in pairs][:20]
+    trans = []
+    for seg in sorted(english, key=lambda x: -x["from"]):   # с конца: индексы начала не сдвигаются
+        t = PR.apply_english(c["words"], {**seg, "from": idx[seg["from"]], "to": idx[seg["to"]]})
+        if t and t["ru"]:
+            trans.append(t)
+    if trans:
+        c["trans"] = sorted((c.get("trans") or []) + trans, key=lambda x: x["s"])
+        log(f"корректор {c['id']}: английская речь — {len(trans)} участок(ов), перевод снизу")
+    if pairs:
+        PR.learn(store, pairs)
+        log(f"корректор {c['id']}: " + ", ".join(f"{a}→{b}" for a, b in pairs[:10]))
+        js = PR.fix_texts(js, {PR.norm(a): b for a, b in pairs if len(b.split()) == 1})
+    js["proofread"] = [f"{a} → {b}" for a, b in pairs][:20] + [f"EN: {s['en'][:60]} — «{s['ru'][:60]}»" for s in english][:5]
     return js
 
 
@@ -611,8 +637,6 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     from . import brain
     from .framing import static_crop
     c, v, ed = pl["c"], pl["v"], pl["ed"]
-    from . import proofread as PR
-    ed = PR.fix_texts(ed, PR.known_fixes(store, cfg))   # известные ошибки распознавания не попадут и в тексты
     s, e = pl["s"], pl["e"]
     cl = cfg["clips"]
     abs_s, dur = c["ctx_start"] + s, e - s
@@ -645,7 +669,7 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
 
     # слова и вырезы — во времени исходника (src)
     to_src = lambda t: t - s + pad
-    words_src = [{"w": w["w"], "s": round(to_src(w["s"]), 2), "e": round(to_src(w["e"]), 2)}
+    words_src = [{**w, "s": round(to_src(w["s"]), 2), "e": round(to_src(w["e"]), 2)}
                  for w in c["words"] if s - 0.1 <= w["s"] < e]
     mn = float(cl.get("min_seconds", 10))
     segs = [(pad, pad + dur)]
@@ -658,13 +682,10 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
         if sum(b - a for a, b in cut) >= 0.75 * mn:
             segs = cut
     kept = sum(b - a for a, b in segs)
-    if cl.get("monetize_long") and dur >= 61.5 and kept < 61:
-        # длинный ролик задуман ради монетизации TikTok (> 1 мин) — вырезка пауз не должна опустить его ниже минуты
-        cut = brain.apply_cuts([(pad, pad + dur)], [(to_src(a), to_src(b)) for a, b in pl.get("cuts") or []])
-        segs = cut if sum(b - a for a, b in cut) >= 61 else [(pad, pad + dur)]
-        kept = sum(b - a for a, b in segs)
-    from .render import words_to_output
+    from .render import trans_to_output, words_to_output
     words_final = words_to_output(words_src, segs)
+    trans_out = trans_to_output([{"s": to_src(t["s"]), "e": to_src(t["e"]), "ru": t["ru"]}
+                                 for t in c.get("trans") or [] if t["e"] > s and t["s"] < e], segs)
 
     # хуки: правдивые, не скопированные из примеров; критик — последний голос
     tr = " ".join(w["w"] for w in words_final)
@@ -715,7 +736,7 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     for attempt in range(2):
         try:
             render_clip(src, segs, words_src, title, cfg, out, variant={}, audio_override=au.get("audio_override"),
-                        pan_keys=pan)
+                        pan_keys=pan, trans=trans_out)
             problems = validate_render(out, kept, "instagram")
         except Exception as ex:  # noqa: BLE001
             problems = [f"рендер упал: {str(ex)[:160]}"]

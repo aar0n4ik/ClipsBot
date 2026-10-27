@@ -95,7 +95,9 @@ class Transcriber:
         if self.used.get("cloud_fail", 0) >= 3 and not self.used.get("gemini"):
             return None   # облако не ответило ни разу из трёх — в этом запуске не тратим время
         try:
-            words = self.llm.transcribe(wav.read_bytes(), "audio/wav", language=LANG_CODES.get(self.language, self.language))
+            # основной язык стрима + английский: облако само переключается внутри фразы (code-mixing)
+            langs = list(dict.fromkeys([LANG_CODES.get(self.language, self.language), "en-US"]))
+            words = self.llm.transcribe(wav.read_bytes(), "audio/wav", language=langs)
         except Exception as e:  # noqa: BLE001 — облако не обязательно
             log(f"облачная расшифровка {wav.name}: {str(e)[:140]} — Whisper")
             self._count("cloud_fail")

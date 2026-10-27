@@ -908,7 +908,7 @@ function clipBucket(c) {
 }
 function clipCard(c) {
   const vids = D.settings?.values || {};
-  const age = (Date.now() - new Date(c.created_at)) / 36e5, maxAge = c.score >= 9 ? Math.max(72, vids["posting.max_age_hours"] || 36) : (vids["posting.max_age_hours"] || 36);
+  const age = (Date.now() - new Date(c.created_at)) / 36e5;
   const plats = Object.entries(c.targets || {}).map(([p, t]) => {
     const post = (c.posts || {})[p];
     const st = post?.status || (t.status === "used" ? "posted" : t.status) || "ready";
@@ -926,7 +926,7 @@ function clipCard(c) {
     return `<div class="copyline">${plChip(p)}<span>${esc(txt)}</span><button class="mini" type="button" data-copy="${esc(txt)}">копировать</button></div>`; }).join("");
   return `<article class="clip" id="clip-${esc(c.id)}">${thumbHtml(c.thumb)}<div style="min-width:0">
     <div class="row"><span class="score ${c.score >= 8 ? "hi" : ""}" title="Финальная оценка после просмотра видео">${c.score}/10</span><span class="muted small">${esc(CATS[c.category] || "")} · ${Math.round(c.duration || 0)} с · ${ago(c.created_at)}</span>
-      ${c.status === "ready" ? `<span class="muted small">· устареет через ${Math.max(0, Math.round(maxAge - age))} ч</span>` : ""}${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}${c.force_post ? `<span class="chip acc">выложу при ближайшем запуске</span>` : ""}</div>
+      ${c.status === "ready" ? `<span class="muted small">· в очереди ${age < 24 ? Math.round(age) + " ч" : Math.round(age / 24) + " дн."}</span>` : ""}${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}${c.force_post ? `<span class="chip acc">выложу при ближайшем запуске</span>` : ""}</div>
     <div class="hook" style="margin-top:6px">${esc(c.overlay || t0.hook || "")}</div>
     ${c.what ? `<div class="what">${esc(c.what)}</div>` : c.why ? `<div class="what">${esc(c.why)}</div>` : ""}
     <div class="plats">${plats}</div>
@@ -1219,15 +1219,13 @@ const SET_UI = [
     ["ai.proofread", "Корректор субтитров по звуку", "ИИ слушает фрагмент и исправляет ошибки распознавания (сленг, имена, бренды); бот запоминает исправления"],
     ["transcribe.engine", "Расшифровка речи", "auto — облако Gemini (быстро и точнее), при сбое Whisper; whisper — только локально"]]],
   ["Монтаж", [
-    ["clips.min_seconds", "Минимальная длина, с", ""], ["clips.max_seconds", "Максимальная длина, с", ""],
+    ["clips.min_seconds", "Минимальная длина, с", ""], ["clips.max_seconds", "Максимальная длина, с", "потолок; обычно ИИ режет 15–45 с, длиннее минуты — только после отдельной проверки"],
     ["clips.trim_silence", "Вырезать паузы и молчание", "паузы, которые ИИ отметил по видео, вырезаются всегда"],
     ["clips.trim_gap_seconds", "Пауза длиннее, с — вырезается", ""],
-    ["clips.follow_subject", "Сдвигать кадр, если стример сбоку", "один раз на весь клип, без движения камеры"],
-    ["clips.monetize_long", "Ролики длиннее минуты (монетизация TikTok)", "TikTok платит только за ролики > 1 мин; включай после 10k подписчиков. Истории станут 63–90 с, короткие моменты останутся короткими"]]],
+    ["clips.follow_subject", "Сдвигать кадр, если стример сбоку", "один раз на весь клип, без движения камеры"]]],
   ["Публикация", [
-    ["posting.daily_max", "Максимум релизов в сутки", "один релиз = один клип сразу на все площадки"],
+    ["posting.daily_max", "Релизов в сутки", "расписание слотов на день; в слот уходит лучший клип очереди, остальные не пропадают"],
     ["posting.min_gap_minutes", "Пауза между релизами, мин", ""],
-    ["posting.max_age_hours", "Клип живёт, ч", "старше не выкладываем; клипы 9+ живут до 72 ч"],
     ["posting.hot_now", "Сильный клип с эфира — сразу", "свежесть важнее идеального часа"],
     ["posting.quiet_hours", "Ночь аудитории", "часы по времени аудитории, когда не выкладываем"]]],
   ["Площадки", [["platforms.tiktok", "TikTok", ""], ["platforms.youtube", "YouTube Shorts", ""], ["platforms.instagram", "Instagram Reels", ""]]],

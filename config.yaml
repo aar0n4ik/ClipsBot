@@ -15,8 +15,6 @@ streamer:
     общается с чатом, попадает в ситуации с клиентами, на дорогах, в районах ЛА.
     Сильные темы: Америка глазами русского, работа в доставке, деньги и чаевые,
     странные клиенты, жизнь в ЛА, реакции на донаты и чат.
-  glossary: [лудка, лудоман, донат, донатер, чаевые, DoorDash, Uber Eats, Instacart, Тесла, Лос-Анджелес, albert1million]
-  spelling: {лутка: лудка, лутоман: лудоман}   # «распознано → как правильно»; остальное бот выучит сам
   audience: >
     Русскоязычные зрители за пределами России и с VPN (СНГ, диаспора в США и Европе),
     которым интересна жизнь в Америке. Из России без VPN новые видео TikTok почти не видны.
@@ -60,8 +58,8 @@ processing:
   max_candidates_per_chunk: 22       # пики + моменты разведчика вместе
   min_gap_seconds: 90
   chat_delay_seconds: 9
-  context_before: 50
-  context_after: 30
+  context_before: 60
+  context_after: 45
   weights: {chat: 1.0, keywords: 1.3, audio: 0.8, viewer_clips: 2.5, spam_wave: 0.8}
 
 transcribe:
@@ -70,7 +68,7 @@ transcribe:
 whisper:                             # запасной движок расшифровки
   model: large-v3-turbo
   compute_type: int8
-  hotwords: "albert1million Альберт Тесла DoorDash Uber Eats Instacart чаевые донат Лос-Анджелес"  # подсказки словаря
+  hotwords: ""                       # пусто: словарь стрима бот собирает сам из исправлений корректора
 
 # Мозг отбора (меняется в дашборде → Настройки)
 ai:
@@ -92,10 +90,10 @@ quality:
 
 clips:
   min_seconds: 10
-  max_seconds: 59
+  max_seconds: 175                   # потолок площадок; ИИ держит коротко, > 1 мин — после отдельной проверки
   layout: auto                       # auto: горизонтальный стрим → крупная панель; вертикальный → на весь экран
   subtitles: ru                      # по умолчанию; бот тестирует ru / ru+en сам
-  subtitle_caps: true
+  subtitle_caps: false              # обычный регистр, как в нормальных субтитрах
   hook_overlay: true
   follow_subject: false              # камера стоит как в оригинале; true — один раз встаёт на стримера, если он сбоку
   context_notes: false               # белые подписи сверху поверх видео — выключены
@@ -136,7 +134,6 @@ posting:
   daily_min: 1
   hard_max: 6                        # выше этого не поднимется даже на волне (волна даёт +1)
   min_gap_minutes: 120
-  max_age_hours: 36                  # клип старше не выкладываем (9+ живёт до 72 ч)
   quiet_hours: [2, 3, 4, 5, 6]
   hot_score: 8                       # такой клип, сделанный во время эфира, уходит сразу
   fixed_hashtags: ["#albert1million"]
@@ -145,16 +142,13 @@ posting:
   disable_comment: false
   tiktok:
     mode: inbox                      # inbox = черновики TikTok; direct отклоняется TikTok пока приложение без аудита (unaudited_client_can_only_post_to_private_accounts)
-    max_age_hours: 72
     max_cap: 4
   youtube:
     privacy: public
     category_id: "24"                # Entertainment
-    max_age_hours: 168               # на Shorts клип живёт дольше — можно выкладывать позже
     max_cap: 4
     daily_cap: 4
   instagram:
-    max_age_hours: 120
     max_cap: 4
     daily_cap: 4
 

@@ -250,12 +250,33 @@ BANNED_HOOKS = {"клиент открыл дверь, а там…", "охра�
 
 
 def length_rule(cfg: dict) -> str:
-    cl = cfg["clips"]
-    if cl.get("monetize_long"):
-        return ("Длина: TikTok платит только за ролики ДЛИННЕЕ 1 минуты. Если момент — история, конфликт или ситуация "
-                "с развитием, которая реально держит внимание дольше минуты, делай 63–90 с (end − start ≥ 63). "
-                "Не растягивай пустотой: короткий сильный момент оставь коротким (15–45 с) — досмотр важнее денег за ролик.")
-    return f"Длина {cl['min_seconds']}–{cl['max_seconds']} с, короче — лучше, если момент от этого не теряется."
+    mx = int(float(cfg["clips"].get("max_seconds", 175)))
+    return ("Длина — сколько держит внимание, обычно 15–45 с. Длиннее минуты — ТОЛЬКО если почти всё время интересно: "
+            "история с интригой, развитие конфликта, нарастание, без провалов; тогда можно до " + str(mx) + " с. "
+            "Если в середине пусто (молчание, ожидание, пересказ), а интересный ответ в конце — не растягивай: "
+            "вырежи пустое (cuts) или начни ближе к развязке. Сомневаешься — короче.")
+
+
+LENGTH_CHECK = """Ты — строгий монтажёр коротких роликов. Перед тобой фрагмент ({dur:.0f} с). Коллега хочет выпустить ролик
+ДЛИННЕЕ МИНУТЫ: start={start:.1f} end={end:.1f}, вырезы {cuts}. Итоговая длина ≈ {kept:.0f} с.
+Транскрипт (секунды от начала видео):
+{transcript}
+Смотри и слушай. Длинный ролик оправдан, только если зритель не заскучает ни на секунду: каждые 5–10 секунд
+что-то происходит, есть интрига или нарастание до развязки. Если есть провисания — сократи: новые start/end
+и вырезы пустых кусков (секунды от начала видео), чтобы ролик держал внимание от первой до последней секунды.
+Развязку и смысл не теряй. Ответ строго JSON: {{"keep_long":false,"start":0.0,"end":0.0,"cuts":[[0.0,0.0]],"why":"…"}}"""
+
+
+def check_length(llm: LLM, cfg: dict, preview: Path, words_rel: list[dict], start: float, end: float,
+                 cuts: list, dur: float) -> dict:
+    """Тщательная проверка ролика длиннее минуты: оправдана ли длина. → {"keep_long", "start", "end", "cuts", "why"}."""
+    kept = (end - start) - sum(b - a for a, b in cuts)
+    prompt = LENGTH_CHECK.format(dur=dur, start=start, end=end, cuts=cuts or "нет", kept=kept,
+                                 transcript=words_to_timed_text(words_rel, every=2.5))
+    model = (cfg.get("ai") or {}).get("video_model", "gemini-4-argon")
+    return llm.media_json([("video/mp4", preview.read_bytes())], prompt, model=model,
+                          fallback_models=["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest"],
+                          max_tokens=1500, schema=schemas.LENGTH, thinking="high")
 
 
 def leaked(text: str) -> bool:

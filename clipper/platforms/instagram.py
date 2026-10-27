@@ -75,6 +75,12 @@ class Instagram(Platform):
         js = self._call("GET", "me", fields="user_id,username")
         return {"display_name": "@" + js.get("username", ""), "username": js.get("username"), "user_id": js.get("user_id")}
 
+    def preflight(self):
+        self.refresh()
+        limit = self._call("GET", f"{self.uid()}/content_publishing_limit", fields="quota_usage,config")
+        if ((limit.get("data") or [{}])[0]).get("quota_usage", 0) >= 95:
+            raise PlatformError("лимит публикаций Instagram на сутки почти исчерпан", "quota")
+
     def publish(self, path: Path, target: dict, cfg: dict, clip: dict) -> dict:
         uid = self.uid()
         limit = self._call("GET", f"{uid}/content_publishing_limit", fields="quota_usage,config")

@@ -2,9 +2,10 @@
 
 Сетка снята с реального экрана TikTok (лента, 1080×1920 в координатах видео):
   0–240      верхние вкладки TikTok             — пусто
-  250–480    ЗАГОЛОВОК-ХУК (1–2 строки, крупно, фиолетовый с белой обводкой)
-  490–1300   ВИДЕО 4:3 (кроп 16:9 по центру: лицо крупнее, оверлеи стрима по краям отрезаются)
-  1345–1450  СУБТИТРЫ (одна строка, всегда тут, текущее слово фиолетовое)
+  300–470    ЗАГОЛОВОК (1–2 строки, белый с чёрной обводкой, без анимации — как у живого монтажёра)
+  480–1440   ВИДЕО (кроп по центру: лицо крупнее, оверлеи стрима по краям отрезаются)
+  ~1330–1400 СУБТИТРЫ у нижнего края видео: обычный белый текст с чёрной обводкой, без подсветки слов
+  ~1410–1455 перевод английской речи «в кавычках» (только когда говорят по-английски)
   1480–1560  ЛОГОТИП + ALBERT1MILLION (снизу по центру)
   1650+      ник, подпись и музыка TikTok        — пусто
   справа x>925 при y>1000 — кнопки лайк/коммент/репост — всё центральное держим в x 160…920
@@ -22,11 +23,13 @@ from .config import FONTS_DIR
 from .util import ffprobe_json, run
 
 W, H = 1080, 1920
-TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 228, 880, (92, 85, 77, 72, 66)
+TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 300, 860, (64, 60, 56, 52, 48)
 VS_RE = re.compile(r"^(.+?)\s+vs\.?\s+(.+)$", re.I)
-VS_SIZES = (80, 74, 68, 62)  # три строки (A / VS / B) должны уместиться над панелью
+VS_SIZES = (56, 52, 48, 44)  # три строки (A / VS / B) должны уместиться над панелью
 PANEL_Y, PANEL_H = 480, 960
-SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1312, 78, 760
+SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1365, 54, 900
+SUB_BOTTOM, TR_BOTTOM, TR_SIZE = 1400, 1456, 40      # низ строки субтитров и строки перевода (выше плашки канала)
+TEXT_ROLE = "note"                                     # спокойный жирный гротеск вместо «плакатного» шрифта
 BRAND_CENTER, BRAND_LOGO, BRAND_TEXT = 1512, 100, 58
 BRAND_MAX_W = 700
 NOTE_Y = PANEL_Y + 44
@@ -129,20 +132,20 @@ def fit_title(*candidates: str) -> tuple[str, list[str], int]:
     for c in candidates:
         m = VS_RE.match(_esc(c or ""))
         if m:
-            a, b = m.group(1).upper(), m.group(2).upper()
+            a, b = m.group(1), m.group(2)
             for size in VS_SIZES:
-                if max(text_width(x, size, spacing=1) for x in (a, b)) <= TITLE_MAX_W - 30:
-                    return f"{a} VS {b}", [a, "VS", b], size
+                if max(text_width(x, size, TEXT_ROLE) for x in (a, b)) <= TITLE_MAX_W - 30:
+                    return f"{a} vs {b}", [a, "vs", b], size
     for size in TITLE_SIZES:
         for c in candidates:
-            c = _esc(c or "").upper()
-            if c and (lines := balanced_lines(c, size, TITLE_MAX_W - 30, spacing=1)):
+            c = _sentence(_esc(c or ""))
+            if c and (lines := balanced_lines(c, size, TITLE_MAX_W - 30, TEXT_ROLE)):
                 return c, lines, size
-    words = _esc(next((c for c in candidates if c), "")).upper().split()
+    words = _sentence(_esc(next((c for c in candidates if c), ""))).split()
     size = TITLE_SIZES[-1]
     while words:
         t = " ".join(words) + "…"
-        if lines := balanced_lines(t, size, TITLE_MAX_W - 30, spacing=1):
+        if lines := balanced_lines(t, size, TITLE_MAX_W - 30, TEXT_ROLE):
             return t, lines, size
         words.pop()
         while len(words) > 1 and len(words[-1]) <= 2:
@@ -150,25 +153,43 @@ def fit_title(*candidates: str) -> tuple[str, list[str], int]:
     return "", [], size
 
 
+def _sentence(t: str) -> str:
+    """КАПС → обычный регистр (капс выглядит как ИИ-шаблон); аббревиатуры (США, ЛА) и обычный текст не трогаем."""
+    letters = [ch for ch in t if ch.isalpha()]
+    if letters and sum(ch.isupper() for ch in letters) / len(letters) > 0.8 and len(letters) > 6:
+        t = t.lower()
+        t = t[:1].upper() + t[1:]
+    return t
+
+
 def fit_hook(*candidates: str) -> str:  # совместимость со старым кодом
     return fit_title(*candidates)[0]
 
 
-def chunk_words(words: list[dict], caps: bool = True, max_words: int = 3) -> list[list[dict]]:
-    """Куски субтитров: каждый ГАРАНТИРОВАННО в одну строку внутри центральной зоны."""
+def chunk_words(words: list[dict], caps: bool = False, max_words: int = 7) -> list[list[dict]]:
+    """Куски субтитров как в обычном видео: фраза до 7 слов, ГАРАНТИРОВАННО в одну строку, рвём по паузе и точке."""
     show = (lambda s: s.upper()) if caps else (lambda s: s)
     chunks, cur = [], []
     for i, w in enumerate(words):
         gap = w["s"] - words[i - 1]["e"] if i else 0
         cand = " ".join(show(mask_profanity(x["w"])) for x in cur + [w])
-        too_wide = text_width(cand, SUB_SIZE * 1.08) + 20 > SUB_MAX_W
-        if cur and (len(cur) >= max_words or too_wide or gap > 0.5 or re.search(r"[.!?…]$", cur[-1]["w"])):
+        too_wide = text_width(cand, SUB_SIZE, TEXT_ROLE) + 20 > SUB_MAX_W
+        lang_switch = cur and cur[-1].get("lang") != w.get("lang")   # английская фраза — своей строкой
+        if cur and (len(cur) >= max_words or too_wide or gap > 0.5 or lang_switch or re.search(r"[.!?…]$", cur[-1]["w"])):
             chunks.append(cur)
             cur = []
         cur.append(w)
     if cur:
         chunks.append(cur)
-    return chunks
+    # не оставлять висячие «и», «а», «в», «на» в конце строки — переносим к следующей фразе, если влезает
+    for i in range(len(chunks) - 1):
+        a, b = chunks[i], chunks[i + 1]
+        last = re.sub(r"\W", "", a[-1]["w"])
+        if len(a) > 1 and len(last) <= 2 and not re.search(r"[.!?…,]$", a[-1]["w"]) and a[-1].get("lang") == b[0].get("lang"):
+            moved = [a[-1]] + b
+            if text_width(" ".join(show(mask_profanity(x["w"])) for x in moved), SUB_SIZE, TEXT_ROLE) + 20 <= SUB_MAX_W:
+                chunks[i], chunks[i + 1] = a[:-1], moved
+    return [c for c in chunks if c]
 
 
 def _t(t: float) -> str:
@@ -177,15 +198,14 @@ def _t(t: float) -> str:
 
 
 def build_ass(words: list[dict], dur: float, title_lines: list[str], title_size: int, cfg: dict,
-              notes: list[dict] | None = None, en_lines: list[str] | None = None) -> str:
+              notes: list[dict] | None = None, en_lines: list[str] | None = None,
+              trans: list[dict] | None = None) -> str:
+    """Стиль v6: белый текст с чёрной обводкой, без цветной подсветки, «попов» и капса.
+    trans — перевод английской речи [{"s","e","text"}] во времени ролика: строка ниже субтитров, в кавычках."""
     cl = cfg["clips"]
-    caps = cl.get("subtitle_caps", True)
-    purple = _hex((cfg.get("branding") or {}).get("color", "#9146FF"))
-    title_fill = mix(purple, (255, 255, 255), 0.12)
-    dark = (20, 8, 42)
-    P, Wt, Dk = ass_color(purple), ass_color((255, 255, 255)), ass_color(dark)
-    disp_f, sub_f, note_f = font("display")[1], font("display")[1], font("note")[1]
-    sub_mv = H - SUB_CENTER - SUB_SIZE // 2
+    caps = bool(cl.get("subtitle_caps", False))
+    Wt, Bk = ass_color((255, 255, 255)), ass_color((0, 0, 0))
+    f = font(TEXT_ROLE)[1]
     head = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {W}
@@ -195,41 +215,65 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Title,{disp_f},{title_size},{ass_color(title_fill)},&H000000FF,{Dk},&H8C000000,0,0,0,0,100,100,1,0,1,9,5,8,90,90,{TITLE_TOP},1
-Style: Sub,{sub_f},{SUB_SIZE},{Wt},&H000000FF,{Dk},&H8C000000,0,0,0,0,100,100,1,0,1,7,3,2,160,160,{sub_mv},1
-Style: SubEn,{note_f},44,&H00F4F4F4,&H000000FF,{Dk},&H8C000000,0,0,0,0,100,100,0,0,1,5,2,2,170,170,{sub_mv - 66},1
-Style: Note,{note_f},42,{Wt},&H000000FF,{Dk},&H00000000,0,0,0,0,100,100,0,0,1,6,2,8,170,170,{NOTE_Y},1
+Style: Title,{f},{title_size},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,5,0,8,110,110,{TITLE_TOP},1
+Style: Sub,{f},{SUB_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4.5,0,2,90,90,{H - SUB_BOTTOM},1
+Style: Tr,{f},{TR_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,3.5,0,2,90,90,{H - TR_BOTTOM},1
+Style: Note,{f},42,{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4,0,8,170,170,{NOTE_Y},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     ev = []
     if title_lines and cl.get("hook_overlay", True):
-        ev.append(f"Dialogue: 4,{_t(0)},{_t(dur)},Title,,0,0,0,,"
-                  r"{\fscx70\fscy70\t(0,110,\fscx106\fscy106)\t(110,190,\fscx100\fscy100)}" + r"\N".join(title_lines))
+        ev.append(f"Dialogue: 4,{_t(0)},{_t(dur)},Title,,0,0,0,," + r"\N".join(_esc(x) for x in title_lines))
     for n in notes or []:
         s, txt = float(n["t"]), _esc(n.get("text", ""))[:42]
         if txt and 0 <= s < dur - 0.8:
-            ev.append(f"Dialogue: 3,{_t(s)},{_t(min(dur, s + 2.6))},Note,,0,0,0,,{{\\fad(120,160)}}{txt}")
+            ev.append(f"Dialogue: 3,{_t(s)},{_t(min(dur, s + 2.6))},Note,,0,0,0,,{txt}")
     if cl.get("subtitles", "ru") != "none" and words:
         chunks = chunk_words(words, caps)
-        hi = r"{\1c" + P + r"\3c" + Wt + r"\fscx108\fscy108}"
         for ci, ch in enumerate(chunks):
             nxt = chunks[ci + 1][0]["s"] if ci + 1 < len(chunks) else dur
-            ch_end = min(nxt, ch[-1]["e"] + 0.3, dur)
-            disp = [_esc(w["w"]).upper() if caps else _esc(w["w"]) for w in ch]
-            for wi, w in enumerate(ch):
-                s = w["s"] if wi else max(0.0, w["s"] - 0.05)
-                e = ch[wi + 1]["s"] if wi + 1 < len(ch) else ch_end
-                if e > s:
-                    parts = [(hi + t + r"{\r}") if j == wi else t for j, t in enumerate(disp)]
-                    pop = r"{\fscx82\fscy82\t(0,80,\fscx100\fscy100)}" if wi == 0 else ""
-                    ev.append(f"Dialogue: 2,{_t(s)},{_t(e)},Sub,,0,0,0,,{pop}{' '.join(parts)}")
-            if en_lines and ci < len(en_lines) and en_lines[ci]:
-                en = _esc(en_lines[ci])
-                if text_width(en, 44, "note") <= SUB_MAX_W:
-                    ev.append(f"Dialogue: 1,{_t(max(0, ch[0]['s'] - 0.05))},{_t(ch_end)},SubEn,,0,0,0,,{en}")
+            s0, s1 = max(0.0, ch[0]["s"] - 0.05), min(nxt - 0.05, ch[-1]["e"] + 0.35, dur)   # строки не налезают
+            if s1 > s0:
+                text = " ".join(_esc(mask_profanity(w["w"])) for w in ch)
+                ev.append(f"Dialogue: 2,{_t(s0)},{_t(s1)},Sub,,0,0,0,,{text.upper() if caps else text}")
+    for tr in trans or []:
+        s0, s1, txt = float(tr["s"]), float(tr["e"]), _esc(str(tr.get("text", "")))
+        if txt and s1 > s0 and s0 < dur:
+            quoted = "«" + txt.strip('«»"') + "»"
+            for line in _fit_lines(quoted, TR_SIZE, SUB_MAX_W)[:1]:
+                ev.append(f"Dialogue: 1,{_t(max(0.0, s0))},{_t(min(dur, max(s1, s0 + 1.2)))},Tr,,0,0,0,,{line}")
     return head + "\n".join(ev) + "\n"
+
+
+def _fit_lines(text: str, size: float, max_w: float) -> list[str]:
+    """Перевод в одну строку: не влезает — уменьшаем шрифт тегом, в крайнем случае обрезаем с «…»."""
+    if text_width(text, size, TEXT_ROLE) <= max_w:
+        return [text]
+    k = max(0.7, max_w / text_width(text, size, TEXT_ROLE))
+    if k > 0.7:
+        return [f"{{\\fscx{int(k * 100)}\\fscy{int(k * 100)}}}{text}"]
+    words = text.split()
+    while words and text_width(" ".join(words) + "…»", size * 0.7, TEXT_ROLE) > max_w:
+        words.pop()
+    return [f"{{\\fscx70\\fscy70}}{' '.join(words)}…»"]
+
+
+def trans_to_output(trans_src: list[dict], segments: list[tuple[float, float]]) -> list[dict]:
+    """Перевод (время исходника) → время готового ролика с учётом вырезанных кусков."""
+    out = []
+    for tr in trans_src or []:
+        a, b, off, first, last = tr["s"], tr["e"], 0.0, None, None
+        for x, y in segments:
+            lo, hi = max(a, x), min(b, y)
+            if hi > lo:
+                first = off + lo - x if first is None else first
+                last = off + hi - x
+            off += y - x
+        if first is not None:
+            out.append({"s": round(first, 2), "e": round(last, 2), "text": tr.get("ru") or tr.get("text", "")})
+    return out
 
 
 # ── плашка канала: [логотип] ALBERT1MILLION ─────────────────────
@@ -308,7 +352,7 @@ def words_to_output(words_src: list[dict], segments: list[tuple[float, float]]) 
     for a, b in segments:
         for w in words_src:
             if a - 0.05 <= w["s"] < b - 0.08:
-                out.append({"w": w["w"], "s": round(off + w["s"] - a, 2), "e": round(off + min(w["e"], b) - a, 2)})
+                out.append({**w, "s": round(off + w["s"] - a, 2), "e": round(off + min(w["e"], b) - a, 2)})
         off += b - a
     return out
 
@@ -317,7 +361,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
                 cfg: dict, out: Path, *, punches: list[float] | None = None, notes: list[dict] | None = None,
                 variant: dict | None = None, audio_override: Path | None = None,
                 en_lines: list[str] | None = None, punch_at: float | None = None,
-                pan_keys: list | None = None) -> Path:
+                pan_keys: list | None = None, trans: list[dict] | None = None) -> Path:
     """segments — куски исходника в порядке показа ([холодное открытие], основной);
     words_src, punches — во времени исходника; notes — во времени итогового ролика."""
     variant = variant or {}
@@ -333,7 +377,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
 
     work = out.parent
     ass = work / (out.stem + ".ass")
-    ass.write_text(build_ass(words, dur, lines, tsize, cfg, notes, en_lines), encoding="utf-8")
+    ass.write_text(build_ass(words, dur, lines, tsize, cfg, notes, en_lines, trans), encoding="utf-8")
     badge = brand_png(cfg, work / "brand.png")
 
     layout = cl.get("layout", "auto")

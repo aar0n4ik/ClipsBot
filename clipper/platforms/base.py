@@ -106,6 +106,10 @@ class Platform:
     def refresh(self, force: bool = False):
         pass
 
+    def preflight(self):
+        """Проверка перед релизом: площадка примет ролик прямо сейчас? Бросает PlatformError, если нет."""
+        self.refresh()
+
     def publish(self, path: Path, target: dict, cfg: dict, clip: dict) -> dict:
         raise NotImplementedError
 
