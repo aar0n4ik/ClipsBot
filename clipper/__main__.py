@@ -5,6 +5,7 @@
   post [--force]   — опубликовать, если пора (каждый час, все площадки)
   stats            — просмотры со всех площадок + здоровье + обучение (каждый час)
   doctor           — токены, секреты, чистка файлов (раз в сутки)
+  assist           — ответить на вопросы из вкладки «Помощь» дашборда
   auth --platform tiktok|youtube|instagram --account ID --code XXX — подключить аккаунт
   fail --job NAME  — записать в дашборд, что запуск упал (вызывается из workflow при ошибке)
   dashboard        — пересобрать data.enc
@@ -26,7 +27,7 @@ from .util import log, now_iso
 def main():
     ap = argparse.ArgumentParser(prog="clipper")
     ap.add_argument("cmd", choices=["watch", "process", "post", "stats", "doctor", "auth", "fail", "dashboard",
-                                    "diagnose", "summary"])
+                                    "diagnose", "summary", "assist"])
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--account", default="")
     ap.add_argument("--platform", default="")
@@ -73,6 +74,9 @@ def main():
         health.report(store, a.job or "unknown", "error",
                       f"запуск «{a.job}» упал — открой лог по ссылке. Следующий запуск по расписанию попробует снова")
         store.sync(f"fail: {a.job}")
+    elif a.cmd == "assist":
+        from .assistant import run as run_assist
+        run_assist(cfg, store)
     elif a.cmd == "diagnose":
         from .diagnose import run_all
         run_all(store, cfg)
