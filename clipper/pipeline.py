@@ -7,6 +7,7 @@ import os
 import shutil
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import random
@@ -180,10 +181,12 @@ def cmd_process(cfg: dict, store: Store):
     t0 = time.time()
     tw = twitch_client()
     meta = ensure_meta(cfg, store, tw)
-    llm = LLM(cfg["llm"]["providers"])
+    ai = cfg.get("ai") or {}
+    llm = LLM(cfg["llm"]["providers"], text_chain=[ai["text_model"]] if ai.get("text_model") else None)
     wh = cfg.get("whisper", {})
     transcriber = Transcriber(wh.get("model", "large-v3-turbo"), wh.get("compute_type", "int8"),
-                              cfg["streamer"].get("language", "ru"))
+                              cfg["streamer"].get("language", "ru"), engine=(cfg.get("transcribe") or {}).get("engine", "auto"),
+                              llm=llm, hotwords=wh.get("hotwords", ""))
     n = 0
     tried: set[str] = set()
     from . import settings
@@ -249,20 +252,24 @@ FUNNEL = "status/funnel.json"
 
 def note_reject(store: Store, vod: dict, t_abs: float, stage: str, reason: str, score=None, what: str = ""):
     """Почему момент НЕ стал клипом — коротко, для дашборда («Почему не взял»). Не засоряет журнал решений."""
-    f = store.read_json(FUNNEL, {}) or {}
-    rej = f.setdefault("rejected", [])
-    rej.append({"at": now_iso(), "vod_id": vod["id"], "t": round(t_abs, 1), "stage": stage, "score": score,
-                "reason": str(reason)[:220], "what": str(what)[:200]})
-    f["rejected"] = rej[-250:]
-    store.write_json(FUNNEL, f)
+    item = {"at": now_iso(), "vod_id": vod["id"], "t": round(t_abs, 1), "stage": stage, "score": score,
+            "reason": str(reason)[:220], "what": str(what)[:200]}
+
+    def add(f):
+        f = f or {}
+        f["rejected"] = (f.get("rejected") or [])[-249:] + [item]
+        return f
+    store.update_json(FUNNEL, add, {})   # потокобезопасно: режиссёр работает параллельно
 
 
 def note_chunk(store: Store, vod: dict, label: str, counts: dict):
-    f = store.read_json(FUNNEL, {}) or {}
-    ch = f.setdefault("chunks", [])
-    ch.append({"at": now_iso(), "vod_id": vod["id"], "vod_title": vod.get("title"), "chunk": label, **counts})
-    f["chunks"] = ch[-60:]
-    store.write_json(FUNNEL, f)
+    item = {"at": now_iso(), "vod_id": vod["id"], "vod_title": vod.get("title"), "chunk": label, **counts}
+
+    def add(f):
+        f = f or {}
+        f["chunks"] = (f.get("chunks") or [])[-59:] + [item]
+        return f
+    store.update_json(FUNNEL, add, {})
 
 
 def _merge_scout(cands: list[dict], scouted: list[dict], chunk_start: float, length: float, p: dict) -> list[dict]:
@@ -297,20 +304,23 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
                          chunk=label, progress=prog, funnel=counts)
     log(f"=== VOD {vid} кусок {label} final={final}")
 
-    st("audio", "Скачиваю звук", 4)
-    audio = download_audio(vid, start, end, work / "audio.m4a")
-    length = int(float(ffprobe_json(audio)["format"].get("duration", end - start)))
-
-    st("chat", "Читаю чат и клипы зрителей", 10)
-    msgs = download_chat(vid, start, end, work / "chat.json")
+    st("audio", "Скачиваю звук, чат и клипы зрителей (одновременно)", 4)
     created = parse_iso(vod["created_at"])
-    try:
-        vclips = tw.clips(meta["user_id"], (created + dt.timedelta(seconds=start)).isoformat().replace("+00:00", "Z"), now_iso())
-        vclips = [c for c in vclips if c.get("video_id") == vid and c.get("vod_offset") is not None
-                  and start <= c["vod_offset"] <= end]
-    except Exception as e:  # noqa: BLE001
-        log(f"клипы зрителей недоступны: {e}")
-        vclips = []
+
+    def viewer_clips():
+        try:
+            vc = tw.clips(meta["user_id"], (created + dt.timedelta(seconds=start)).isoformat().replace("+00:00", "Z"), now_iso())
+            return [c for c in vc if c.get("video_id") == vid and c.get("vod_offset") is not None
+                    and start <= c["vod_offset"] <= end]
+        except Exception as e:  # noqa: BLE001
+            log(f"клипы зрителей недоступны: {e}")
+            return []
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        f_audio = ex.submit(download_audio, vid, start, end, work / "audio.m4a")
+        f_chat = ex.submit(download_chat, vid, start, end, work / "chat.json")
+        f_clips = ex.submit(viewer_clips)
+        audio, msgs, vclips = f_audio.result(), f_chat.result(), f_clips.result()
+    length = int(float(ffprobe_json(audio)["format"].get("duration", end - start)))
 
     st("peaks", "Ищу пики реакции чата и звука", 14)
     db = audio_rms_db(audio, length)
@@ -334,9 +344,10 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
     cands = cands[: int(p.get("max_candidates_per_chunk", 22))]
     counts["candidates"] = len(cands)
 
-    # транскрипт окна вокруг каждого кандидата
+    # транскрипт окна вокруг каждого кандидата: все окна сразу (облако параллельно, Whisper — запасной)
+    st("speech", f"Расшифровываю речь: {len(cands)} окон одновременно", 22)
+    items = []
     for i, c in enumerate(cands):
-        st("speech", f"Расшифровываю речь {i + 1}/{len(cands)}", 22 + int(28 * i / max(1, len(cands))))
         sc = c.get("scout") or {}
         before, after = float(p["context_before"]), float(p["context_after"])
         if sc and sc.get("end_abs") and not c.get("signal"):
@@ -348,9 +359,11 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
         if not c["chat_sample"]:
             near = [m for m in msgs if cs <= m["t"] <= ce + 15]
             c["chat_sample"], c["chat_count"] = _chat_sample(near, c["peak_abs"]), len(near)
-        wav = cut_wav(audio, cs - start, ce - cs, work / f"{c['id']}.wav")
-        c["words"] = transcriber.words(wav)
-        c["frames"] = []
+        items.append((cut_wav(audio, cs - start, ce - cs, work / f"{c['id']}.wav"), ce - cs))
+    used0 = dict(transcriber.used)
+    for c, words in zip(cands, transcriber.words_many(items)):
+        c["words"], c["frames"] = words, []
+    counts["asr"] = {k: v - used0.get(k, 0) for k, v in transcriber.used.items() if v - used0.get(k, 0)}
     alive = [c for c in cands if len(c["words"]) >= 6 or c["breakdown"]["viewer_clips"] >= 1]
 
     st("judge", f"ИИ оценивает {len(alive)} кандидатов по тексту", 52)
@@ -382,15 +395,20 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
     counts["text_pass"] = len(text_pass)
     log(f"по тексту прошли {len(text_pass)} из {len(alive)}, на видео-проверку {len(finalists)}")
 
-    # режиссёр смотрит видео каждого финалиста
-    plans = []
-    for k, (c, v) in enumerate(finalists):
-        st("video", f"ИИ смотрит видео финалиста {k + 1}/{len(finalists)}", 58 + int(20 * k / max(1, len(finalists))))
+    # режиссёр смотрит видео финалистов — одновременно (загрузка превью и ответ ИИ — это ожидание, не CPU)
+    st("video", f"ИИ смотрит видео {len(finalists)} финалистов одновременно", 58)
+
+    def review(item):
+        c, v = item
         s0, e0 = snap_bounds(c["words"], v.get("start", 0), v.get("end", c["ctx_dur"]), c["ctx_dur"], cfg)
-        plan = _review_on_video(cfg, store, llm, vod, c, v, s0, e0, work)
-        counts["video_checked"] += 1
-        if plan:
-            plans.append(plan)
+        try:
+            return _review_on_video(cfg, store, llm, vod, c, v, s0, e0, work)
+        except Exception as e:  # noqa: BLE001 — один финалист не валит кусок
+            log(f"⚠️ проверка {c['id']} упала: {str(e)[:200]}")
+            return None
+    with ThreadPoolExecutor(max_workers=max(1, min(int(ai.get("parallel_reviews", 3)), len(finalists) or 1))) as ex:
+        plans = [x for x in ex.map(review, finalists) if x]
+    counts["video_checked"] = len(finalists)
     plans.sort(key=lambda x: -x["score"])
     counts["video_pass"] = len(plans)
 
@@ -402,15 +420,33 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
         if x not in picked:
             note_reject(store, vod, x["abs_s"], "отбор", "в куске есть клипы сильнее (лимит на кусок)", x["score"], x.get("what", ""))
 
+    # один момент, найденный дважды (пик + разведчик, перекрытие кусков), монтируем один раз
+    uniq = []
+    for x in picked:
+        xa, xb = x["c"]["ctx_start"] + x["s"], x["c"]["ctx_start"] + x["e"]
+        same = next((u for u in uniq if min(xb, u[2]) - max(xa, u[1]) >= 0.4 * max(1.0, min(xb - xa, u[2] - u[1]))), None)
+        if same:
+            note_reject(store, vod, xa, "дубль", f"тот же момент, что и {clip_key(vod, same[0])}", x["score"], x.get("what", ""))
+        else:
+            uniq.append((x, xa, xb))
+    picked = [u[0] for u in uniq]
     platforms = targets_for(cfg, store)
     made = 0
+    # исходники всех отобранных качаем параллельно заранее; монтаж (CPU) идёт по очереди
+    pre = ThreadPoolExecutor(max_workers=3)
     for k, pl in enumerate(picked):
-        st("render", f"Монтирую клип {k + 1}/{len(picked)}", 80 + int(18 * k / max(1, len(picked))))
-        try:
-            made += bool(make_clip(cfg, store, llm, policy, vod, pl, platforms, work))
-        except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
-            log(f"⚠️ клип не собран: {str(e)[:400]}")
-            health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
+        a, b = source_range(pl)
+        pl["_src"] = pre.submit(download_video, vod["id"], a, b, work / f"{clip_key(vod, pl)}_pre{k}.mp4")   # свои имена файлов
+    try:
+        for k, pl in enumerate(picked):
+            st("render", f"Монтирую клип {k + 1}/{len(picked)}", 80 + int(18 * k / max(1, len(picked))))
+            try:
+                made += bool(make_clip(cfg, store, llm, policy, vod, pl, platforms, work))
+            except Exception as e:  # noqa: BLE001 — один битый клип не валит всё
+                log(f"⚠️ клип не собран: {str(e)[:400]}")
+                health.report(store, "render", "warn", f"клип не собран: {str(e)[:200]}")
+    finally:
+        pre.shutdown(wait=True)
     counts["made"] = made
 
     spent = llm.delta(u0)
@@ -489,6 +525,17 @@ def _review_on_video(cfg, store: Store, llm: LLM, vod: dict, c: dict, v: dict, s
         why_bad = f"после просмотра видео оценка {score}: {js.get('moment') or js.get('what_happens') or ''}"
     elif int((js.get("risk") or {}).get("level", 0) or 0) >= 3:
         why_bad = "риск для аккаунта: " + ", ".join((js.get("risk") or {}).get("flags", []))
+    if not why_bad and ai.get("second_opinion", True) and score == make_min:
+        # пограничный клип: второй независимый просмотр, итог — среднее (вниз). Дёшево: только на границе порога
+        try:
+            js2 = brain.direct(llm, cfg, prev, words_rel, c.get("chat_sample", []), v, tech)
+            s2 = int(js2.get("score", 0) or 0) if str(js2.get("verdict", "")).lower() == "post" else min(
+                int(js2.get("score", 0) or 0), make_min - 1)
+            score = (score + s2) // 2
+            if score < make_min:
+                why_bad = f"второе мнение: {s2}/10 — {js2.get('reject_reason') or js2.get('moment') or 'не уверен'}"
+        except Exception as e:  # noqa: BLE001
+            log(f"второе мнение недоступно ({str(e)[:120]}) — остаюсь при первом")
     if why_bad:
         note_reject(store, vod, t_abs, "видео", why_bad, score, js.get("what_happens", ""))
         return None
@@ -535,13 +582,24 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     s, e = pl["s"], pl["e"]
     cl = cfg["clips"]
     abs_s, dur = c["ctx_start"] + s, e - s
-    clip_id = f"{vod['id']}_{int(abs_s)}"
+    clip_id = clip_key(vod, pl)
     if store.read_json(f"queue/{clip_id}.json"):
         log(f"{clip_id} уже есть в очереди — пропускаю")
         return False
+    dup = overlapping_clip(store, vod["id"], abs_s, abs_s + dur)
+    if dup:   # куски записи перекрываются, разведчик и пики могут найти один момент дважды
+        note_reject(store, vod, abs_s, "дубль", f"этот момент уже есть в клипе {dup}", pl["score"], pl.get("what", ""))
+        return False
     pad = min(2.0, abs_s)
     src_off = abs_s - pad
-    src = download_video(vod["id"], src_off, abs_s + dur + 1.5, work / f"{clip_id}_src.mp4")
+    src = None
+    if pl.get("_src") is not None:
+        try:
+            src = pl["_src"].result()
+        except Exception as ex:  # noqa: BLE001
+            log(f"заранее скачанный исходник {clip_id} не готов: {str(ex)[:160]} — качаю заново")
+    if src is None:
+        src = download_video(vod["id"], src_off, abs_s + dur + 1.5, work / f"{clip_id}_src.mp4")
 
     au = inspect_clip_audio(src, pad, dur, work, cfg)
     if au["action"] == "skip":
@@ -641,7 +699,7 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
                          "comment": humanize_comment(ed.get("comment", "")), "cover_ms": 500}
     store.write_json(f"queue/{clip_id}.json", {
         "id": clip_id, "vod_id": vod["id"], "vod_title": vod.get("title"), "vod_time": round(abs_s, 1),
-        "duration": round(kept, 1), "score": int(pl["score"]), "subscores": v.get("subscores") or {},
+        "duration": round(kept, 1), "span": round(dur, 1), "score": int(pl["score"]), "subscores": v.get("subscores") or {},
         "category": v.get("category", "other"), "risk": risk, "why": v.get("why", ""), "what": pl.get("what", ""),
         "overlay": lead["hook"], "signal": c.get("signal", 0), "breakdown": c.get("breakdown", {}),
         "audio": {k: au[k] for k in ("muted", "music", "action") if k in au} | {"reason": au.get("reason")},
@@ -661,6 +719,29 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     store.sync(f"клип {clip_id} готов (оценка {pl['score']}, {kept:.0f} с)")
     log(f"✅ {clip_id} оценка={pl['score']} {kept:.0f}с (вырезано {dur - kept:.1f} с) «{lead['hook']}»")
     return True
+
+
+def clip_key(vod: dict, pl: dict) -> str:
+    return f"{vod['id']}_{int(pl['c']['ctx_start'] + pl['s'])}"
+
+
+def source_range(pl: dict) -> tuple[float, float]:
+    """Какой кусок VOD нужен для монтажа (с запасом 2 с до и 1.5 с после) — то же, что считает make_clip."""
+    abs_s = pl["c"]["ctx_start"] + pl["s"]
+    return abs_s - min(2.0, abs_s), abs_s + (pl["e"] - pl["s"]) + 1.5
+
+
+def overlapping_clip(store: Store, vod_id: str, a: float, b: float, share: float = 0.4) -> str | None:
+    """id клипа этого VOD, который покрывает ≥ share нового момента (или наоборот) — это один и тот же момент."""
+    for q in store.list_json("queue"):
+        if q.get("vod_id") != vod_id or q.get("bundle"):
+            continue
+        qa = float(q.get("vod_time") or 0)
+        qb = qa + float(q.get("span") or q.get("duration") or 0)
+        ov = min(b, qb) - max(a, qa)
+        if ov > 0 and ov >= share * max(1.0, min(b - a, qb - qa)):
+            return q.get("id")
+    return None
 
 
 def _hms(sec: float) -> str:

@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  actions: write       # keepalive: GitHub не выключит расписание через 60 дней тишины
 
 concurrency:
   group: accounts
@@ -16,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
+      PYTHONUNBUFFERED: "1"
       GH_TOKEN: ${{ github.token }}
       TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
       TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
@@ -28,12 +30,24 @@ jobs:
       TOKEN_KEY: ${{ secrets.TOKEN_KEY }}
       DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
       MONEY_CONFIG: ${{ vars.MONEY_CONFIG }}
+      GEMINI_API_KEY_1_BOHDANREVA00: ${{ secrets.GEMINI_API_KEY_1_BOHDANREVA00 }}
+      GEMINI_API_KEY_2_A82075245: ${{ secrets.GEMINI_API_KEY_2_A82075245 }}
+      GEMINI_API_KEY_3_ANDREYBORUSENKO11: ${{ secrets.GEMINI_API_KEY_3_ANDREYBORUSENKO11 }}
+      GEMINI_API_KEY_4_BOHDANREVA5: ${{ secrets.GEMINI_API_KEY_4_BOHDANREVA5 }}
+      GEMINI_API_KEY_5_PROFITABLE_PROP_TRADING: ${{ secrets.GEMINI_API_KEY_5_PROFITABLE_PROP_TRADING }}
+      GEMINI_API_KEY_6_AARONLEVIT322: ${{ secrets.GEMINI_API_KEY_6_AARONLEVIT322 }}
+      GEMINI_API_KEY_7_ANONYMOUSGMAIL322: ${{ secrets.GEMINI_API_KEY_7_ANONYMOUSGMAIL322 }}
+      GEMINI_API_KEY_8_GAMERAARON037: ${{ secrets.GEMINI_API_KEY_8_GAMERAARON037 }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.12", cache: pip, cache-dependency-path: requirements-light.txt}
-      - run: pip install -q -r requirements-light.txt
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with: {python-version: "3.12"}
+      - uses: astral-sh/setup-uv@v7          # uv: установка зависимостей в разы быстрее pip
+        with: {enable-cache: true, cache-dependency-glob: "requirements-light.txt"}
+      - run: uv pip install --system -q -r requirements-light.txt
       - run: bash scripts/mount_state.sh
       - run: python -m clipper doctor
       - if: failure()
         run: python -m clipper fail --job doctor || true
+      - if: always()
+        run: python -m clipper summary --job doctor >> "$GITHUB_STEP_SUMMARY" || true

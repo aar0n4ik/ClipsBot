@@ -13,6 +13,7 @@ import base64
 import re
 from pathlib import Path
 
+from . import schemas
 from .llm import LLM, LLMError
 from .render import PROFANITY, mask_profanity
 from .transcribe import words_to_timed_text
@@ -134,12 +135,12 @@ def _judge_messages(system: str, batch: list[dict], frames: bool) -> list[dict]:
 def _judge_batch(llm: LLM, system: str, batch: list[dict]) -> dict:
     has_frames = any(c.get("frames") for c in batch)
     try:
-        return llm.chat_json(_judge_messages(system, batch, True), temperature=0.3, max_tokens=1500)
+        return llm.chat_json(_judge_messages(system, batch, True), max_tokens=1500, schema=schemas.PICKER, thinking="medium")
     except LLMError as e:
         if not has_frames:
             raise
         log(f"повтор без кадров: {str(e)[:120]}")
-        return llm.chat_json(_judge_messages(system, batch, False), temperature=0.3, max_tokens=1500)
+        return llm.chat_json(_judge_messages(system, batch, False), max_tokens=1500, schema=schemas.PICKER, thinking="medium")
 
 
 def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | None = None,
@@ -153,21 +154,27 @@ def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | Non
     bs = max(1, int(cfg["judge"].get("batch_size", 4)))
     results: dict[str, dict] = {}
     batches = list(range(0, len(cands), bs))
-    failed = 0
-    for i in batches:
+
+    def one(i):
         batch = cands[i:i + bs]
         try:
-            js = llm.chat_json(_judge_messages(system, batch, False), temperature=0.2, max_tokens=1200 * len(batch) + 800)
+            return batch, llm.chat_json(_judge_messages(system, batch, False), max_tokens=700 * len(batch) + 600,
+                                        schema=schemas.PICKER, thinking="medium")
         except LLMError as e:
             # одна пачка не ответила — пропускаем только её, остальные кандидаты не теряем
-            failed += 1
             log(f"пачка {i + 1}–{i + len(batch)} пропущена: {str(e)[:160]}")
-            continue
+            return batch, None
+    from concurrent.futures import ThreadPoolExecutor
+    workers = max(1, min(int(cfg["judge"].get("parallel", 4)), len(batches)))
+    with ThreadPoolExecutor(max_workers=workers) as ex:   # пачки независимы — оцениваются одновременно
+        done = list(ex.map(one, batches))
+    failed = sum(1 for _, js in done if js is None)
+    for batch, js in done:
         ids = {c["id"] for c in batch}
-        for r in js.get("clips", []):
+        for r in (js or {}).get("clips", []):
             if str(r.get("id")) in ids:
                 results[str(r["id"])] = r
-        log(f"отборщик: {min(i + bs, len(cands))}/{len(cands)}")
+    log(f"отборщик: оценено {len(results)}/{len(cands)} ({len(batches)} пачек параллельно)")
     if batches and failed == len(batches):
         raise LLMError("ИИ-отборщик не ответил ни на одну пачку кандидатов")
     return results
@@ -187,7 +194,7 @@ def edit_clips(llm: LLM, cfg: dict, items: list[dict]) -> dict[str, dict]:
             for it in batch)
         try:
             js = llm.chat_json([{"role": "system", "content": system}, {"role": "user", "content": text}],
-                               temperature=0.8, max_tokens=3500)
+                               max_tokens=3500, schema=schemas.EDITOR, thinking="low")
         except LLMError as e:
             log(f"редактор недоступен: {e}")
             continue
@@ -279,7 +286,7 @@ def review_clip(llm: LLM, cfg: dict, pl: dict, ed: dict) -> tuple[bool, str]:
             f"Длина: {dur:.0f} с\nСлова со временем:\n{words_to_timed_text(words, every=2.5)}")
     try:
         js = llm.chat_json([{"role": "system", "content": REVIEW}, {"role": "user", "content": text}],
-                           temperature=0.2, max_tokens=400)
+                           max_tokens=600, schema=schemas.REVIEW, thinking="low")
     except LLMError as e:
         log(f"проверка клипа пропущена: ИИ недоступен ({str(e)[:100]})")
         return True, ""
@@ -302,6 +309,6 @@ def translate_lines(llm: LLM, lines: list[str]) -> list[str]:
                                       "casual tone, no profanity stronger than original. "
                                       'Return JSON {"lines":[...]} with the SAME number of lines in the same order.'},
         {"role": "user", "content": "\n".join(f"{i + 1}. {t}" for i, t in enumerate(lines))},
-    ], max_tokens=1500, temperature=0.3)
+    ], max_tokens=1500, schema=schemas.TRANSLATE, thinking="low")
     out = [str(x) for x in js.get("lines", [])]
     return out if len(out) == len(lines) else [""] * len(lines)

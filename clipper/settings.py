@@ -16,13 +16,15 @@ SCHEMA = {
     # отбор
     "quality.make_min": (7, (5, 10), "quality.make_min"),          # с какой финальной оценки клип вообще монтируется
     "quality.post_min": (7, (5, 10), "quality.post_min"),          # с какой оценки публикуется
-    "quality.max_per_chunk": (4, (1, 10), "quality.max_per_chunk"),  # сколько клипов максимум из 2 ч стрима
+    "quality.max_per_chunk": (3, (1, 10), "quality.max_per_chunk"),  # сколько клипов максимум из куска (1 ч) стрима
     "quality.exceptional": (9, (7, 10), "quality.exceptional"),    # такой момент берём всегда, сверх лимитов
     "ai.scout_audio": (True, bool, "ai.scout_audio"),              # Gemini слушает весь кусок стрима целиком
     "ai.video_review": (True, bool, "ai.video_review"),            # Gemini смотрит каждый финалист
     "ai.video_model": ("gemini-4-argon", ("gemini-4-argon", "gemini-3.8-flash"), "ai.video_model"),
     "ai.planner": (True, bool, "ai.planner"),                      # ИИ-продюсер решает, что и когда выкладывать
     "ai.planner_model": ("gemini-4-argon", ("gemini-4-argon", "gemini-3.8-flash"), "ai.planner_model"),
+    "ai.second_opinion": (True, bool, "ai.second_opinion"),        # клип ровно на пороге — второй независимый просмотр
+    "transcribe.engine": ("auto", ("auto", "gemini", "whisper"), "transcribe.engine"),  # облако Gemini / локальный Whisper
     # монтаж
     "clips.min_seconds": (10, (6, 30), "clips.min_seconds"),
     "clips.max_seconds": (59, (20, 90), "clips.max_seconds"),

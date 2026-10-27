@@ -41,7 +41,7 @@ def build(store: Store, cfg: dict) -> dict:
         failed = any(p.get("status") == "failed" for p in posts.values()) or any(
             t.get("status") == "failed" for t in c.get("targets", {}).values())
         waiting = any(pending_for(c, plat) for plat in c.get("targets", {})) or any(
-            p.get("status") in ("inbox", "inbox_stale", "processing") for p in posts.values())
+            p.get("status") in ("inbox", "inbox_stale", "processing", "uploading") for p in posts.values())
         if failed or waiting:
             filtered.append(c)
             continue

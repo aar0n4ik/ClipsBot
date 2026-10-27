@@ -9,6 +9,7 @@
   fail --job NAME  — записать в дашборд, что запуск упал (вызывается из workflow при ошибке)
   dashboard        — пересобрать data.enc
   diagnose         — проверить каждую площадку и сказать, что не так и что делать
+  summary --job X  — короткий отчёт запуска в Markdown (для страницы запуска GitHub Actions)
 """
 from __future__ import annotations
 
@@ -25,7 +26,7 @@ from .util import log, now_iso
 def main():
     ap = argparse.ArgumentParser(prog="clipper")
     ap.add_argument("cmd", choices=["watch", "process", "post", "stats", "doctor", "auth", "fail", "dashboard",
-                                    "diagnose"])
+                                    "diagnose", "summary"])
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--account", default="")
     ap.add_argument("--platform", default="")
@@ -35,6 +36,9 @@ def main():
 
     cfg = load_config()
     store = Store()
+    if a.cmd == "summary":
+        print(summary(store, a.job))
+        return
     from . import settings
     settings.apply(cfg, store)          # настройки из дашборда поверх config.yaml
     dashboard_data.install(store, cfg)
@@ -73,6 +77,34 @@ def main():
     elif a.cmd == "dashboard":
         store.write_json("status/watch.json", (store.read_json("status/watch.json", {}) or {}) | {"rebuilt_at": now_iso()})
         store.sync("dashboard rebuild")
+
+
+def summary(store: Store, job: str) -> str:
+    """Отчёт для вкладки Summary запуска: что сделано и почему — без похода в дашборд."""
+    out = [f"### clipper · {job}"]
+    sysd = store.read_json("status/system.json", {}) or {}
+    if job == "process":
+        f = store.read_json("status/funnel.json", {}) or {}
+        out.append("| кусок | пики | разведчик | кандидаты | прошли текст | видео | взяты | ИИ $ | речь |")
+        out.append("|---|---|---|---|---|---|---|---|---|")
+        for ch in (f.get("chunks") or [])[-6:]:
+            out.append(f"| {ch.get('chunk')} | {ch.get('peaks', 0)} | {ch.get('scout', 0)} | {ch.get('candidates', 0)} | "
+                       f"{ch.get('text_pass', 0)} | {ch.get('video_pass', 0)}/{ch.get('video_checked', 0)} | "
+                       f"**{ch.get('made', 0)}** | {ch.get('usd', 0)} | {ch.get('asr') or ''} |")
+        rej = (f.get("rejected") or [])[-8:]
+        if rej:
+            out.append("\n**Последние отказы:**")
+            out += [f"- `{r.get('stage')}` {r.get('score') or ''} — {r.get('reason')}" for r in rej]
+    elif job == "post":
+        last = (store.read_json("status/brain.json", {}) or {}).get("last") or {}
+        out.append(f"**{last.get('action', '—')}** {last.get('clip') or ''} — {last.get('reason', '')} _({last.get('by', '')})_")
+        if last.get("released"):
+            out.append("Выложено: " + ", ".join(last["released"]))
+    for k in (job, "ai", "render") if job != "post" else (job,):
+        x = sysd.get(k)
+        if x:
+            out.append(f"- **{k}**: {x.get('level')} — {x.get('msg')}")
+    return "\n".join(out)
 
 
 def auth(cfg, store: Store, a):

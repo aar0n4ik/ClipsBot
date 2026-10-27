@@ -24,6 +24,11 @@ ACC = "status/health.json"
 
 # ── система ─────────────────────────────────────────────────────
 def report(store: Store, component: str, level: str, msg: str, **extra):
+    with store.lock:
+        _report(store, component, level, msg, **extra)
+
+
+def _report(store: Store, component: str, level: str, msg: str, **extra):
     st = store.read_json(SYS, {}) or {}
     prev = st.get(component, {})
     run_url = None
@@ -135,10 +140,13 @@ def update_accounts(store: Store, stats: dict, cfg: dict) -> dict:
 def note_platform_error(store: Store, acc: str, kind: str):
     if kind != "spam":
         return
-    h = store.read_json(ACC, {}) or {}
-    a = h.setdefault(acc, {})
-    a["spam_errors"] = a.get("spam_errors", 0) + 1
-    store.write_json(ACC, h)
+
+    def bump(h):
+        h = h or {}
+        a = h.setdefault(acc, {})
+        a["spam_errors"] = a.get("spam_errors", 0) + 1
+        return h
+    store.update_json(ACC, bump, {})   # публикация идёт в несколько потоков
 
 
 def label(state: str) -> str:

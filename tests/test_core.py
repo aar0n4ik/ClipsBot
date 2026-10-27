@@ -118,7 +118,8 @@ def test_no_second_lost():
     assert covered(12600, 70, live_steps=[7500, 9000])[0] == 12600  # 3.5 ч, резался вживую
     assert covered(37, 70)[0] == 37                                 # совсем короткий
     pos, spans = covered(12601, 2, live_steps=[7500])               # только что закончился: хвост ждёт стабилизации
-    assert pos == 7200
+    chunk = int(CFG["processing"]["chunk_minutes"]) * 60
+    assert pos < 12601 and 12601 - pos < chunk and pos % 3600 == 0, pos   # целые куски взяты, короткий хвост ждёт
     st = Store(Path(tempfile.mkdtemp()))                            # Twitch удлинил VOD задним числом
     v = {"id": "v", "created_at": iso(now - dt.timedelta(hours=5)), "duration_sec": 4000}
     st.write_json("vods.json", {"v": {"processed_until": 3900, "finished": True}})

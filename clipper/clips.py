@@ -46,7 +46,7 @@ def overall(c: dict) -> str:
     st = [p.get("status") for p in c.get("posts", {}).values()]
     if any(s == "posted" for s in st):
         return "posted"
-    if any(s == "processing" for s in st):
+    if any(s in ("processing", "uploading") for s in st):
         return "processing"
     if c.get("status") in ("broken", "skipped", "expired"):
         return c["status"]

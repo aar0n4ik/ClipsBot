@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import threading
 import time
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from ..store import Store
 from ..util import log
 
 TOKENS = "tokens.enc"
+_TOKENS_LOCK = threading.RLock()   # площадки публикуются параллельно, токены — один общий файл
 
 
 class PlatformError(RuntimeError):
@@ -42,6 +44,8 @@ def save_tokens(store: Store, tokens: dict):
 def http(method: str, url: str, *, retries: int = 4, ok=(200, 201), **kw) -> requests.Response:
     """Запрос с повторами на сетевые сбои и 429/5xx (экспоненциальная пауза)."""
     kw.setdefault("timeout", 120)
+    if hasattr(kw.get("data"), "read"):   # файл нельзя «перечитать» при повторе — читаем в память один раз
+        kw["data"] = kw["data"].read()
     last = None
     for attempt in range(retries):
         try:
@@ -81,10 +85,11 @@ class Platform:
         return self.tokens[self.id]
 
     def save(self):
-        fresh = load_tokens(self.store)  # другие аккаунты могли обновиться параллельно
-        fresh[self.id] = self.tokens[self.id]
-        self.tokens = fresh
-        save_tokens(self.store, fresh)
+        with _TOKENS_LOCK:
+            fresh = load_tokens(self.store)  # другие аккаунты могли обновиться параллельно
+            fresh[self.id] = self.tokens[self.id]
+            self.tokens = fresh
+            save_tokens(self.store, fresh)
 
     def token_status(self) -> dict:
         if not self.connected():

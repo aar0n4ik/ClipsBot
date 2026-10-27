@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-ITERATIONS = 250_000
+ITERATIONS = 600_000  # OWASP 2023 для PBKDF2-SHA256; дашборд читает число итераций из файла
 
 
 def _key(password: str, salt: bytes, iterations: int) -> bytes:

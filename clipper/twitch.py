@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import random
 import re
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -82,66 +84,173 @@ class Twitch:
         return out
 
 
-# ── скачивание ──────────────────────────────────────────────────
+# ── скачивание: свой HLS-загрузчик ──────────────────────────────
+# Почему не просто yt-dlp: он читает HLS через ffmpeg последовательно, кусок за куском. Здесь сегменты
+# качаются параллельно (×8–16), склеиваются локально и режутся точно по секунде. Поддерживаются
+# и классические .ts-плейлисты, и fMP4 (#EXT-X-MAP — так Twitch отдаёт HEVC/AV1 записи «Enhanced
+# Broadcasting»; v4 на них падал). Любой сбой → запасной путь через yt-dlp, как раньше.
+_FORMATS: dict[str, tuple[float, list[dict]]] = {}
+_FMT_TTL = 20 * 60
+_local = threading.local()
+
+
+def _http() -> requests.Session:
+    s = getattr(_local, "s", None)
+    if s is None:
+        s = _local.s = requests.Session()
+        s.headers["User-Agent"] = "Mozilla/5.0 (clipper)"
+    return s
+
+
 def _section(start: float, end: float) -> str:
     return f"*{max(0, start):.2f}-{end:.2f}"
 
 
-def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
-    """Звук куска VOD. Сегменты HLS качаются параллельно напрямую (без ffmpeg-потока, который идёт
-    в темпе эфира), склеиваются в один файл и обрезаются локально по точному старту (-c copy, без перекодирования)."""
-    out.parent.mkdir(parents=True, exist_ok=True)
-    raw = out.with_suffix(".raw.ts")
-    url = run(["yt-dlp", "-g", "-f", "Audio_Only/audio_only/bestaudio/worst",
-               f"https://www.twitch.tv/videos/{vod_id}"], timeout=300).stdout.strip().splitlines()[0]
-    s = requests.Session()
-    pl = s.get(url, timeout=30).text
-    if "#EXT-X-MAP" in pl:
-        raise RuntimeError("fMP4-плейлист: склейка сегментов не поддержана")
-    segs, pos, dur, first_start = [], 0.0, None, None
-    for line in pl.splitlines():
+def vod_formats(vod_id: str) -> list[dict]:
+    """HLS-варианты записи (ссылки на плейлисты) через yt-dlp -J. Кэш на 20 минут — ссылки подписаны."""
+    hit = _FORMATS.get(vod_id)
+    if hit and time.time() - hit[0] < _FMT_TTL:
+        return hit[1]
+    js = json.loads(run(["yt-dlp", "-J", "--no-warnings", f"https://www.twitch.tv/videos/{vod_id}"],
+                        timeout=300, quiet=True).stdout)
+    out = []
+    for f in js.get("formats") or []:
+        if "m3u8" not in str(f.get("protocol", "")) or not f.get("url"):
+            continue
+        out.append({"id": str(f.get("format_id", "")), "url": f["url"], "height": f.get("height") or 0,
+                    "fps": f.get("fps") or 0, "vcodec": str(f.get("vcodec") or ""), "acodec": str(f.get("acodec") or "")})
+    if not out:
+        raise RuntimeError("yt-dlp не вернул HLS-варианты записи")
+    _FORMATS[vod_id] = (time.time(), out)
+    return out
+
+
+def pick_format(formats: list[dict], audio_only: bool = False, max_height: int | None = None) -> dict:
+    if audio_only:
+        aud = [f for f in formats if f["vcodec"] in ("none", "") and f["id"].lower().startswith("audio")] or \
+              [f for f in formats if f["vcodec"] == "none"]
+        if aud:
+            return aud[0]
+        return min((f for f in formats if f["height"]), key=lambda f: f["height"])  # нет отдельного звука — самое лёгкое видео
+    vids = [f for f in formats if f["height"] and f["vcodec"] != "none"]
+    if max_height:
+        vids = [f for f in vids if f["height"] <= max_height] or sorted(vids, key=lambda f: f["height"])[:1]
+    if not vids:
+        raise RuntimeError("нет видео-вариантов записи")
+    avc = lambda f: 1 if (f["vcodec"].startswith("avc") or f["vcodec"] in ("", "h264")) else 0  # H.264 декодируется быстрее
+    return max(vids, key=lambda f: (f["height"], min(f["fps"] or 30, 60), avc(f)))
+
+
+def parse_m3u8(text: str, base: str) -> tuple[str | None, list[tuple[float, float, str]]]:
+    """→ (init-сегмент fMP4 или None, [(начало, длина, url)])."""
+    if "#EXT-X-BYTERANGE" in text:
+        raise RuntimeError("плейлист с BYTERANGE — отдаю yt-dlp")
+    init, segs, pos, dur = None, [], 0.0, None
+    for line in text.splitlines():
         line = line.strip()
-        if line.startswith("#EXTINF:"):
+        if line.startswith("#EXT-X-MAP:"):
+            m = re.search(r'URI="([^"]+)"', line)
+            if m and init is None:
+                init = urljoin(base, m.group(1))
+        elif line.startswith("#EXTINF:"):
             dur = float(line[len("#EXTINF:"):].split(",")[0])
         elif line and not line.startswith("#") and dur is not None:
-            if pos + dur > start and pos < end:
-                if first_start is None:
-                    first_start = pos
-                segs.append(urljoin(url, line))
+            segs.append((pos, dur, urljoin(base, line)))
             pos += dur
             dur = None
-            if pos >= end:
-                break
-    if not segs:
+    return init, segs
+
+
+def fetch_range(playlist_url: str, start: float, end: float, raw: Path, workers: int = 12) -> tuple[Path, float]:
+    """Скачать сегменты, покрывающие [start, end), параллельно. → (файл, сдвиг: где start внутри файла)."""
+    text = _http().get(playlist_url, timeout=30).text
+    init, segs = parse_m3u8(text, playlist_url)
+    need = [(s, d, u) for s, d, u in segs if s + d > start and s < end]
+    if not need:
         raise RuntimeError(f"в плейлисте нет сегментов для {start:.0f}-{end:.0f} с")
 
-    def fetch(u):
-        for _ in range(3):
-            r = s.get(u, timeout=60)
-            if r.status_code == 200:
-                return r.content
-            time.sleep(1)
-        raise RuntimeError(f"сегмент не скачался ({r.status_code})")
+    def fetch(u: str) -> bytes:
+        last = None
+        for attempt in range(4):
+            try:
+                r = _http().get(u, timeout=60)
+                if r.status_code == 200 and r.content:
+                    return r.content
+                last = f"HTTP {r.status_code}"
+            except requests.RequestException as e:
+                last = str(e)[:120]
+            time.sleep(0.6 * 2 ** attempt + random.random() * 0.4)
+        raise RuntimeError(f"сегмент не скачался ({last})")
 
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        parts = list(ex.map(fetch, segs))
+    urls = ([init] if init else []) + [u for _, _, u in need]
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        parts = list(ex.map(fetch, urls))
+    raw = raw.parent / (raw.name + (".mp4" if init else ".ts"))   # «x.raw.ts»: не совпадёт с итоговым x.mp4
+    raw.parent.mkdir(parents=True, exist_ok=True)
     with open(raw, "wb") as f:
         for p in parts:
             f.write(p)
-    run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{max(0.0, start - first_start):.3f}", "-i", str(raw),
-         "-t", f"{end - start:.3f}", "-c", "copy", str(out.with_suffix(".ts"))], timeout=600)
-    raw.unlink(missing_ok=True)
-    return out.with_suffix(".ts")
+    return raw, max(0.0, start - need[0][0])
+
+
+def _cleanup(out: Path, dst: Path):
+    dst.unlink(missing_ok=True)
+    for p in out.parent.glob(out.stem + ".raw*"):
+        p.unlink(missing_ok=True)
+
+
+def download_audio(vod_id: str, start: float, end: float, out: Path) -> Path:
+    """Звук куска VOD: параллельная загрузка сегментов + точная обрезка без перекодирования."""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    dst = out.with_suffix(".m4a")
+    try:
+        f = pick_format(vod_formats(vod_id), audio_only=True)
+        raw, lead = fetch_range(f["url"], start, end, out.with_suffix(".raw"))
+        # -ss ПОСЛЕ -i: точный рез по сэмплу. «-ss до -i» на склеенном TS сдвигал начало на ~0,2 с и терял
+        # ~1 с в конце (так было в v4 — субтитры чуть уезжали относительно речи)
+        r = run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-ss", f"{lead:.3f}", "-t", f"{end - start:.3f}",
+                 "-map", "0:a:0", "-c", "copy", str(dst)], timeout=600, check=False)
+        if r.returncode != 0:  # кодек не кладётся в m4a как есть — перекодируем звук (дёшево)
+            run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-ss", f"{lead:.3f}", "-t", f"{end - start:.3f}",
+                 "-map", "0:a:0", "-c:a", "aac", "-b:a", "128k", str(dst)], timeout=900)
+        raw.unlink(missing_ok=True)
+        return dst
+    except Exception as e:  # noqa: BLE001
+        log(f"звук: свой загрузчик не справился ({str(e)[:160]}) — yt-dlp")
+        _cleanup(out, dst)
+    tmpl = str(out.with_suffix("")) + ".%(ext)s"
+    run(["yt-dlp", "-q", "--no-warnings", "--no-part", "-f", "Audio_Only/audio_only/bestaudio/worst",
+         "--download-sections", _section(start, end), "-o", tmpl, f"https://www.twitch.tv/videos/{vod_id}"], timeout=3600)
+    got = [p for p in out.parent.glob(out.stem + ".*") if p.suffix in (".mp4", ".ts", ".m4a", ".aac", ".mkv")
+           and ".raw" not in p.name]
+    if not got:
+        raise RuntimeError("звук не скачался")
+    return got[0]
 
 
 def download_video(vod_id: str, start: float, end: float, out: Path, max_height: int | None = None) -> Path:
+    """Кусок видео, начинающийся РОВНО в start (кадр в кадр): сегменты параллельно → точная перекодировка.
+    max_height — лёгкая версия для ИИ; без него — исходное качество записи."""
     out.parent.mkdir(parents=True, exist_ok=True)
+    dst = out.with_suffix(".mp4")
+    try:
+        f = pick_format(vod_formats(vod_id), max_height=max_height)
+        raw, lead = fetch_range(f["url"], start, end, out.with_suffix(".raw"))
+        crf, preset = ("22", "veryfast") if max_height else ("16", "veryfast")
+        run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-ss", f"{lead:.3f}", "-t", f"{end - start:.3f}",
+             "-map", "0:v:0", "-map", "0:a:0?", "-c:v", "libx264", "-preset", preset, "-crf", crf, "-pix_fmt", "yuv420p",
+             "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", str(dst)], timeout=1800)
+        raw.unlink(missing_ok=True)
+        return dst
+    except Exception as e:  # noqa: BLE001
+        log(f"видео: свой загрузчик не справился ({str(e)[:160]}) — yt-dlp")
+        _cleanup(out, dst)   # недописанный файл yt-dlp счёл бы «уже скачанным»
     tmpl = str(out.with_suffix("")) + ".%(ext)s"
     fmt = (f"best[height<={max_height}][fps<=60]/best[height<={max_height}]/best" if max_height
            else "best[fps<=60]/best")  # без потолка: исходное качество записи
     run(["yt-dlp", "-q", "--no-warnings", "--no-part", "-f", fmt, "--download-sections", _section(start, end),
          "--force-keyframes-at-cuts", "--merge-output-format", "mp4", "-o", tmpl, f"https://www.twitch.tv/videos/{vod_id}"], timeout=1800)
-    got = [p for p in out.parent.glob(out.stem + ".*") if p.suffix in (".mp4", ".ts", ".mkv")]
+    got = [p for p in out.parent.glob(out.stem + ".*") if p.suffix in (".mp4", ".ts", ".mkv") and ".raw" not in p.name]
     if not got:
         raise RuntimeError("yt-dlp не скачал видео")
     return got[0]
