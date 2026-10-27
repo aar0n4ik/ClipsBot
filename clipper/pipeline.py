@@ -12,7 +12,7 @@ from pathlib import Path
 
 import random
 
-from . import health, learn, releases
+from . import health, learn, releases, reserve
 from .audio import inspect_clip_audio
 from .bundles import record_moment
 from .cuts import speech_runs
@@ -289,9 +289,13 @@ def _merge_scout(cands: list[dict], scouted: list[dict], chunk_start: float, len
 def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcriber, meta: dict,
                   vod: dict, start: float, end: float, final: bool):
     from . import brain
+    from .reserve import bank_surcharge
     from .signals import PATTERNS, _chat_sample
     p, ai, q = cfg["processing"], cfg.get("ai") or {}, cfg.get("quality") or {}
     make_min = int(q.get("make_min", 7))
+    bar = make_min + bank_surcharge(store, q)      # банк полон — берём только то, что сильнее
+    if bar > make_min:
+        log(f"в запасе хватает клипов: на этот кусок планка {bar}/10 вместо {make_min}/10")
     vid = vod["id"]
     work = WORK_DIR / vid / str(int(start))
     shutil.rmtree(work, ignore_errors=True)
@@ -384,7 +388,7 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
         if int((v.get("risk") or {}).get("level", 0)) >= 3:
             note_reject(store, vod, c["peak_abs"], "текст", "риск для аккаунта: " + ", ".join((v.get("risk") or {}).get("flags", [])), sc, v.get("why", ""))
             continue
-        if sc < make_min - 1:
+        if sc < bar - 1:
             note_reject(store, vod, c["peak_abs"], "текст", v.get("why") or "слабый момент", sc)
             continue
         text_pass.append((c, v))
@@ -414,7 +418,7 @@ def process_chunk(cfg, store: Store, tw: Twitch, llm: LLM, transcriber: Transcri
 
     exc = int(q.get("exceptional", 9))
     limit = int(q.get("max_per_chunk", 4))
-    picked = [x for x in plans if x["score"] >= make_min][:limit]
+    picked = [x for x in plans if x["score"] >= bar][:limit]
     picked += [x for x in plans if x not in picked and x["score"] >= exc]
     for x in plans:
         if x not in picked:
@@ -755,6 +759,7 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
         health.report(store, "render", "warn", f"{clip_id}: " + "; ".join(problems))
         note_reject(store, vod, abs_s, "монтаж", "; ".join(problems), pl["score"])
         return False
+    _shelf = reserve.shelf_of(v)
     thumb = thumb_b64(out, at=min(1.2, kept / 2))
     asset = releases.upload(out)
     hq = hook_quality({"speech_start": (words_final[0]["s"] if words_final else None)}, False, title[0])
@@ -774,7 +779,8 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
         "brain": {**pl.get("brain", {}), "critic": {k: crit.get(k) for k in ("ok", "problems", "fix_hook", "skipped")},
                   "cuts": len(segs) - 1, "trimmed_s": round(dur - kept, 1)},
         "transcript": tr[:700], "thumb": thumb, "targets": targets, "posts": {}, "created_at": now_iso(),
-        "live_when_made": bool((store.read_json("status/live.json", {}) or {}).get("is_live")), "fresh": bool(v.get("fresh")),
+        "live_when_made": bool((store.read_json("status/live.json", {}) or {}).get("is_live")),
+        "shelf": _shelf, "expires_at": reserve.expires_at(_shelf), "fresh": _shelf == "now",
         "uid": uuid.uuid4().hex[:8], "asset": asset,
         "vod_url": f"https://www.twitch.tv/videos/{vod['id']}?t={_hms(src_off + segs[0][0])}",
     })

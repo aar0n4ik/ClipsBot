@@ -16,7 +16,7 @@ SCHEMA = {
     # отбор
     "quality.make_min": (7, (5, 10), "quality.make_min"),          # с какой финальной оценки клип вообще монтируется
     "quality.post_min": (7, (5, 10), "quality.post_min"),          # с какой оценки публикуется
-    "quality.max_per_chunk": (3, (1, 10), "quality.max_per_chunk"),  # сколько клипов максимум из куска (1 ч) стрима
+    "quality.max_per_chunk": (2, (1, 10), "quality.max_per_chunk"),  # сколько клипов максимум из куска (1 ч) стрима
     "quality.exceptional": (9, (7, 10), "quality.exceptional"),    # такой момент берём всегда, сверх лимитов
     "ai.scout_audio": (True, bool, "ai.scout_audio"),              # Gemini слушает весь кусок стрима целиком
     "ai.video_review": (True, bool, "ai.video_review"),            # Gemini смотрит каждый финалист
@@ -32,12 +32,15 @@ SCHEMA = {
     "clips.trim_silence": (True, bool, "clips.trim_silence"),
     "clips.trim_gap_seconds": (1.2, (0.6, 4.0), "clips.trim_gap_seconds"),
     "clips.follow_subject": (False, bool, "clips.follow_subject"),
+    # запас
+    "quality.reserve_target": (8, (0, 60), "quality.reserve_target"),   # с этого размера банка планка отбора +1
+    "quality.reserve_max": (16, (1, 120), "quality.reserve_max"),       # выше — +2: монтируем только сильнее лежащего
     # публикация
-    "posting.daily_max": (5, (0, 12), "posting.daily_max"),        # максимум релизов в сутки (одинаково на всех площадках)
+    "posting.daily_max": (4, (0, 12), "posting.daily_max"),        # релизов в сутки в день с эфиром (одинаково на всех площадках)
+    "posting.offday_max": (2, (0, 12), "posting.offday_max"),      # в день без эфира — из запаса, но меньше
     "posting.daily_min": (1, (0, 6), "posting.daily_min"),         # если есть хоть что-то достойное — хотя бы столько
-    "posting.min_gap_minutes": (120, (20, 600), "posting.min_gap_minutes"),
+    "posting.min_gap_minutes": (180, (20, 600), "posting.min_gap_minutes"),
     "posting.hot_now": (True, bool, "posting.hot_now"),            # сильный клип во время эфира — сразу
-    "posting.quiet_hours": ([2, 3, 4, 5, 6], "hours", "posting.quiet_hours"),
     "platforms.tiktok": (True, bool, "platforms.tiktok"),
     "platforms.youtube": (True, bool, "platforms.youtube"),
     "platforms.instagram": (True, bool, "platforms.instagram"),
@@ -112,6 +115,13 @@ MIGRATIONS = {
                    "до 3 клипов из часа стрима (куски стали по 1 ч), длина без жёсткого потолка в минуту — "
                    "ИИ держит коротко, а длинный ролик проходит отдельную проверку. Основание — данные Buffer/vidIQ 2025–2026: "
                    "больше качественных роликов = больше шансов на выстрел без потери охвата каждого"),
+    "v6_reserve": ({"posting.daily_max": (5, 4), "posting.min_gap_minutes": (120, 180), "quality.max_per_chunk": (3, 2)},
+                   "Ритм v6: 4 релиза в сутки в день с эфиром и 2 в день без эфира (было 5 всегда), пауза между "
+                   "релизами 3 ч (было 2 ч), до 2 клипов из часа стрима (было 3). Ночных часов больше нет — "
+                   "расписание строится только по активности аудитории. Что не влезло в день, не пропадает: "
+                   "лежит в запасе со сроком годности. Основание: TikTok рекомендует 1–4 поста в сутки и паузу "
+                   "3–4 часа, чтобы ролики не отбирали друг у друга первый показ; у Shorts жёсткого лимита нет, "
+                   "но ровный ритм даёт больше, чем залп"),
 }
 
 

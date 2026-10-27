@@ -1937,7 +1937,7 @@ function dayIn(tz, d = new Date()) { return new Intl.DateTimeFormat("en-CA", { t
    поэтому рельс показывает то, что бот делает прямо сейчас, а не заготовку. */
 const PHASES = [
   ["Нет стрима", "проверка раз в 10 минут"],
-  ["Идёт стрим", "запись куска, до 2 часов"],
+  ["Идёт стрим", "запись куска по часу"],
   ["Поиск", "звук, чат, клипы зрителей"],
   ["Анализ", "ИИ оценивает речь"],
   ["Видео", "ИИ смотрит кадры"],
@@ -1945,9 +1945,15 @@ const PHASES = [
   ["Выкладка", "TikTok, Shorts, Reels"],
 ];
 const STAGE_PHASE = { peaks: 2, scout: 2, speech: 3, judge: 3, video: 4, render: 5 };
+/* Нарезка и выкладка идут параллельно: пока режется новый кусок, предыдущий клип
+   может уже уходить на площадки. Этап-герой — тот, что требует внимания (нарезка),
+   но выкладка при этом не исчезает: её шаг на рельсе тоже горит. */
+function uploadBusy() {
+  return (D.clips || []).some(c => Object.values(c.posts || {}).some(p => ["uploading", "processing", "retry"].includes(p.status)));
+}
 function phaseNow() {
   const P = D.status.process || {}, L = D.status.live || {};
-  const busy = D.clips.some(c => Object.values(c.posts || {}).some(p => ["uploading", "processing", "retry"].includes(p.status)));
+  const busy = uploadBusy();
   if (P.state === "running" && STAGE_PHASE[P.stage_id] != null) return STAGE_PHASE[P.stage_id];
   if (busy) return 6;
   if (L.is_live) return 1;
@@ -2141,6 +2147,7 @@ function renderOverview() {
   else leadParts.push("Эфиров ещё не было.");
   if (P.state === "running") leadParts.push(`${P.stage || "Нарезка"}${P.chunk ? ` на куске ${P.chunk}` : ""}.`);
   else leadParts.push(PHASES[idx][1][0].toUpperCase() + PHASES[idx][1].slice(1) + ".");
+  if (uploadBusy() && idx !== 6) leadParts.push("Параллельно прошлый клип уходит на площадки.");
   $("heroLead").textContent = leadParts.join(" ");
 
   const lastChunk = ((D.status.funnel || {}).chunks || []).slice(-1)[0] || {};
@@ -2161,8 +2168,9 @@ function renderOverview() {
     : `<p class="empty">Пока пусто — бот ещё ничего не делал.</p>`;
 
   /* ── рельс этапов ── */
+  const alsoPosting = uploadBusy() && idx !== 6;
   $("rail").innerHTML = PHASES.map(([t, d], i) => {
-    const on = i === idx, done = i < idx;
+    const on = i === idx || (i === 6 && alsoPosting), done = i < idx && !(i === 6 && alsoPosting);
     const w = on && P.state === "running" && P.progress != null ? Math.max(4, Math.min(100, P.progress)) : null;
     return `<div class="ri p${i} ${on ? "on" : ""} ${done ? "done" : ""}"${on ? ' aria-current="step"' : ""}>
       <span class="tr"><i class="${done ? "full" : on && w == null ? "run" : ""}"${w != null ? ` style="width:${w}%"` : ""}></i></span>
@@ -2700,7 +2708,9 @@ const SET_UI = [
     ["quality.make_min", "С какой оценки монтировать клип", "финальная оценка после того, как ИИ посмотрел видео (1–10)"],
     ["quality.post_min", "С какой оценки выкладывать", "ниже не выйдет никогда, даже если выкладывать нечего"],
     ["quality.max_per_chunk", "Максимум клипов из часа стрима", "обычно выходит 0–2: лучше меньше, но сильнее"],
-    ["quality.exceptional", "Исключительный момент", "с такой оценкой берём сверх всех лимитов"]]],
+    ["quality.exceptional", "Исключительный момент", "с такой оценкой берём сверх всех лимитов"],
+    ["quality.reserve_target", "Запас клипов", "столько готовых держим про запас; дальше планка отбора поднимается на балл"],
+    ["quality.reserve_max", "Потолок запаса", "выше монтируем только то, что сильнее уже лежащего"]]],
   ["Мозг", [
     ["ai.scout_audio", "ИИ слушает весь стрим целиком", "находит истории и тихие панчлайны, которые чат не заметил"],
     ["ai.video_review", "ИИ смотрит видео каждого финалиста", "лаги, есть ли момент, где резать, правдив ли заголовок"],
@@ -2716,8 +2726,9 @@ const SET_UI = [
     ["clips.trim_gap_seconds", "Пауза длиннее, с — вырезается", ""],
     ["clips.follow_subject", "Сдвигать кадр, если стример сбоку", "один раз на весь клип, без движения камеры"]]],
   ["Публикация", [
-    ["posting.daily_max", "Релизов в сутки", "расписание слотов на день; в слот уходит лучший клип очереди, остальные не пропадают"],
-    ["posting.min_gap_minutes", "Пауза между релизами, мин", ""],
+    ["posting.daily_max", "Релизов в сутки с эфиром", "расписание слотов на день; в слот уходит лучший клип очереди, остальные не пропадают"],
+    ["posting.offday_max", "Релизов в сутки без эфира", "в день без стрима выкладываем из запаса, но меньше"],
+    ["posting.min_gap_minutes", "Пауза между релизами, мин", "меньше трёх часов ролики отбирают друг у друга первый показ"],
     ["posting.hot_now", "Сильный клип с эфира — сразу", "свежесть важнее идеального часа"]]],
   ["Площадки", [["platforms.tiktok", "TikTok", ""], ["platforms.youtube", "YouTube Shorts", ""], ["platforms.instagram", "Instagram Reels", ""]]],
 ];
@@ -2927,9 +2938,9 @@ function demoData() {
   const tzA = "Europe/Moscow", h = hourIn(tzA);
   return {
     generated_at: ago_(3), title: "Нарезки albert1million", timezone: "America/Chicago", streamer: { display_name: "albert1million" }, accounts,
-    money: { rate_per_1000: 1, currency: "USD", payout_min: 20 }, posting: { timezone: tzA, quiet_hours: [2, 3, 4, 5, 6] },
-    settings: { values: { "quality.make_min": 7, "quality.post_min": 7, "quality.max_per_chunk": 4, "quality.exceptional": 9, "ai.scout_audio": true, "ai.video_review": true, "ai.video_model": "gemini-4-argon", "ai.planner": true, "ai.planner_model": "gemini-4-argon", "clips.min_seconds": 10, "clips.max_seconds": 59, "clips.trim_silence": true, "clips.trim_gap_seconds": 1.2, "clips.follow_subject": false, "posting.daily_max": 4, "posting.daily_min": 1, "posting.min_gap_minutes": 90, "posting.max_age_hours": 36, "posting.hot_now": true, "posting.quiet_hours": [2, 3, 4, 5, 6], "platforms.tiktok": true, "platforms.youtube": true, "platforms.instagram": true },
-      schema: { "quality.make_min": [7, [5, 10]], "quality.post_min": [7, [5, 10]], "quality.max_per_chunk": [4, [1, 10]], "quality.exceptional": [9, [7, 10]], "ai.scout_audio": [true, "bool"], "ai.video_review": [true, "bool"], "ai.video_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "ai.planner": [true, "bool"], "ai.planner_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "clips.min_seconds": [10, [6, 30]], "clips.max_seconds": [59, [20, 90]], "clips.trim_silence": [true, "bool"], "clips.trim_gap_seconds": [1.2, [0.6, 4]], "clips.follow_subject": [false, "bool"], "posting.daily_max": [4, [0, 12]], "posting.daily_min": [1, [0, 6]], "posting.min_gap_minutes": [90, [20, 600]], "posting.max_age_hours": [36, [6, 168]], "posting.hot_now": [true, "bool"], "posting.quiet_hours": [[2, 3, 4, 5, 6], "hours"], "platforms.tiktok": [true, "bool"], "platforms.youtube": [true, "bool"], "platforms.instagram": [true, "bool"] } },
+    money: { rate_per_1000: 1, currency: "USD", payout_min: 20 }, posting: { timezone: tzA },
+    settings: { values: { "quality.make_min": 7, "quality.post_min": 7, "quality.max_per_chunk": 2, "quality.exceptional": 9, "quality.reserve_target": 8, "quality.reserve_max": 16, "ai.scout_audio": true, "ai.video_review": true, "ai.video_model": "gemini-4-argon", "ai.planner": true, "ai.planner_model": "gemini-4-argon", "clips.min_seconds": 10, "clips.max_seconds": 59, "clips.trim_silence": true, "clips.trim_gap_seconds": 1.2, "clips.follow_subject": false, "posting.daily_max": 4, "posting.offday_max": 2, "posting.daily_min": 1, "posting.min_gap_minutes": 180, "posting.hot_now": true, "platforms.tiktok": true, "platforms.youtube": true, "platforms.instagram": true },
+      schema: { "quality.make_min": [7, [5, 10]], "quality.post_min": [7, [5, 10]], "quality.max_per_chunk": [2, [1, 10]], "quality.exceptional": [9, [7, 10]], "quality.reserve_target": [8, [0, 60]], "quality.reserve_max": [16, [1, 120]], "ai.scout_audio": [true, "bool"], "ai.video_review": [true, "bool"], "ai.video_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "ai.planner": [true, "bool"], "ai.planner_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "clips.min_seconds": [10, [6, 30]], "clips.max_seconds": [59, [20, 90]], "clips.trim_silence": [true, "bool"], "clips.trim_gap_seconds": [1.2, [0.6, 4]], "clips.follow_subject": [false, "bool"], "posting.daily_max": [4, [0, 12]], "posting.offday_max": [2, [0, 12]], "posting.daily_min": [1, [0, 6]], "posting.min_gap_minutes": [180, [20, 600]], "posting.hot_now": [true, "bool"], "platforms.tiktok": [true, "bool"], "platforms.youtube": [true, "bool"], "platforms.instagram": [true, "bool"] } },
     switches: {},
     status: {
       live: { is_live: true, title: "Доставка по ЛА на Тесле", started_at: ago_(202), viewers: 1840 },

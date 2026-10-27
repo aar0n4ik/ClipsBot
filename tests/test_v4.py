@@ -39,14 +39,14 @@ def test_settings_clamped_and_applied():
     from clipper import settings
     st = _store()
     st.write_json(settings.SETTINGS, {"values": {"posting.daily_max": 99, "quality.post_min": "8", "ai.video_model": "evil",
-                                                 "posting.quiet_hours": [1, 2, 25, "x"], "platforms.instagram": False,
+                                                 "quality.reserve_target": 99, "platforms.instagram": False,
                                                  "junk.key": 1}})
     cfg = json.loads(json.dumps(CFG))
     v = settings.apply(cfg, st)
     assert v["posting.daily_max"] == 12 and cfg["posting"]["daily_max"] == 12      # зажато в границы
     assert cfg["quality"]["post_min"] == 8
     assert cfg["ai"]["video_model"] == "gemini-4-argon"                             # мусор → по умолчанию
-    assert cfg["posting"]["quiet_hours"] == [1, 2]
+    assert cfg["quality"]["reserve_target"] == 60                                  # зажато в границы
     assert "instagram" not in cfg["platforms"] and "tiktok" in cfg["platforms"]
     assert "junk.key" not in v
     st.write_json(settings.SWITCHES, {"post": True, "note": "тест"})
@@ -283,7 +283,7 @@ def test_release_goes_to_all_platforms_and_respects_rules():
         assert st.read_json("queue/old.json")["targets"]["tiktok"]["status"] == "ready"        # v6: клип не сгорает
         ps = st.read_json("status/post.json")
         assert ps["accounts"]["tt_main"]["today"]["drafts"] == 0                               # счётчик до публикации
-        assert ps["releases"]["by_day"]["2026-10-25"] == 1 and len(ps["schedule"]["hours"]) == 5
+        assert ps["releases"]["by_day"]["2026-10-25"] == 1 and len(ps["schedule"]["hours"]) == 4
         # следующий слот: уходит вчерашний сильный клип; слабый не выходит никогда
         FakeClient.published = []
         m(P, "now_utc", lambda: now + dt.timedelta(hours=3))
@@ -326,7 +326,10 @@ def test_release_gap_quiet_and_stop_switch():
         st2 = _store()
         st2.write_json("queue/a.json", _clip("a", 8, night - dt.timedelta(hours=1)))
         P.cmd_post(cfg, st2)
-        assert not FakeClient.published and "ночь" in st2.read_json(P.BRAIN)["last"]["reason"]
+        # ночных часов больше нет: решает только расписание, и причина — слот, а не «ночь аудитории»
+        last = st2.read_json(P.BRAIN)["last"]
+        assert "ночь" not in last["reason"]
+        assert FakeClient.published or "слот" in last["reason"], last
     finally:
         undo()
 

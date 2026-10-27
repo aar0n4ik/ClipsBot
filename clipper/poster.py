@@ -21,7 +21,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from zoneinfo import ZoneInfo
 
-from . import health, learn, releases, schemas
+from . import health, learn, releases, reserve, schemas
 from .clips import age_hours, normalize, pending_for
 from .config import WORK_DIR
 from .platforms import accounts as list_accounts
@@ -291,6 +291,7 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     tz = posting["timezone"]
     local = _local(now, tz)
     today = local.date().isoformat()
+    reserve.expire_due(store, now)
     queue = [normalize(c) for c in store.list_json("queue")]
     enabled = cfg.get("platforms") or {"tiktok": 1, "youtube": 1, "instagram": 1}
     errors: list[str] = []
@@ -359,10 +360,19 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     last_rel = parse_iso(rs["last_at"]) if rs.get("last_at") else None
     since_min = (now - last_rel).total_seconds() / 60 if last_rel else 1e9
     gap = int(posting.get("min_gap_minutes", 120))
-    quiet = set(posting.get("quiet_hours", [2, 3, 4, 5, 6]))
+    quiet: set[int] = set(posting.get("quiet_hours") or [])   # ночных часов больше нет; ключ остался для ручного запрета
     waves = momentum(stats, now.timestamp())
     hard = max(int(posting.get("hard_max", 6)), daymax + 1)     # настройка дашборда главнее потолка из config
-    cap = min(hard, daymax + (1 if waves else 0))
+    # В день без эфира выкладываем меньше и только из запаса: постоянство важнее объёма,
+    # но тратить на пустой день сильные клипы незачем — они дороже в день, когда зритель уже пришёл.
+    lv = store.read_json("status/live.json", {}) or {}
+    seen = lv.get("started_at") if lv.get("is_live") else lv.get("last_seen_live")
+    fresh_material = any(age_hours(c) <= 36 for c in queue if c.get("status") not in ("broken", "skipped", "expired"))
+    stream_day = (bool(lv.get("is_live"))
+                  or bool(seen and (now - parse_iso(seen)).total_seconds() < 36 * 3600)
+                  or fresh_material)
+    base = daymax if stream_day else min(daymax, int(posting.get("offday_max", 2)))
+    cap = min(hard, base + (1 if waves else 0))
     weights = learn.get(policy, "hours.youtube") or learn.get(policy, "hours.tiktok") or learn.PRIOR_HOURS
     sch = pstate.get("schedule") or {}
     if sch.get("date") != today:
@@ -409,7 +419,7 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     ctx = {"now_local": local.strftime("%Y-%m-%d %H:%M"), "releases_today": rel_today, "daily_max": cap,
            "slots_today": [f"{h:02d}:07" for h in sch["hours"]], "slots_left": slots_left,
            "minutes_since_last_release": None if since_min > 1e8 else int(since_min),
-           "live_now": bool((store.read_json("status/live.json", {}) or {}).get("is_live")), "waves": waves,
+           "live_now": bool(lv.get("is_live")), "stream_day": stream_day, "waves": waves,
            "platforms": sorted(active), "last_releases": [{"hook": r.get("hook"), "category": r.get("category"), "at": r.get("at")}
                                                           for r in recent[:5]],
            "queue": [{"id": c["id"], "score": c.get("score"), "rank": k, "category": c.get("category"),
@@ -427,8 +437,6 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
         if miss:
             decision["reason"] = (f"клип {c['id']} вышел не везде — жду {', '.join(miss)}, чтобы дотянуть; "
                                   "новые клипы не выходят, пока площадки не сравняются")
-        elif local.hour in quiet:
-            decision["reason"] = f"ночь аудитории — дотяну {', '.join(c['_plats'])} утром; новые клипы ждут"
         else:
             decision = {"action": "post", "clip": c["id"], "by": "синхрон",
                         "reason": f"дотягиваю {', '.join(c['_plats'])}: клип уже вышел на других площадках"}
@@ -439,8 +447,6 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     elif force or forced:
         pick = forced or ranked[0][1]
         decision = {"action": "post", "clip": pick["id"], "by": "владелец", "reason": "владелец нажал «Выложить сейчас»"}
-    elif local.hour in quiet:
-        decision["reason"] = f"ночь аудитории ({local.hour}:00 по {tz})"
     elif slots_left <= 0:
         decision["reason"] = f"сегодня уже {rel_today} релиз(ов) из {cap} — лучшие из очереди уйдут завтра"
     elif since_min < gap - 20:   # запуск по расписанию GitHub опаздывает на минуты — слот из-за этого не теряем

@@ -665,9 +665,10 @@ def test_cadence_migration_respects_user_choice():
     from clipper import settings
     st = _store()
     st.write_json(settings.SETTINGS, {"values": {"posting.daily_max": 4, "posting.min_gap_minutes": 60, "clips.max_seconds": 59}})
-    assert settings.migrate(st) == ["v5_cadence"]
+    assert settings.migrate(st) == ["v5_cadence", "v6_reserve"]
     v = st.read_json(settings.SETTINGS)["values"]
-    assert v["posting.daily_max"] == 5 and v["posting.min_gap_minutes"] == 60 and v["clips.max_seconds"] == 175
+    # v5 поднял лимит 4→5, v6 опустил обратно 5→4; ручные 60 минут паузы обе миграции не трогают
+    assert v["posting.daily_max"] == 4 and v["posting.min_gap_minutes"] == 60 and v["clips.max_seconds"] == 175
     st.write_json(settings.SETTINGS, {"values": {"posting.daily_max": 4}})              # владелец вернул 4 сам
     assert settings.migrate(st) == [] and st.read_json(settings.SETTINGS)["values"]["posting.daily_max"] == 4
     from clipper.brain import length_rule
@@ -822,9 +823,9 @@ def test_late_runner_does_not_lose_slot_and_long_clips_fit_limits():
         cfg = _sync_env(m, now)
         st = _store()
         st.write_json("queue/a.json", _clip("a", 8, now - dt.timedelta(hours=1)))
-        st.write_json("status/post.json", {"releases": {"last_at": _iso(now - dt.timedelta(minutes=114))}})
+        st.write_json("status/post.json", {"releases": {"last_at": _iso(now - dt.timedelta(minutes=174))}})
         P.cmd_post(cfg, st)
-        assert FakeClient.published, st.read_json(P.BRAIN)["last"]                    # 114 мин из 120 — слот не теряем
+        assert FakeClient.published, st.read_json(P.BRAIN)["last"]                    # 174 мин из 180 — слот не теряем
     finally:
         undo()
     from clipper.pipeline import cap_kept, kept_len

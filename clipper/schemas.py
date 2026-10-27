@@ -7,6 +7,7 @@
 """
 from __future__ import annotations
 
+SHELF = ["now", "weeks", "forever"]
 CATS = ["funny", "conflict", "money", "america", "customer", "road", "emotional", "chat", "story", "other"]
 HOOK_STYLES = ["tease", "conflict", "number", "quote"]
 
@@ -34,7 +35,8 @@ SCOUT = obj({"moments": {"type": "array", "items": obj({"at": S, "end": S, "gues
 
 PICKER = obj({"clips": {"type": "array", "items": obj({
     "id": S, "keep": B, "score": I, "hook": I, "payoff": I, "clarity": I, "emotion": I, "rewatch": I,
-    "start": N, "end": N, "category": {"type": "string", "enum": CATS}, "fresh": B, "risk": RISK, "why": S})}})
+    "start": N, "end": N, "category": {"type": "string", "enum": CATS},
+    "shelf": {"type": "string", "enum": SHELF}, "risk": RISK, "why": S})}})
 
 DIRECTOR = obj({
     "verdict": {"type": "string", "enum": ["post", "reject"]}, "score": I, "subscores": SUBSCORES,

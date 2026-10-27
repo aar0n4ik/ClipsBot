@@ -99,7 +99,7 @@ def build(store: Store, cfg: dict) -> dict:
         "platform_labels": LABELS,
         "accounts": [{"id": a["id"], "name": a.get("name", a["id"]), "platform": a["platform"],
                       "enabled": a.get("enabled", True)} for a in list_accounts(cfg, enabled_only=False)],
-        "posting": {"timezone": cfg["posting"].get("timezone"), "quiet_hours": cfg["posting"].get("quiet_hours")},
+        "posting": {"timezone": cfg["posting"].get("timezone")},
         "status": {k: store.read_json(f"status/{k}.json", {}) or {}
                    for k in ("live", "process", "post", "watch", "health", "system", "tokens", "storage", "funnel", "brain")},
         "settings": _settings(store, cfg),
