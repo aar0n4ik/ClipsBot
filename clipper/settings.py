@@ -23,19 +23,19 @@ SCHEMA = {
     "ai.video_model": ("gemini-4-argon", ("gemini-4-argon", "gemini-3.8-flash"), "ai.video_model"),
     "ai.planner": (True, bool, "ai.planner"),                      # ИИ-продюсер решает, что и когда выкладывать
     "ai.planner_model": ("gemini-4-argon", ("gemini-4-argon", "gemini-3.8-flash"), "ai.planner_model"),
-    "ai.second_opinion": (True, bool, "ai.second_opinion"),        # клип ровно на пороге — второй независимый просмотр
+    "ai.second_opinion": (True, bool, "ai.second_opinion"),
+    "ai.proofread": (True, bool, "ai.proofread"),                  # ИИ слушает звук и правит ошибки распознавания        # клип ровно на пороге — второй независимый просмотр
     "transcribe.engine": ("auto", ("auto", "gemini", "whisper"), "transcribe.engine"),  # облако Gemini / локальный Whisper
     # монтаж
     "clips.min_seconds": (10, (6, 30), "clips.min_seconds"),
-    "clips.max_seconds": (59, (20, 90), "clips.max_seconds"),
+    "clips.max_seconds": (175, (20, 175), "clips.max_seconds"),  # потолок площадок; ИИ держит коротко
     "clips.trim_silence": (True, bool, "clips.trim_silence"),
     "clips.trim_gap_seconds": (1.2, (0.6, 4.0), "clips.trim_gap_seconds"),
     "clips.follow_subject": (False, bool, "clips.follow_subject"),
     # публикация
-    "posting.daily_max": (4, (0, 12), "posting.daily_max"),        # максимум клипов в сутки (на каждую площадку)
+    "posting.daily_max": (5, (0, 12), "posting.daily_max"),        # максимум релизов в сутки (одинаково на всех площадках)
     "posting.daily_min": (1, (0, 6), "posting.daily_min"),         # если есть хоть что-то достойное — хотя бы столько
-    "posting.min_gap_minutes": (90, (20, 600), "posting.min_gap_minutes"),
-    "posting.max_age_hours": (36, (6, 168), "posting.max_age_hours"),  # клип старше — не выкладываем (кроме 9+)
+    "posting.min_gap_minutes": (120, (20, 600), "posting.min_gap_minutes"),
     "posting.hot_now": (True, bool, "posting.hot_now"),            # сильный клип во время эфира — сразу
     "posting.quiet_hours": ([2, 3, 4, 5, 6], "hours", "posting.quiet_hours"),
     "platforms.tiktok": (True, bool, "platforms.tiktok"),
@@ -101,6 +101,41 @@ def apply(cfg: dict, store: Store) -> dict:
     cfg["platforms"] = {p: 1 for p in ("tiktok", "youtube", "instagram") if vals[f"platforms.{p}"]}
     cfg["_settings"] = vals
     return vals
+
+
+# Смена значений по умолчанию для тех, кто их не трогал: если в дашборде стоит СТАРОЕ значение по умолчанию —
+# ставим новое и пишем в журнал решений. Выполняется один раз (метка в status/migrations.json).
+MIGRATIONS = {
+    "v5_cadence": ({"posting.daily_max": (4, 5), "posting.min_gap_minutes": (90, 120), "quality.max_per_chunk": (4, 3),
+                    "clips.max_seconds": (59, 175)},
+                   "Новый ритм v5: до 5 релизов в сутки (было 4), пауза между релизами 2 ч (было 1,5 ч), "
+                   "до 3 клипов из часа стрима (куски стали по 1 ч), длина без жёсткого потолка в минуту — "
+                   "ИИ держит коротко, а длинный ролик проходит отдельную проверку. Основание — данные Buffer/vidIQ 2025–2026: "
+                   "больше качественных роликов = больше шансов на выстрел без потери охвата каждого"),
+}
+
+
+def migrate(store: Store) -> list[str]:
+    from . import decisions
+    done = store.read_json("status/migrations.json", []) or []
+    raw = store.read_json(SETTINGS, None)
+    applied = []
+    for name, (changes, why) in MIGRATIONS.items():
+        if name in done:
+            continue
+        if isinstance(raw, dict):
+            vals = raw.get("values") if isinstance(raw.get("values"), dict) else raw
+            hit = {k: new for k, (old, new) in changes.items() if k in vals and vals[k] == old}
+            if hit:
+                before = {k: vals[k] for k in hit}
+                vals.update(hit)
+                store.write_json(SETTINGS, raw)
+                decisions.record(store, "settings", why, before=before, after=hit, reversible=False)
+        done.append(name)
+        applied.append(name)
+    if applied:
+        store.write_json("status/migrations.json", done)
+    return applied
 
 
 def switches(store: Store) -> dict:

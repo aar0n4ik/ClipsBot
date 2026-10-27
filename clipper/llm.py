@@ -472,12 +472,13 @@ class LLM:
         return self._run(chain=chain, build=build, parse=lambda p, m, js: self._parse_json(js),
                          est=_estimate_tokens(len(prompt), size, max_tokens), what="медиа")
 
-    def transcribe(self, audio: bytes, mime: str, *, language: str = "ru-RU", model: str = TRANSCRIBE_MODEL) -> list[dict]:
+    def transcribe(self, audio: bytes, mime: str, *, language: str | list[str] = "ru-RU",
+                   model: str = TRANSCRIBE_MODEL) -> list[dict]:
         """Облачная расшифровка с таймкодами слов (gemini-3.5-transcribe). → [{"w","s","e"}] или LLMError."""
         def build(p, m):
             cfg = {"wordTimestamp": True}
             if (m, "transcribe_cfg") not in self.unsupported:   # язык подсказываем, если поле принимается
-                cfg["languageCodes"] = [language]
+                cfg["languageCodes"] = [language] if isinstance(language, str) else list(language)
             return {"contents": [{"role": "user", "parts": self._media_parts(p, [(mime, audio)], None, m)}],
                     "generationConfig": {"audioTranscriptionConfig": cfg}}
 

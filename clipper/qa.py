@@ -8,7 +8,7 @@ from pathlib import Path
 from .util import ffprobe_json
 
 LIMITS = {"tiktok": 287 * 1024 * 1024, "youtube": 2 * 1024 ** 3, "instagram": 100 * 1024 * 1024}
-MAX_DUR = {"tiktok": 600, "youtube": 180, "instagram": 90}
+MAX_DUR = {"tiktok": 600, "youtube": 180, "instagram": 180}
 
 
 def plan_opening(words: list[dict], start: float, end: float, cfg: dict) -> tuple[float, dict]:

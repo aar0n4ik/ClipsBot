@@ -360,7 +360,7 @@ def test_release_parallel_and_crash_safe():
         assert q["posts"]["tiktok"]["status"] == "inbox" and q["posts"]["instagram"]["status"] == "posted"
         assert q["posts"]["youtube"]["status"] == "retry"                   # сбой аккаунта — клип ждёт
         h = st.read_json("queue/h.json")["posts"]["tiktok"]
-        assert h["status"] == "failed" and "прервалась" in h["error"]       # не перевыкладываем вслепую
+        assert h["status"] == "retry" and "прервалась" in h["error"]        # TikTok-черновик: сверить нельзя — перезалить
     finally:
         undo()
 
@@ -539,6 +539,301 @@ def test_llm_generic_400_does_not_poison_model():
         assert seen[2:] == [True, True]                                       # схема снова на месте; не-JSON → LLMError → повтор
     finally:
         srv.close()
+
+
+# ── v6: синхрон «все или ничего», расписание, перенос, без таймеров ──
+def _sync_env(m, now):
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import _post_env
+    _post_env(m, now)
+    cfg = json.loads(json.dumps(CFG))
+    cfg["ai"]["planner"] = False
+    return cfg
+
+
+def test_release_waits_for_any_resting_platform_no_timers():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _iso, _monkey
+    import clipper.poster as P
+    m, undo = _monkey()
+    now = dt.datetime(2026, 10, 25, 16, 7, tzinfo=dt.timezone.utc)
+    try:
+        cfg = _sync_env(m, now)
+        st = _store()
+        st.write_json("queue/a.json", _clip("a", 8, now - dt.timedelta(hours=1)))
+        st.write_json("status/post.json", {"accounts": {"ig_main": {"platform": "instagram",
+                                           "cooldown_until": _iso(now + dt.timedelta(hours=30)), "cooldown_reason": "бан"}}})
+        P.cmd_post(cfg, st)
+        assert not FakeClient.published                                         # даже долгий отдых — ждут все
+        assert "всех площадках сразу" in st.read_json(P.BRAIN)["last"]["reason"]
+        assert st.read_json("queue/a.json")["targets"]["instagram"]["status"] == "ready"   # ничего не пропущено
+    finally:
+        undo()
+
+
+def test_preflight_failure_means_nothing_goes_out():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _monkey
+    import clipper.poster as P
+    from clipper.platforms.base import PlatformError
+    m, undo = _monkey()
+    now = dt.datetime(2026, 10, 25, 16, 7, tzinfo=dt.timezone.utc)
+    try:
+        cfg = _sync_env(m, now)
+
+        def pre(self):
+            if self.acc["platform"] == "youtube":
+                raise PlatformError("token revoked", "auth")
+        FakeClient.preflight = pre
+        st = _store()
+        st.write_json("queue/a.json", _clip("a", 8, now - dt.timedelta(hours=1)))
+        P.cmd_post(cfg, st)
+        assert not FakeClient.published                                         # одна не готова — не выходит никуда
+        assert "проверку" in st.read_json(P.BRAIN)["last"]["reason"]
+        assert st.read_json("status/post.json")["accounts"]["yt_main"]["cooldown_until"]
+    finally:
+        FakeClient.__dict__.get("preflight") and delattr(FakeClient, "preflight")
+        undo()
+
+
+def test_partial_release_is_repaired_any_time_and_blocks_new_ones():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _iso, _monkey
+    import clipper.poster as P
+    m, undo = _monkey()
+    now = dt.datetime(2026, 10, 25, 16, 7, tzinfo=dt.timezone.utc)
+    try:
+        cfg = _sync_env(m, now)
+        st = _store()
+        a = _clip("a", 8, now - dt.timedelta(days=3))
+        a["posts"] = {"tiktok": {"account": "tt_main", "status": "inbox", "posted_at": _iso(now - dt.timedelta(days=2))},
+                      "instagram": {"account": "ig_main", "status": "posted", "posted_at": _iso(now - dt.timedelta(days=2))},
+                      "youtube": {"account": "yt_main", "status": "retry"}}
+        st.write_json("queue/a.json", a)
+        st.write_json("queue/b.json", _clip("b", 9, now - dt.timedelta(hours=1), vod_time=5000))
+        st.write_json("status/post.json", {"accounts": {"yt_main": {"platform": "youtube",
+                                           "cooldown_until": _iso(now + dt.timedelta(hours=5))}}})
+        P.cmd_post(cfg, st)
+        assert not FakeClient.published and "дотянуть" in st.read_json(P.BRAIN)["last"]["reason"]   # новые ждут
+        ps = st.read_json("status/post.json")
+        ps["accounts"]["yt_main"].pop("cooldown_until")
+        st.write_json("status/post.json", ps)
+        P.cmd_post(cfg, st)
+        assert FakeClient.published == [("youtube", "a")], FakeClient.published   # дотянули спустя 2 дня
+        assert int(st.read_json("status/post.json")["releases"].get("by_day", {}).get("2026-10-25", 0)) == 0   # починка ≠ релиз
+        FakeClient.published = []
+        P.cmd_post(cfg, st)
+        assert sorted(p for p, c in FakeClient.published if c == "b") == ["instagram", "tiktok", "youtube"]
+    finally:
+        undo()
+
+
+def test_daily_schedule_fills_cap_with_best_and_nothing_expires():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _monkey
+    import clipper.clips as C
+    import clipper.poster as P
+    m, undo = _monkey()
+    day = dt.datetime(2026, 10, 25, 7, 7, tzinfo=dt.timezone.utc)                  # 10:07 МСК
+    try:
+        cfg = _sync_env(m, day)
+        cfg["posting"]["daily_max"] = 2
+        st = _store()
+        for i, sc in enumerate((7, 7, 7)):                                          # с утра — «середнячки»
+            st.write_json(f"queue/m{i}.json", _clip(f"m{i}", sc, day - dt.timedelta(hours=1), vod_time=1000 * i, cat=f"c{i}"))
+        posted = []
+        for h in range(0, 15):
+            now = day + dt.timedelta(hours=h)
+            m(P, "now_utc", lambda now=now: now)
+            m(C, "now_utc", lambda now=now: now)
+            if h == 8:                                                              # вечером — топ-момент
+                st.write_json("queue/top.json", _clip("top", 9, now, vod_time=50000, cat="money"))
+            FakeClient.published = []
+            P.cmd_post(cfg, st)
+            posted += sorted({c for _, c in FakeClient.published})
+        sch = st.read_json("status/post.json")["schedule"]
+        assert len(sch["hours"]) == 2 and all(h >= 12 for h in sch["hours"]), sch    # слоты в лучшие часы, а не с утра
+        assert "top" in posted and len([x for x in posted if x]) <= 4, posted       # топ не потерялся
+        left = [c for c in ("m0", "m1", "m2") if c not in posted]
+        assert left and all(st.read_json(f"queue/{c}.json")["targets"]["tiktok"]["status"] == "ready" for c in left)
+        assert P.day_slots(5, [1.0] * 24, {2, 3, 4, 5, 6}, 2.0) and len(P.day_slots(5, [1.0] * 24, set(range(0, 21)), 2.0)) == 3
+    finally:
+        undo()
+
+
+def test_cadence_migration_respects_user_choice():
+    from clipper import settings
+    st = _store()
+    st.write_json(settings.SETTINGS, {"values": {"posting.daily_max": 4, "posting.min_gap_minutes": 60, "clips.max_seconds": 59}})
+    assert settings.migrate(st) == ["v5_cadence"]
+    v = st.read_json(settings.SETTINGS)["values"]
+    assert v["posting.daily_max"] == 5 and v["posting.min_gap_minutes"] == 60 and v["clips.max_seconds"] == 175
+    st.write_json(settings.SETTINGS, {"values": {"posting.daily_max": 4}})              # владелец вернул 4 сам
+    assert settings.migrate(st) == [] and st.read_json(settings.SETTINGS)["values"]["posting.daily_max"] == 4
+    from clipper.brain import length_rule
+    assert "только если почти всё время интересно" in length_rule(CFG).lower() or "ТОЛЬКО" in length_rule(CFG)
+
+
+# ── корректор субтитров ─────────────────────────────────────────
+def test_glossary_is_a_hint_not_blind_replacement():
+    from clipper import proofread as PR
+    st = _store()
+    PR.learn(st, [("лутка", "лудка")])
+    PR.learn(st, [("Лутка,", "лудка")])
+    assert PR.hints(st) == ["лутка → лудка (2)"] and "лудка" in PR.terms(st)
+    assert not hasattr(PR, "apply_known")                                            # никаких слепых автозамен
+    ed = PR.fix_texts({"hooks": [{"style": "quote", "text": "Опять лутка!"}], "youtube": {"title": "Лутка", "tags": ["лутка"]}},
+                      {"лутка": "лудка"})
+    assert ed["hooks"][0]["text"] == "Опять лудка!" and ed["youtube"]["title"] == "Лудка" and ed["youtube"]["tags"] == ["лудка"]
+    words = [{"w": "он", "s": 0, "e": 0.2}, {"w": "сказал", "s": 0.3, "e": 0.6}, {"w": "ю", "s": 0.7, "e": 0.8},
+             {"w": "кэнт", "s": 0.9, "e": 1.1}, {"w": "парк", "s": 1.2, "e": 1.5}, {"w": "ок", "s": 1.6, "e": 1.8}]
+    t = PR.apply_english(words, {"from": 2, "to": 4, "en": "you can't park here", "ru": "тут нельзя парковаться"})
+    assert [w["w"] for w in words] == ["он", "сказал", "you", "can't", "park", "here", "ок"]
+    assert t == {"s": 0.7, "e": 1.5, "ru": "тут нельзя парковаться"} and words[2]["lang"] == "en" and words[5]["e"] <= 1.51
+
+
+def test_proofreader_listens_fixes_and_handles_english():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import DIRECTOR_OK, _cand, _monkey, _patch_pipeline
+    import clipper.pipeline as P
+    from clipper import learn, schemas
+
+    class L:
+        def media_json(self, media, prompt, **kw):
+            if kw.get("schema") is schemas.PROOF:
+                assert media[0][0] in ("audio/ogg", "audio/mp3") and "0:" in prompt
+                import re
+                ii = [int(x) for x in re.findall(r"(\d+):охранник", prompt)]
+                j = int(re.search(r"(\d+):штраф", prompt).group(1))
+                return {"fixes": [{"i": i, "w": "охранница"} for i in ii] + [{"i": 9999, "w": "мусор"}],
+                        "english": [{"from": j, "to": j + 1, "en": "fine two hundred", "ru": "штраф двести"}]}
+            return {**DIRECTOR_OK, "hooks": [{"style": "tease", "text": "Охранник против меня"}] + DIRECTOR_OK["hooks"][1:]}
+
+        def chat_json(self, messages, **kw):
+            return {"ok": True}
+
+        def totals(self):
+            return {}
+    m, undo = _monkey()
+    try:
+        d = Path(tempfile.mkdtemp())
+        _patch_pipeline(m, d)
+        st = _store()
+        vod = {"id": "v1", "title": "t", "created_at": "2026-10-25T00:00:00Z"}
+        c = _cand()
+        plan = P._review_on_video(CFG, st, L(), vod, c, {"score": 7, "why": "x"}, 3, 30, d)
+        text = " ".join(w["w"] for w in c["words"])
+        assert plan and "охранница" in text and "fine two hundred" in text                 # субтитры исправлены
+        assert plan["ed"]["hooks"][0]["text"] == "Охранница против меня"                    # и заголовок тоже
+        assert c["trans"] and c["trans"][0]["ru"] == "штраф двести"
+        assert st.read_json("glossary.json")["fixes"]["охранник"]["to"] == "охранница"
+        assert P.make_clip(CFG, st, L(), learn.default_policy(CFG), vod, plan, ["tiktok"], d)
+        ass = next(d.rglob("*.ass")).read_text()
+        assert "«штраф двести»" in ass and ",Tr," in ass and "fine two hundred" in ass       # перевод строкой ниже
+    finally:
+        undo()
+
+
+def test_long_clip_needs_strict_length_check():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import DIRECTOR_OK, _monkey, _patch_pipeline, _words
+    import clipper.pipeline as P
+    from clipper import schemas
+    calls = []
+
+    class L:
+        def media_json(self, media, prompt, **kw):
+            calls.append(kw.get("schema"))
+            if kw.get("schema") is schemas.LENGTH:
+                return {"keep_long": False, "start": 10.0, "end": 45.0, "cuts": [], "why": "середина провисает"}
+            if kw.get("schema") is schemas.PROOF:
+                return {"fixes": [], "english": []}
+            return {**DIRECTOR_OK, "start": 1.0, "end": 85.0, "cuts": []}
+
+        def chat_json(self, messages, **kw):
+            return {"ok": True}
+    m, undo = _monkey()
+    try:
+        d = Path(tempfile.mkdtemp())
+        _patch_pipeline(m, d)
+        st = _store()
+        c = {"id": "c9", "ctx_start": 1000.0, "ctx_dur": 100.0, "peak_in_ctx": 50, "peak_abs": 1050.0, "signal": 2.0,
+             "breakdown": {"chat": 1, "keywords": 1, "spam_wave": 0, "audio": 1, "viewer_clips": 0},
+             "chat_sample": [], "chat_count": 0, "words": _words(190, 0.5)}
+        plan = P._review_on_video(CFG, st, L(), {"id": "v2", "title": "t", "created_at": "2026-10-25T00:00:00Z"},
+                                  c, {"score": 8, "why": "x"}, 2, 90, d)
+        assert schemas.LENGTH in calls and plan and plan["e"] - plan["s"] < 50, plan and (plan["s"], plan["e"])
+        assert plan["brain"]["length"]["keep_long"] is False
+    finally:
+        undo()
+
+
+def test_paused_platform_does_not_dump_old_clips_when_back():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _monkey
+    import clipper.clips as C
+    import clipper.poster as P
+    from clipper import learn
+    m, undo = _monkey()
+    now = dt.datetime(2026, 10, 25, 16, 7, tzinfo=dt.timezone.utc)
+    try:
+        cfg = _sync_env(m, now)
+        st = _store()
+        pol = learn.default_policy(cfg)
+        pol["paused"] = {"ig_main": "2026-10-26T00:00:00+00:00"}
+        st.write_json("policy.json", pol)
+        st.write_json("queue/a.json", _clip("a", 8, now - dt.timedelta(hours=1)))
+        P.cmd_post(cfg, st)
+        assert sorted(p for p, _ in FakeClient.published) == ["tiktok", "youtube"]       # владелец сам поставил паузу
+        assert st.read_json("queue/a.json")["targets"]["instagram"]["status"] == "skipped_sync"
+        later = now + dt.timedelta(days=1, hours=3)
+        m(P, "now_utc", lambda: later)
+        m(C, "now_utc", lambda: later)
+        FakeClient.published = []
+        P.cmd_post(cfg, st)
+        assert not any(c == "a" for _, c in FakeClient.published)                        # не перевыкладывает старьё
+    finally:
+        undo()
+
+
+def test_hung_upload_reconciled_against_platform():
+    import clipper.poster as P
+    c = {"id": "x", "targets": {"youtube": {"caption": "Штраф за парковку в США", "asset": "x.mp4", "status": "ready"}},
+         "posts": {"youtube": {"status": "uploading", "started_at": "2026-10-25T10:00:00Z"},
+                   "tiktok": {"status": "uploading", "started_at": "2026-10-25T10:00:00Z"}}}
+
+    class YT:
+        def list_videos(self):
+            return [{"id": "v1", "title": "Штраф за парковку в США!", "description": "", "create_time": int(dt.datetime(2026, 10, 25, 10, 5, tzinfo=dt.timezone.utc).timestamp()), "url": "u"}]
+    assert P.reconcile_upload(c, "youtube", YT()) == "posted" and c["posts"]["youtube"]["video_id"] == "v1"
+    assert P.reconcile_upload(c, "tiktok", object()) == "retry"                      # черновик не виден — перезалить
+    YT.list_videos = lambda self: []
+    c["posts"]["youtube"] = {"status": "uploading", "started_at": "2026-10-25T10:00:00Z"}
+    assert P.reconcile_upload(c, "youtube", YT()) == "retry"
+
+
+def test_late_runner_does_not_lose_slot_and_long_clips_fit_limits():
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_v4 import FakeClient, _clip, _iso, _monkey
+    import clipper.poster as P
+    m, undo = _monkey()
+    now = dt.datetime(2026, 10, 25, 16, 9, tzinfo=dt.timezone.utc)
+    try:
+        cfg = _sync_env(m, now)
+        st = _store()
+        st.write_json("queue/a.json", _clip("a", 8, now - dt.timedelta(hours=1)))
+        st.write_json("status/post.json", {"releases": {"last_at": _iso(now - dt.timedelta(minutes=114))}})
+        P.cmd_post(cfg, st)
+        assert FakeClient.published, st.read_json(P.BRAIN)["last"]                    # 114 мин из 120 — слот не теряем
+    finally:
+        undo()
+    from clipper.pipeline import cap_kept, kept_len
+    e, cuts = cap_kept(0, 90, [(10, 20), (50, 60), (95, 99)], 60)
+    assert kept_len(0, e, cuts) == 60 and (95, 99) not in cuts
+    import inspect
+    from clipper import render
+    assert "0.88 * 95" in inspect.getsource(render.render_clip)                       # битрейт под длину ролика
+    assert render.SUB_MAX_W <= 760                                                    # не под кнопками TikTok
 
 
 if __name__ == "__main__":

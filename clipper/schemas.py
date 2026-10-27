@@ -59,3 +59,9 @@ BUNDLES = obj({"groups": {"type": "array", "items": obj({"ids": STRS, "title": S
                                                           "category": {"type": "string", "enum": CATS}})}})
 
 TRANSLATE = obj({"lines": STRS})
+
+PROOF = obj({"fixes": {"type": "array", "items": obj({"i": I, "w": S, "why": S}, ["i", "w"])},
+             "english": {"type": "array", "items": obj({"from": I, "to": I, "en": S, "ru": S})}}, ["fixes", "english"])
+
+LENGTH = obj({"keep_long": B, "start": N, "end": N, "cuts": {"type": "array", "items": {"type": "array", "items": N}}, "why": S},
+             ["keep_long", "start", "end", "why"])

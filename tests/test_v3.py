@@ -164,7 +164,7 @@ def test_render_template_and_validation():
                       pan_keys=[(1.0, 0.35), (3.0, 0.35), (4.2, 0.6)])
         assert validate_render(out, 9.8, "tiktok") == []
         for ch in R.chunk_words(words):
-            assert R.text_width(" ".join(R.mask_profanity(x["w"]).upper() for x in ch), R.SUB_SIZE * 1.08) + 20 <= R.SUB_MAX_W
+            assert R.text_width(" ".join(R.mask_profanity(x["w"]) for x in ch), R.SUB_SIZE, R.TEXT_ROLE) + 20 <= R.SUB_MAX_W
         b = Image.open(out.parent / "brand.png")
         assert b.width <= R.BRAND_MAX_W + 60 and R.BRAND_CENTER + b.height / 2 < R.UI_BOTTOM
         assert R.mask_profanity("блять") == "б***ь" and R.mask_profanity("привет") == "привет"

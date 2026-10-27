@@ -145,10 +145,10 @@ def _judge_batch(llm: LLM, system: str, batch: list[dict]) -> dict:
 
 def judge_candidates(llm: LLM, cfg: dict, cands: list[dict], learned: dict | None = None,
                      hints: str = "") -> dict[str, dict]:
-    from .brain import CATS, PICKER, RISK, SCALE
+    from .brain import CATS, PICKER, RISK, SCALE, length_rule
     st, cl = cfg["streamer"], cfg["clips"]
     system = PICKER.format(persona=st["persona"].strip(), audience=st.get("audience", "").strip(),
-                           min_s=cl["min_seconds"], max_s=cl["max_seconds"], scale=SCALE, cats=CATS, risk=RISK,
+                           length=length_rule(cfg), scale=SCALE, cats=CATS, risk=RISK,
                            hints=(hints + "\n") if hints else "",
                            learned=learned_block(learned) if cfg["judge"].get("learn_from_stats") else "")
     bs = max(1, int(cfg["judge"].get("batch_size", 4)))

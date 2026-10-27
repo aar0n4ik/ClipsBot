@@ -178,8 +178,8 @@ PICKER = """Ты — строгий отборщик в команде клип�
 • keep — true только если тянет на 7+.
 • score 1–10 по шкале; подоценки 0–10: hook (первые 2 с), payoff (развязка), clarity (понятно без контекста), emotion, rewatch.
 • start / end — секунды от начала окна: start прямо с действия или первой фразы, которая цепляет (без «короче», «ну вот»,
-  приветствий и долгой подводки); end — через 0.5–1.5 с после панчлайна или реакции. Длина {min_s}–{max_s} с,
-  короче — лучше, если момент от этого не теряется.
+  приветствий и долгой подводки); end — через 0.5–1.5 с после панчлайна или реакции.
+  {length}
 • category — одно из: {cats}.
 • {risk}
 • fresh — true, если момент важен именно сейчас.
@@ -204,6 +204,7 @@ DIRECTOR = """Ты — режиссёр монтажа коротких роли
 2. Технически: лаги (картинка замирает или дёргается, а звук идёт), рассыпание кадра, чёрный экран, буферизация,
    рассинхрон звука, оверлеи закрывают главное. Если лаги заметны в главной части — это reject.
 3. Где точно начать (первая секунда должна цеплять), где закончить (сразу после развязки/реакции, без хвоста).
+   {length}
 4. Какие куски ВНУТРИ вырезать: долгие паузы и молчание (стример думает, смотрит в телефон, ждёт), «ща-ща-ща»,
    уход в другую тему. Короткие драматические паузы (до 1 с) перед панчлайном оставляй.
 {scale}
@@ -246,6 +247,36 @@ CRITIC = """Ты — независимый редактор, последний
 
 BANNED_HOOKS = {"клиент открыл дверь, а там…", "охранник против курьера", "$3 за 40 минут езды", "ты вообще русский?",
                 "заказ на $3 через весь город", "смотри, что было"}
+
+
+def length_rule(cfg: dict) -> str:
+    mx = int(float(cfg["clips"].get("max_seconds", 175)))
+    return ("Длина — сколько держит внимание, обычно 15–45 с. Длиннее минуты — ТОЛЬКО если почти всё время интересно: "
+            "история с интригой, развитие конфликта, нарастание, без провалов; тогда можно до " + str(mx) + " с. "
+            "Если в середине пусто (молчание, ожидание, пересказ), а интересный ответ в конце — не растягивай: "
+            "вырежи пустое (cuts) или начни ближе к развязке. Сомневаешься — короче.")
+
+
+LENGTH_CHECK = """Ты — строгий монтажёр коротких роликов. Перед тобой фрагмент ({dur:.0f} с). Коллега хочет выпустить ролик
+ДЛИННЕЕ МИНУТЫ: start={start:.1f} end={end:.1f}, вырезы {cuts}. Итоговая длина ≈ {kept:.0f} с.
+Транскрипт (секунды от начала видео):
+{transcript}
+Смотри и слушай. Длинный ролик оправдан, только если зритель не заскучает ни на секунду: каждые 5–10 секунд
+что-то происходит, есть интрига или нарастание до развязки. Если есть провисания — сократи: новые start/end
+и вырезы пустых кусков (секунды от начала видео), чтобы ролик держал внимание от первой до последней секунды.
+Развязку и смысл не теряй. Ответ строго JSON: {{"keep_long":false,"start":0.0,"end":0.0,"cuts":[[0.0,0.0]],"why":"…"}}"""
+
+
+def check_length(llm: LLM, cfg: dict, preview: Path, words_rel: list[dict], start: float, end: float,
+                 cuts: list, dur: float) -> dict:
+    """Тщательная проверка ролика длиннее минуты: оправдана ли длина. → {"keep_long", "start", "end", "cuts", "why"}."""
+    kept = (end - start) - sum(b - a for a, b in cuts)
+    prompt = LENGTH_CHECK.format(dur=dur, start=start, end=end, cuts=cuts or "нет", kept=kept,
+                                 transcript=words_to_timed_text(words_rel, every=2.5))
+    model = (cfg.get("ai") or {}).get("video_model", "gemini-4-argon")
+    return llm.media_json([("video/mp4", preview.read_bytes())], prompt, model=model,
+                          fallback_models=["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest"],
+                          max_tokens=1500, schema=schemas.LENGTH, thinking="high")
 
 
 def leaked(text: str) -> bool:
@@ -299,7 +330,7 @@ def direct(llm: LLM, cfg: dict, preview: Path, words_rel: list[dict], chat_rel: 
     prompt = DIRECTOR.format(dur=tech.get("duration") or 0, persona=cfg["streamer"]["persona"].strip(),
                              transcript=words_to_timed_text(words_rel, every=2.5), chat="; ".join(chat_rel[:14]) or "нет",
                              pre_score=pre.get("score", "?"), pre_why=str(pre.get("why", ""))[:200], tech=tech_text(tech),
-                             scale=SCALE, style=STYLE_RULES, risk=RISK)
+                             scale=SCALE, style=STYLE_RULES, risk=RISK, length=length_rule(cfg))
     return llm.media_json([("video/mp4", preview.read_bytes())], prompt, model=model,
                           fallback_models=["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest"],
                           max_tokens=6000, schema=schemas.DIRECTOR, thinking="high")

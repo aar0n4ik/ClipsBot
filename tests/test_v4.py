@@ -280,21 +280,25 @@ def test_release_goes_to_all_platforms_and_respects_rules():
         st.write_json("queue/old.json", _clip("old", 8, now - dt.timedelta(hours=40), vod_time=9000))
         P.cmd_post(cfg, st)
         assert sorted(FakeClient.published) == [("instagram", "a"), ("tiktok", "a"), ("youtube", "a")], FakeClient.published
-        assert st.read_json("queue/old.json")["targets"]["tiktok"]["status"] == "expired"      # на завтра не оставляем
+        assert st.read_json("queue/old.json")["targets"]["tiktok"]["status"] == "ready"        # v6: клип не сгорает
         ps = st.read_json("status/post.json")
         assert ps["accounts"]["tt_main"]["today"]["drafts"] == 0                               # счётчик до публикации
-        assert ps["releases"]["by_day"]["2026-10-25"] == 1
-        # слабый клип не выходит никогда, даже когда пауза прошла
+        assert ps["releases"]["by_day"]["2026-10-25"] == 1 and len(ps["schedule"]["hours"]) == 5
+        # следующий слот: уходит вчерашний сильный клип; слабый не выходит никогда
         FakeClient.published = []
         m(P, "now_utc", lambda: now + dt.timedelta(hours=3))
         import clipper.clips as C
         m(C, "now_utc", lambda: now + dt.timedelta(hours=3))
         P.cmd_post(cfg, st)
+        assert sorted(FakeClient.published) == [("instagram", "old"), ("tiktok", "old"), ("youtube", "old")], FakeClient.published
+        FakeClient.published = []
+        m(P, "now_utc", lambda: now + dt.timedelta(hours=6))
+        m(C, "now_utc", lambda: now + dt.timedelta(hours=6))
+        P.cmd_post(cfg, st)
         assert not FakeClient.published
-        brain = st.read_json(P.BRAIN)
-        assert brain["last"]["action"] == "wait" and "качества" in brain["last"]["reason"]
+        assert "качества" in st.read_json(P.BRAIN)["last"]["reason"]
         tt = st.read_json("status/post.json")["accounts"]["tt_main"]
-        assert tt["drafts_by_day"]["2026-10-25"] == 1                                         # TikTok — черновик, честно
+        assert tt["drafts_by_day"]["2026-10-25"] == 2                                         # TikTok — черновик, честно
     finally:
         undo()
 
@@ -335,6 +339,7 @@ def test_planner_ai_is_bounded_by_rules():
         _post_env(m, now)
         st = _store()
         st.write_json("queue/a.json", _clip("a", 8, now - dt.timedelta(hours=2)))
+        st.write_json("queue/b.json", _clip("b", 7, now - dt.timedelta(hours=2), vod_time=7000, cat="funny"))
         m(P, "think", lambda cfg, ctx, fb: {"action": "post", "clip": "ghost", "reason": "галлюцинация", "by": "ИИ-продюсер"})
         P.cmd_post(CFG, st)
         assert {c for _, c in FakeClient.published} == {"a"}                                   # выдуманный клип отброшен
