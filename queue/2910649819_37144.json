@@ -147,7 +147,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "А вы бы что ответили на его месте?",
    "cover_ms": 500
   },
@@ -208,9 +208,14 @@
    "by": "ИИ-продюсер"
   },
   "instagram": {
+   "status": "posted",
+   "video_id": "18059762795797890",
+   "url": "https://www.instagram.com/reel/DfAWE0fgiVX/",
+   "privacy": "public",
    "account": "ig_main",
-   "status": "uploading",
-   "started_at": "2026-10-27T16:44:33Z"
+   "posted_at": "2026-10-27T16:44:33Z",
+   "reason": "Выбираем клип с наивысшей оценкой (8) и мощным хуком для максимального удержания зрителей. Так как это первый публикационный слот за сегодня, противопоказаний по повтору темы нет.",
+   "by": "ИИ-продюсер"
   }
  },
  "created_at": "2026-10-27T01:19:55Z",
