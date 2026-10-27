@@ -20,11 +20,11 @@
  "post": {
   "level": "ok",
   "msg": "выложено: tiktok, youtube, instagram",
-  "at": "2026-10-27T17:01:41Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40541068115",
+  "at": "2026-10-27T19:34:42Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40567026883",
   "since": "2026-10-26T06:02:28Z",
   "fails": 0,
-  "last_ok": "2026-10-27T17:01:41Z"
+  "last_ok": "2026-10-27T19:34:42Z"
  },
  "doctor": {
   "level": "warn",
