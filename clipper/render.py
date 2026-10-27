@@ -29,6 +29,8 @@ VS_SIZES = (56, 52, 48, 44)  # три строки (A / VS / B) должны у�
 PANEL_Y, PANEL_H = 480, 960
 SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1365, 54, 760   # x 160…920: справа ниже y≈1000 кнопки TikTok
 SUB_BOTTOM, TR_BOTTOM, TR_SIZE = 1400, 1456, 40      # низ строки субтитров и строки перевода (выше плашки канала)
+TR_LIFT = 58            # на сколько пикселей поднять субтитры, когда под ними идёт строка перевода
+TR_PAD = 20             # горизонтальный отступ строки перевода от края поля субтитров
 TEXT_ROLE = "note"                                     # спокойный жирный гротеск вместо «плакатного» шрифта
 BRAND_CENTER, BRAND_LOGO, BRAND_TEXT = 1512, 100, 58
 BRAND_MAX_W = 700
@@ -201,11 +203,17 @@ def build_ass(words: list[dict], dur: float, title_lines: list[str], title_size:
               notes: list[dict] | None = None, en_lines: list[str] | None = None,
               trans: list[dict] | None = None) -> str:
     """Стиль v6: белый текст с чёрной обводкой, без цветной подсветки, «попов» и капса.
-    trans — перевод английской речи [{"s","e","text"}] во времени ролика: строка ниже субтитров, в кавычках."""
+    trans — перевод английской речи [{"s","e","text"}] во времени ролика: строка ниже субтитров, в кавычках.
+    Когда перевод присутствует, субтитры поднимаются на TR_LIFT пикселей, чтобы не налезать.
+    Строка перевода ограничена шириной SUB_MAX_W − 2*TR_PAD, никогда не выходит за края поля."""
     cl = cfg["clips"]
     caps = bool(cl.get("subtitle_caps", False))
     Wt, Bk = ass_color((255, 255, 255)), ass_color((0, 0, 0))
     f = font(TEXT_ROLE)[1]
+    has_trans = bool(trans)
+    # когда есть строка перевода, субтитры чуть выше, чтобы обе строки влезали без наложения
+    sub_margin_v = H - SUB_BOTTOM + (TR_LIFT if has_trans else 0)
+    tr_max_w = SUB_MAX_W - 2 * TR_PAD   # перевод с отступом с обеих сторон
     head = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {W}
@@ -216,7 +224,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Title,{f},{title_size},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,5,0,8,110,110,{TITLE_TOP},1
-Style: Sub,{f},{SUB_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4.5,0,2,160,160,{H - SUB_BOTTOM},1
+Style: Sub,{f},{SUB_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4.5,0,2,160,160,{sub_margin_v},1
 Style: Tr,{f},{TR_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,3.5,0,2,160,160,{H - TR_BOTTOM},1
 Style: Note,{f},42,{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4,0,8,170,170,{NOTE_Y},1
 
@@ -242,22 +250,26 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         s0, s1, txt = float(tr["s"]), float(tr["e"]), _esc(str(tr.get("text", "")))
         if txt and s1 > s0 and s0 < dur:
             quoted = "«" + txt.strip('«»"') + "»"
-            for line in _fit_lines(quoted, TR_SIZE, SUB_MAX_W)[:1]:
+            for line in _fit_lines(quoted, TR_SIZE, tr_max_w)[:1]:
                 ev.append(f"Dialogue: 1,{_t(max(0.0, s0))},{_t(min(dur, max(s1, s0 + 1.2)))},Tr,,0,0,0,,{line}")
     return head + "\n".join(ev) + "\n"
 
 
 def _fit_lines(text: str, size: float, max_w: float) -> list[str]:
-    """Перевод в одну строку: не влезает — уменьшаем шрифт тегом, в крайнем случае обрезаем с «…»."""
+    """Перевод в одну строку: не влезает — уменьшаем шрифт тегом (до 70%), в крайнем случае обрезаем с «…».
+    Никогда не выходит за max_w."""
     if text_width(text, size, TEXT_ROLE) <= max_w:
         return [text]
-    k = max(0.7, max_w / text_width(text, size, TEXT_ROLE))
-    if k > 0.7:
+    k = max_w / text_width(text, size, TEXT_ROLE)
+    if k >= 0.7:
         return [f"{{\\fscx{int(k * 100)}\\fscy{int(k * 100)}}}{text}"]
-    words = text.split()
-    while words and text_width(" ".join(words) + "…»", size * 0.7, TEXT_ROLE) > max_w:
+    # слишком длинный — обрезаем до max_w при 70%, убираем слова с конца
+    inner = text.rstrip("»").rstrip()  # убираем закрывающую «»
+    words = inner.split()
+    suffix = "…»"
+    while words and text_width(" ".join(words) + suffix, size * 0.7, TEXT_ROLE) > max_w:
         words.pop()
-    return [f"{{\\fscx70\\fscy70}}{' '.join(words)}…»"]
+    return [f"{{\\fscx70\\fscy70}}{' '.join(words)}{suffix}"]
 
 
 def trans_to_output(trans_src: list[dict], segments: list[tuple[float, float]]) -> list[dict]:
