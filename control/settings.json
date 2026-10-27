@@ -1,9 +1,6 @@
 {
  "values": {
-  "posting.quiet_hours": [
-   6,
-   23
-  ]
+  "posting.quiet_hours": []
  },
- "updated_at": "2026-10-27T18:53:20.370Z"
+ "updated_at": "2026-10-27T18:53:25.615Z"
 }
