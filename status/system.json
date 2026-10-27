@@ -9,11 +9,11 @@
   "last_ok": "2026-10-27T17:02:03Z"
  },
  "watch": {
-  "level": "ok",
-  "msg": "эфир идёт, нарезка запущена",
-  "at": "2026-10-27T18:12:00Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40557674813",
-  "since": "2026-10-21T00:07:49Z",
+  "level": "paused",
+  "msg": "остановлено вручную из дашборда",
+  "at": "2026-10-27T22:24:57Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40594620538",
+  "since": "2026-10-27T22:24:57Z",
   "fails": 0,
   "last_ok": "2026-10-27T18:12:00Z"
  },
