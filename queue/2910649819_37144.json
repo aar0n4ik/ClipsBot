@@ -116,7 +116,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "А вы бы что ответили на его месте?",
    "cover_ms": 500
   },
@@ -188,9 +188,14 @@
  },
  "posts": {
   "tiktok": {
+   "publish_id": "v_inbox_file~v2.7701393502525229087",
+   "privacy": "DRAFT",
+   "status": "inbox",
+   "video_id": null,
    "account": "tt_main",
-   "status": "uploading",
-   "started_at": "2026-10-27T16:44:33Z"
+   "posted_at": "2026-10-27T16:44:33Z",
+   "reason": "Выбираем клип с наивысшей оценкой (8) и мощным хуком для максимального удержания зрителей. Так как это первый публикационный слот за сегодня, противопоказаний по повтору темы нет.",
+   "by": "ИИ-продюсер"
   },
   "youtube": {
    "status": "posted",
