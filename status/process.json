@@ -1,23 +1,20 @@
 {
  "state": "running",
- "stage": "Монтирую клип 3/3",
+ "stage": "Расшифровываю речь: 9 окон одновременно",
  "vod_id": "2912272303",
  "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
- "chunk": "0:00:00–1:00:00",
- "progress": 92,
- "updated_at": "2026-10-27T19:12:36Z",
+ "chunk": "0:58:00–2:00:00",
+ "progress": 22,
+ "updated_at": "2026-10-27T19:30:40Z",
  "detail": "обработано кусков: 5",
- "stage_id": "render",
+ "stage_id": "speech",
  "funnel": {
   "peaks": 6,
-  "scout": 2,
-  "candidates": 8,
-  "text_pass": 5,
-  "video_checked": 5,
-  "video_pass": 4,
-  "made": 0,
-  "asr": {
-   "gemini": 8
-  }
+  "scout": 4,
+  "candidates": 9,
+  "text_pass": 0,
+  "video_checked": 0,
+  "video_pass": 0,
+  "made": 0
  }
 }
