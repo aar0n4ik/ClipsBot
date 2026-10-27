@@ -15,13 +15,14 @@
     ],
     "health": "ok"
    },
-   "last_post_at": "2026-10-26T03:53:24Z",
-   "last_clip": "2907089925_13868",
-   "last_error": "TikTok /v2/post/publish/video/init/: unaudited_client_can_only_post_to_private_accounts — Please review our integration guidelines at https://developers.tiktok.com/doc/content-sharing-guidelines/ [content]",
+   "last_post_at": "2026-10-27T16:44:33Z",
+   "last_clip": "2910649819_37144",
+   "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
     "2026-10-23": 2,
-    "2026-10-26": 1
+    "2026-10-26": 1,
+    "2026-10-27": 1
    },
    "recent": [
     {
@@ -61,14 +62,17 @@
     }
    ],
    "first_post_at": "2026-10-22T10:03:45Z",
-   "diagnosis": "Приложение TikTok ещё не прошло аудит: публикация только в черновики или приватно. Это ограничение TikTok, а не ошибка бота.\nТекст площадки: TikTok /v2/post/publish/video/init/: unaudited_client_can_only_post_to_private_accounts — Please review our integration guidelines at https://developers.tiktok.com/doc/content-sharing-guidelines/",
+   "diagnosis": null,
    "last_error_at": "2026-10-26T04:00:53Z",
    "today": {
     "published": 0,
     "drafts": 0,
-    "max": 4
+    "max": 5
    },
-   "state": "готова"
+   "state": "готова",
+   "drafts_by_day": {
+    "2026-10-27": 1
+   }
   },
   "yt_main": {
    "platform": "youtube",
@@ -83,15 +87,16 @@
     ],
     "health": "cooldown"
    },
-   "last_post_at": "2026-10-26T03:48:55Z",
-   "last_clip": "2906042925_24540",
+   "last_post_at": "2026-10-27T16:44:33Z",
+   "last_clip": "2910649819_37144",
    "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
     "2026-10-23": 3,
     "2026-10-24": 3,
     "2026-10-25": 1,
-    "2026-10-26": 1
+    "2026-10-26": 1,
+    "2026-10-27": 1
    },
    "recent": [
     {
@@ -169,9 +174,10 @@
    "today": {
     "published": 0,
     "drafts": 0,
-    "max": 4
+    "max": 5
    },
-   "state": "готова"
+   "state": "готова",
+   "diagnosis": null
   },
   "ig_main": {
    "platform": "instagram",
@@ -189,11 +195,12 @@
     "threshold": 7,
     "why": []
    },
-   "last_post_at": "2026-10-26T13:11:25Z",
-   "last_clip": "2907089925_9786",
+   "last_post_at": "2026-10-27T16:44:33Z",
+   "last_clip": "2910649819_37144",
    "last_error": null,
    "count_by_day": {
-    "2026-10-26": 2
+    "2026-10-26": 2,
+    "2026-10-27": 1
    },
    "recent": [
     {
@@ -215,13 +222,14 @@
    "today": {
     "published": 0,
     "drafts": 0,
-    "max": 4
+    "max": 5
    },
-   "state": "готова"
+   "state": "готова",
+   "diagnosis": null
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-27T04:52:20Z",
+ "updated_at": "2026-10-27T16:44:33Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -302,27 +310,47 @@
    0.5
   ]
  },
- "next_check": "2026-10-27T05:07:00+00:00",
+ "next_check": "2026-10-27T17:07:00+00:00",
  "releases": {
-  "by_day": {}
+  "by_day": {
+   "2026-10-27": 1
+  },
+  "last_at": "2026-10-27T16:44:33Z",
+  "recent": [
+   {
+    "clip": "2910649819_37144",
+    "category": "funny",
+    "vod_id": "2910649819",
+    "vod_time": 37144.3,
+    "hook": "Ты знаешь Путина?",
+    "at": "2026-10-27T16:44:33Z",
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   }
+  ]
  },
  "plan": {
   "today": [
+   "08:07",
    "13:07",
    "17:07",
    "19:07",
    "21:07"
   ],
   "slots_left": 4,
-  "cap": 4,
-  "releases_today": 0,
+  "cap": 5,
+  "releases_today": 1,
   "waves": {},
+  "backlog": 7,
   "up_next": [
    {
-    "id": "2910649819_37144",
-    "hook": "Ты знаешь Путина?",
-    "score": 8,
-    "expires_in_h": 32.5,
+    "id": "2911545684_7991",
+    "hook": "Типичный день в Лос-Анджелесе",
+    "score": 7,
+    "age_h": 10.3,
     "platforms": [
      "tiktok",
      "youtube",
@@ -333,13 +361,45 @@
     "id": "2910649819_39863",
     "hook": "Clean me please на Кибертраке",
     "score": 7,
-    "expires_in_h": 32.5,
+    "age_h": 15.7,
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   },
+   {
+    "id": "2911545684_8064",
+    "hook": "Когда агрятся на Теслу",
+    "score": 7,
+    "age_h": 10.2,
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   },
+   {
+    "id": "2911545684_1202",
+    "hook": "Донатит сам на стриме",
+    "score": 7,
+    "age_h": 10.5,
     "platforms": [
      "tiktok",
      "youtube",
      "instagram"
     ]
    }
+  ]
+ },
+ "schedule": {
+  "date": "2026-10-27",
+  "hours": [
+   8,
+   13,
+   17,
+   19,
+   21
   ]
  }
 }

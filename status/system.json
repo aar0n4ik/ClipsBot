@@ -19,12 +19,12 @@
  },
  "post": {
   "level": "ok",
-  "msg": "жду: Сейчас раннее утро (07:52), когда активность аудитории минимальна, а первый запланированный слот пиковой активности назначен на 13:00. Впереди 4 отличных окна п",
-  "at": "2026-10-27T05:00:22Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40452075110",
+  "msg": "выложено: tiktok, youtube, instagram",
+  "at": "2026-10-27T17:01:41Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40541068115",
   "since": "2026-10-26T06:02:28Z",
   "fails": 0,
-  "last_ok": "2026-10-27T05:00:22Z"
+  "last_ok": "2026-10-27T17:01:41Z"
  },
  "doctor": {
   "level": "warn",
