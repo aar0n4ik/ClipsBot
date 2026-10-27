@@ -123,7 +123,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "skipped",
    "comment": "Вы бы сразу сказали в чате или тоже молча смотрели?",
    "cover_ms": 500
   },
@@ -154,7 +154,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "skipped",
    "comment": "Вы бы сразу сказали в чате или тоже молча смотрели?",
    "cover_ms": 500
   },
@@ -188,7 +188,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "skipped",
    "comment": "Вы бы сразу сказали в чате или тоже молча смотрели?",
    "cover_ms": 500
   }
