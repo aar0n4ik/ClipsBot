@@ -1,0 +1,183 @@
+{
+ "id": "2907089925_4016",
+ "vod_id": "2907089925",
+ "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
+ "vod_time": 4016.6,
+ "duration": 42.3,
+ "score": 7,
+ "subscores": {
+  "hook": 6,
+  "payoff": 7,
+  "clarity": 7,
+  "emotion": 5,
+  "relate": 6
+ },
+ "category": "road",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Рассказывает о получении прав в США в 30 лет и о хаосе на дорогах, имеет понятный конфликт с другими водителями, эмоциональный момент в конце, релевантно теме \"Америка глазами русского\".",
+ "overlay": "Русский vs американские",
+ "signal": 18.43,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.0,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.47,
+   "stability": 0.412,
+   "tonal": 0.0,
+   "beat": 0.177
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 14.1,
+   "text": "лет получил права бро 30"
+  }
+ ],
+ "transcript": "у них натуре ступор мозговины какой -то произошел то что они все они все тупят у них у всех как будто бы пинг секунды 4 сколько лет получил права бро 30 получается не не в 20 29 получается вот задели 30 я же здесь первые права получил в америке у меня в россии не было про у них Реально ЧП, да. Такое ощущение, как будто бы они все в шоке. Смотри, они все стоят, они все в пробках. Они все поперекрыли две полосы.",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Русский vs американские",
+   "hook_style": "conflict",
+   "caption": "Америка глазами русского: как я получил водительские права в 30 и попал в трафик ЛА",
+   "hashtags": [
+    "#доставка",
+    "#америка",
+    "#русскийвсша",
+    "#водитель",
+    "#la"
+   ],
+   "hook_alts": [
+    "Русский vs американские",
+    "Получил права в 30, но…",
+    "30 лет, первая лицензия",
+    "Лет получил права, бро, 30"
+   ],
+   "asset": "2907089925_4016_tiktok.mp4",
+   "size": 23292442,
+   "duration": 42.3,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "used",
+   "comment": "Кто уже пробовал сдавать права в США? Делитесь опытом!",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "Лет получил права, бро, 30",
+   "hook_style": "quote",
+   "caption": "Получил права в 30, а трафик в ЛА, это отдельный уровень. Как вы думаете, стоит ли учиться водить в США?",
+   "hashtags": [
+    "#лосанджелес",
+    "#русскийвсша",
+    "#права",
+    "#трафик",
+    "#жизньвсша"
+   ],
+   "hook_alts": [
+    "Лет получил права, бро, 30",
+    "Получил права в 30, но…",
+    "Русский vs американские",
+    "30 лет, первая лицензия"
+   ],
+   "asset": "2907089925_4016_instagram.mp4",
+   "size": 24376446,
+   "duration": 44.3,
+   "variant": {
+    "hook_style": "quote",
+    "cold_open": true
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "expired",
+   "comment": "Кто уже пробовал сдавать права в США? Делитесь опытом!",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "30 лет, первая лицензия",
+   "hook_style": "number",
+   "title": "Как я получил водительские права в США в 30 лет",
+   "description": "Русский рассказывает о получении лицензии в Америке и хаосе на дорогах Лос‑Анджелеса\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "водительские права США",
+    "русский в Америке",
+    "жизнь в Лос‑Анджелесе",
+    "доставка в США",
+    "америка глазами русского",
+    "трафик в ЛА",
+    "курьер в США",
+    "права в 30"
+   ],
+   "caption": "Как я получил водительские права в США в 30 лет",
+   "hook_alts": [
+    "30 лет, первая лицензия",
+    "Получил права в 30, но…",
+    "Русский vs американские",
+    "Лет получил права, бро, 30"
+   ],
+   "asset": "2907089925_4016_youtube.mp4",
+   "size": 23301930,
+   "duration": 42.3,
+   "variant": {
+    "hook_style": "number",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "used",
+   "comment": "Кто уже пробовал сдавать права в США? Делитесь опытом!",
+   "cover_ms": 600
+  }
+ },
+ "posts": {
+  "tiktok": {
+   "publish_id": "v_inbox_file~v2.7699876909962348574",
+   "privacy": "DRAFT",
+   "status": "posted",
+   "video_id": "7700436009414053151",
+   "account": "tt_main",
+   "posted_at": "2026-10-23T14:57:44Z",
+   "reason": "лучший час по плану",
+   "why": [],
+   "url": "https://www.tiktok.com/@twitch.albert1million/video/7700436009414053151?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
+   "published_at": 1792897483
+  },
+  "youtube": {
+   "status": "posted",
+   "video_id": "6Ztw4V4tUvg",
+   "url": "https://youtube.com/shorts/6Ztw4V4tUvg",
+   "privacy": "public",
+   "account": "yt_main",
+   "posted_at": "2026-10-24T17:04:22Z",
+   "reason": "прошло время между постами",
+   "why": []
+  }
+ },
+ "created_at": "2026-10-23T05:08:22Z",
+ "live_when_made": true,
+ "uid": "b263c660"
+}

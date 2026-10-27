@@ -1,0 +1,194 @@
+{
+ "id": "2910649819_39863",
+ "vod_id": "2910649819",
+ "vod_title": "Автопилот везет бургеры? Доставка еды на Tesla по LA!",
+ "vod_time": 39863.4,
+ "duration": 17.8,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 7,
+  "clarity": 8,
+  "emotion": 6,
+  "rewatch": 6
+ },
+ "category": "funny",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Заброшенный пыльный Cybertruck на парковке в США с надписью «Clean me please».",
+ "what": "Стример показывает в паркинге в США заброшенный Tesla Cybertruck, который стоит весь в пыли уже два месяца, а кто-то написал на нем «clean me please».",
+ "overlay": "Clean me please на Кибертраке",
+ "signal": 18.65,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.31,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.487,
+   "stability": 0.434,
+   "tonal": 0.0,
+   "beat": 0.142
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "brain": {
+  "text": {
+   "score": 7,
+   "hook": 8,
+   "payoff": 7,
+   "clarity": 8,
+   "emotion": 6,
+   "rewatch": 6,
+   "why": "Отличный визуальный IRL-момент про США: дорогущий Тесла Кибертрак брошен на улице уже пару месяцев и настолько запылился, что на нем пальцем вывели 'Clean me please'. Тема хайповая и понятная без контекста.",
+   "category": "america"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 7,
+    "payoff": 7,
+    "clarity": 8,
+    "emotion": 6,
+    "rewatch": 6
+   },
+   "what_happens": "Стример показывает в паркинге в США заброшенный Tesla Cybertruck, который стоит весь в пыли уже два месяца, а кто-то написал на нем «clean me please».",
+   "moment": "Заброшенный пыльный Cybertruck на парковке в США с надписью «Clean me please».",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 28.1,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "critic": {
+   "ok": true,
+   "problems": null,
+   "fix_hook": null,
+   "skipped": true
+  },
+  "cuts": 2,
+  "trimmed_s": 5.7
+ },
+ "transcript": "смотрите этот гибер тракт уже стоит я не знаю clean me please уже написал кто -то он уже стоит до хера здесь времени сколько я здесь живу он месяца два уже стоит про него забыли или чем весь грязный пыльный",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Clean me please на Кибертраке",
+   "hook_style": "quote",
+   "caption": "Забытый Tesla Cybertruck на парковке в США пылится уже несколько месяцев",
+   "hashtags": [
+    "#cybertruck",
+    "#тесла",
+    "#кибертрак",
+    "#сша",
+    "#жизньвсша"
+   ],
+   "hook_alts": [
+    "Clean me please на Кибертраке",
+    "Забыли про Кибертрак в США",
+    "Бросили Кибертрак на парковке",
+    "Кибертрак пылится 2 месяца"
+   ],
+   "asset": "2910649819_39863.mp4",
+   "size": 11445229,
+   "duration": 17.8,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Забыли про машину за 100 тысяч долларов 😅",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Clean me please на Кибертраке",
+   "hook_style": "quote",
+   "caption": "На парковке в Лос-Анджелесе стоит заброшенный Cybertruck, на котором уже пишут clean me please 😅 Купили бы такой?",
+   "hashtags": [
+    "#cybertruck",
+    "#tesla",
+    "#сша",
+    "#лосанджелес",
+    "#машины"
+   ],
+   "hook_alts": [
+    "Clean me please на Кибертраке",
+    "Забыли про Кибертрак в США",
+    "Бросили Кибертрак на парковке",
+    "Кибертрак пылится 2 месяца"
+   ],
+   "asset": "2910649819_39863.mp4",
+   "size": 11445229,
+   "duration": 17.8,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Забыли про машину за 100 тысяч долларов 😅",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Clean me please на Кибертраке",
+   "hook_style": "quote",
+   "title": "Забыли про Кибертрак в США",
+   "description": "Стример наткнулся на парковке в Лос-Анджелесе на заброшенный и пыльный Tesla Cybertruck, про который все забыли\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "cybertruck",
+    "тесла",
+    "кибертрак",
+    "сша",
+    "лос анджелес",
+    "irl"
+   ],
+   "caption": "Забыли про Кибертрак в США",
+   "hook_alts": [
+    "Clean me please на Кибертраке",
+    "Забыли про Кибертрак в США",
+    "Бросили Кибертрак на парковке",
+    "Кибертрак пылится 2 месяца"
+   ],
+   "asset": "2910649819_39863.mp4",
+   "size": 11445229,
+   "duration": 17.8,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Забыли про машину за 100 тысяч долларов 😅",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-27T01:21:55Z",
+ "live_when_made": false,
+ "fresh": false,
+ "uid": "fd11e442",
+ "asset": "2910649819_39863.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2910649819?t=11h4m23s"
+}

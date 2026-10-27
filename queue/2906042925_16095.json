@@ -1,0 +1,169 @@
+{
+ "id": "2906042925_16095",
+ "vod_id": "2906042925",
+ "vod_title": "🇺🇸 LOS ANGELES IRL | ДОСТАВКА НА TESLA 🚗 | ЕЗДИМ ПО ЗАКАЗАМ И ОБЩАЕМСЯ [Новый ТГ в описании]",
+ "vod_time": 16095.0,
+ "duration": 55.5,
+ "score": 7,
+ "subscores": {
+  "hook": 8,
+  "payoff": 7,
+  "clarity": 9,
+  "emotion": 6,
+  "relate": 9
+ },
+ "category": "chat",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Цепляющий донат-вопрос от школьника из глухой деревни и неожиданный деловой совет от стримера заняться органическими курами. Отлично триггерит обсуждение в комментариях.",
+ "overlay": "Школьник просит совет",
+ "signal": 18.41,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.0,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.261,
+   "stability": 0.295,
+   "tonal": 0.0,
+   "beat": 0.182
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 13.5,
+   "text": "Город 200 км от деревни"
+  }
+ ],
+ "transcript": "Слушай, можешь дать совет? Я ушел после девятого класса, никуда не поступил. Как можно заработать в инете? Живу в деревне, где нет ни работы, ничего в городе. Не могу ездить, так как очень далеко. Дальше город 200 км. Не знаю, но если ты, смотри, если ты в деревне живешь, попробуй двигаться как -то по хозяйству, там, кур заведи. органические яйца, все такое. Попробуй на вот эту тему как -то, не знаю, подняться. Типа мути куриц, делай яйца, там делай какое -то мясо куриное органическое или молоко. Езди на какие -то фермы в город, да, там раз в неделю. Продавай эту продукцию как суперорганик, су",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Школьник просит совет",
+   "hook_style": "tease",
+   "caption": "заработок в деревне: совет от курьера про органические куры. Как думаете, стоит?",
+   "hashtags": [
+    "#ферма",
+    "#куры",
+    "#бизнес",
+    "#russianinusa"
+   ],
+   "hook_alts": [
+    "Школьник просит совет",
+    "Деревня vs бизнес",
+    "Органические куры = деньги",
+    "Заведи кур, будет доход"
+   ],
+   "asset": "2906042925_16095_tiktok.mp4",
+   "size": 30352855,
+   "duration": 57.8,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": true
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "expired",
+   "comment": "Кто уже пробовал вести ферму в деревне?",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "Школьник просит совет",
+   "hook_style": "tease",
+   "caption": "Органические куры, новый способ заработать в деревне. Попробуете? 🐔",
+   "hashtags": [
+    "#ферма",
+    "#куры",
+    "#бизнес",
+    "#русскийвамерике"
+   ],
+   "hook_alts": [
+    "Школьник просит совет",
+    "Деревня vs бизнес",
+    "Органические куры = деньги",
+    "Заведи кур, будет доход"
+   ],
+   "asset": "2906042925_16095_instagram.mp4",
+   "size": 28985084,
+   "duration": 55.5,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "expired",
+   "comment": "Кто уже пробовал вести ферму в деревне?",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "Школьник просит совет",
+   "hook_style": "tease",
+   "title": "Как заработать в деревне? Совет про органических кур",
+   "description": "Отвечаю школьнику из деревни, предлагаю бизнес с органическими курами. Делюсь идеей\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "заработок в деревне",
+    "органические куры",
+    "бизнес идеи",
+    "советы от стримера",
+    "русский в США",
+    "ферма",
+    "куриный бизнес",
+    "online income"
+   ],
+   "caption": "Как заработать в деревне? Совет про органических кур",
+   "hook_alts": [
+    "Школьник просит совет",
+    "Деревня vs бизнес",
+    "Органические куры = деньги",
+    "Заведи кур, будет доход"
+   ],
+   "asset": "2906042925_16095_youtube.mp4",
+   "size": 30352859,
+   "duration": 57.8,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": true
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "used",
+   "comment": "Кто уже пробовал вести ферму в деревне?",
+   "cover_ms": 600
+  }
+ },
+ "posts": {
+  "youtube": {
+   "status": "posted",
+   "video_id": "dRyHGHPX0sU",
+   "url": "https://youtube.com/shorts/dRyHGHPX0sU",
+   "privacy": "public",
+   "account": "yt_main",
+   "posted_at": "2026-10-23T09:57:21Z",
+   "reason": "клипов больше, чем успеем выложить",
+   "why": []
+  }
+ },
+ "created_at": "2026-10-23T04:34:00Z",
+ "live_when_made": true,
+ "uid": "526274cd"
+}

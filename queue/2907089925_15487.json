@@ -1,0 +1,189 @@
+{
+ "id": "2907089925_15487",
+ "vod_id": "2907089925",
+ "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
+ "vod_time": 15487.8,
+ "duration": 57.1,
+ "score": 8,
+ "subscores": {
+  "hook": 7,
+  "payoff": 8,
+  "clarity": 8,
+  "emotion": 7,
+  "relate": 8
+ },
+ "category": "funny",
+ "risk": {
+  "level": 2,
+  "flags": [
+   "heavy_profanity"
+  ]
+ },
+ "why": "Яркое начало с «Звони мне, блядь», понятный конфликт с Instagram‑звонками, хороший панчлайн, релевантно аудитории, но присутствует умеренный мат.",
+ "overlay": "Т**е звонят через отключённый Инстаграм",
+ "signal": 18.4,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.0,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.208,
+   "stability": 0.259,
+   "tonal": 0.0,
+   "beat": 0.181
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 44.7,
+   "text": "уведомления отключены"
+  }
+ ],
+ "transcript": "Звони мне, блядь, в инстаграме, сука Я с этого больше угораю Что ты не можешь в инстаграме Поставить, ну, ты если челу ответил Все, ебать, он тебе может хуярить просто Без конца звонить Через этот инстаграм, прикиньте Ты не можешь эту хуйню отключить Любой чел, которому ты ответил Может тебе начать названивать У меня отключены Мансори, вообще похуй Мансори, отключены или не отключены я тебе клянусь любой может названивать у меня отключено уведомление в инсте у меня все отключено в инсте вот это это хуйня работает так что даже если уведомление отключены чел тебе через инстаграм может позвонить ",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Т**е звонят через отключённый Инстаграм",
+   "hook_style": "conflict",
+   "caption": "жизнь в лос-анджелесе: когда Инстаграм звонит, даже если отключил уведомления",
+   "hashtags": [
+    "#инстаграм",
+    "#звонки",
+    "#лосанджелес",
+    "#русскийвсша",
+    "#курьер"
+   ],
+   "hook_alts": [
+    "Т**е звонят через отключённый Инстаграм",
+    "Звонок из Инсты, а ты",
+    "$0 за звонок в Инсте",
+    "Звони мне, б***ь, в инстаграме"
+   ],
+   "asset": "2907089925_15487_tiktok.mp4",
+   "size": 22065394,
+   "duration": 57.1,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "used",
+   "comment": "Кто ещё получал звонки из Инсты, когда всё выключено? Делитесь!",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "Т**е звонят через отключённый Инстаграм",
+   "hook_style": "conflict",
+   "caption": "Когда думаешь, что отключил всё, а Инстаграм всё равно звонил. Вы тоже сталкивались?",
+   "hashtags": [
+    "#инстаграм",
+    "#звонки",
+    "#лосанджелес",
+    "#русскийвсша",
+    "#курьер"
+   ],
+   "hook_alts": [
+    "Т**е звонят через отключённый Инстаграм",
+    "Звонок из Инсты, а ты",
+    "$0 за звонок в Инсте",
+    "Звони мне, б***ь, в инстаграме"
+   ],
+   "asset": "2907089925_15487_instagram.mp4",
+   "size": 22065394,
+   "duration": 57.1,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "failed",
+   "comment": "Кто ещё получал звонки из Инсты, когда всё выключено? Делитесь!",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "Т**е звонят через отключённый Инстаграм",
+   "hook_style": "conflict",
+   "title": "Инстаграм звонит даже при отключенных уведомлениях | Русский в США",
+   "description": "Смотрим, как странные звонки через Инстаграм могут испортить день курьера в Лос‑Анджелесе. Подписывайтесь!\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "инстаграм звонки",
+    "русский в америке",
+    "жизнь в лос-анджелесе",
+    "курьер США",
+    "соцсети проблемы",
+    "звонки в инсте",
+    "мемы"
+   ],
+   "caption": "Инстаграм звонит даже при отключенных уведомлениях | Русский в США",
+   "hook_alts": [
+    "Т**е звонят через отключённый Инстаграм",
+    "Звонок из Инсты, а ты",
+    "$0 за звонок в Инсте",
+    "Звони мне, б***ь, в инстаграме"
+   ],
+   "asset": "2907089925_15487_youtube.mp4",
+   "size": 22065394,
+   "duration": 57.1,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "used",
+   "comment": "Кто ещё получал звонки из Инсты, когда всё выключено? Делитесь!",
+   "cover_ms": 600
+  }
+ },
+ "posts": {
+  "instagram": {
+   "tries": 3,
+   "account": "ig_main",
+   "error": "Instagram: API access blocked. (200/None)",
+   "last_try": "2026-10-23T19:06:54Z",
+   "status": "failed"
+  },
+  "youtube": {
+   "status": "removed_by_user",
+   "video_id": "vboYf5QaPB8",
+   "url": "https://youtube.com/shorts/vboYf5QaPB8",
+   "privacy": "public",
+   "account": "yt_main",
+   "posted_at": "2026-10-23T14:57:47Z",
+   "reason": "лучший час по плану",
+   "why": []
+  },
+  "tiktok": {
+   "publish_id": "v_inbox_file~v2.7699941473118324766",
+   "privacy": "DRAFT",
+   "status": "inbox_stale",
+   "video_id": null,
+   "account": "tt_main",
+   "posted_at": "2026-10-23T19:06:49Z",
+   "reason": "лучший час по плану",
+   "why": []
+  }
+ },
+ "created_at": "2026-10-22T23:30:08Z",
+ "live_when_made": true,
+ "uid": "252a5db5"
+}

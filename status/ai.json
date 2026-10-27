@@ -1,0 +1,29 @@
+{
+ "at": "2026-10-27T08:58:10Z",
+ "keys": {
+  "gemini-3.8-flash-1": "ok",
+  "gemini-3.8-flash-2": "ok",
+  "gemini-3.8-flash-3": "ok",
+  "gemini-3.8-flash-4": "ok",
+  "gemini-3.8-flash-5": "ok",
+  "gemini-3.8-flash-6": "ok",
+  "gemini-3.8-flash-7": "ошибка 401",
+  "gemini-3.8-flash-8": "ok"
+ },
+ "missing": {},
+ "models": 60,
+ "latest": [
+  "gemini-3.6-flash",
+  "gemini-3.7-flash",
+  "gemini-3.8-flash",
+  "gemini-4-argon",
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
+  "gemini-nano-banana-2.1",
+  "gemini-omni-1.1-flash",
+  "gemini-omni-flash-preview",
+  "gemini-pro-latest",
+  "gemini-robotics-er-2-preview",
+  "gemini-robotics-er-2-streaming-preview"
+ ]
+}

@@ -1,0 +1,203 @@
+{
+ "id": "2911545684_1202",
+ "vod_id": "2911545684",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 1202.3,
+ "duration": 29.4,
+ "span": 38.9,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 7,
+  "clarity": 8,
+  "emotion": 7,
+  "rewatch": 5
+ },
+ "category": "funny",
+ "risk": {
+  "level": 1,
+  "flags": [
+   "heavy_profanity",
+   "music"
+  ]
+ },
+ "why": "Стример заявляет, что задонатит сам себе на костюм Бэтмена: «Я че виноват, что я богатый, а ты бедный?»",
+ "what": "Стример видит, что зрители не донатят на выбор костюма, и решает закинуть 50 долларов сам себе на костюм Бэтмена. Когда чат возмущается нарушением правил, стример парирует дерзким панчлайном.",
+ "overlay": "Донатит сам на стриме",
+ "signal": 0.0,
+ "breakdown": {
+  "chat": 0,
+  "keywords": 0,
+  "spam_wave": 0,
+  "audio": 0,
+  "viewer_clips": 0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.767,
+   "stability": 0.585,
+   "tonal": 0.0,
+   "beat": 0.152
+  },
+  "action": "flag",
+  "reason": "в фоне слышна музыка — звук оставлен как есть, клип помечен"
+ },
+ "brain": {
+  "text": {
+   "score": 7,
+   "hook": 7,
+   "payoff": 8,
+   "clarity": 8,
+   "emotion": 7,
+   "rewatch": 6,
+   "why": "Забавный байт чата и комичный абсурд: стример закидывает 50$ сам себе на костюм Бэтмена и выдает панчлайн «Я чё виноват, что я богатый, а ты бедный?».",
+   "category": "funny"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 7,
+    "payoff": 7,
+    "clarity": 8,
+    "emotion": 7,
+    "rewatch": 5
+   },
+   "what_happens": "Стример видит, что зрители не донатят на выбор костюма, и решает закинуть 50 долларов сам себе на костюм Бэтмена. Когда чат возмущается нарушением правил, стример парирует дерзким панчлайном.",
+   "moment": "Стример заявляет, что задонатит сам себе на костюм Бэтмена: «Я че виноват, что я богатый, а ты бедный?»",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 52.5,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "proofread": [
+   "задонатил? → задоначу?",
+   "выиграю → выберу"
+  ],
+  "length": null,
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 5,
+  "trimmed_s": 9.5
+ },
+ "transcript": "Может, я сам себе Может, я сам себе задоначу? Ебать, я реально сейчас себе просто сам задоначу на какой-нибудь охуенный костюм и всё, и идите на хуй. Я сейчас выберу просто Бэтмена, заложу, блядь, просто баксов 50 на Бэтмена. Всё, блядь, и просто буду в Бэтмене, поэтому идите в пизду. А что? Такого в правилах нет. Я могу всё, что угодно. Я могу сам себе донатить. Я тоже участник. Понятно? Что? Артурио, здорово. Нельзя так делать. С хуя ли так нельзя делать? Я что, виноват, что я богатый, а ты бедный?",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Донатит сам на стриме",
+   "hook_style": "tease",
+   "caption": "Когда никто не донатит на костюм и приходится брать всё в свои руки #irl #стрим #донаты #юмор",
+   "hashtags": [
+    "#irl",
+    "#стрим",
+    "#донаты",
+    "#юмор"
+   ],
+   "hook_alts": [
+    "Донатит сам на стриме",
+    "Обманул свои же правила",
+    "Закинул 50 баксов сам",
+    "Такого в правилах нет"
+   ],
+   "asset": "2911545684_1202.mp4",
+   "size": 20965972,
+   "duration": 29.4,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "В каком костюме ему в итоге надо было ходить?",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Донатит сам на стриме",
+   "hook_style": "tease",
+   "caption": "Донатит сам на стриме",
+   "hashtags": [
+    "#irlстрим",
+    "#донаты",
+    "#приколы",
+    "#стример",
+    "#юмор"
+   ],
+   "hook_alts": [
+    "Донатит сам на стриме",
+    "Обманул свои же правила",
+    "Закинул 50 баксов сам",
+    "Такого в правилах нет"
+   ],
+   "asset": "2911545684_1202.mp4",
+   "size": 20965972,
+   "duration": 29.4,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "В каком костюме ему в итоге надо было ходить?",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Донатит сам на стриме",
+   "hook_style": "tease",
+   "title": "Донатит сам на стриме",
+   "description": "Стример решил сам задонатить на костюм Бэтмена, когда чат отказался скидываться\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "стрим",
+    "irl",
+    "донаты",
+    "аукцион",
+    "бэтмен",
+    "юмор",
+    "нарезка"
+   ],
+   "caption": "Донатит сам на стриме",
+   "hook_alts": [
+    "Донатит сам на стриме",
+    "Обманул свои же правила",
+    "Закинул 50 баксов сам",
+    "Такого в правилах нет"
+   ],
+   "asset": "2911545684_1202.mp4",
+   "size": 20965972,
+   "duration": 29.4,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "В каком костюме ему в итоге надо было ходить?",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-27T06:31:17Z",
+ "live_when_made": false,
+ "fresh": false,
+ "uid": "3e2586f5",
+ "asset": "2911545684_1202.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2911545684?t=0h20m2s"
+}

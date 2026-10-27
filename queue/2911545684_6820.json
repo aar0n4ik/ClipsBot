@@ -1,0 +1,195 @@
+{
+ "id": "2911545684_6820",
+ "vod_id": "2911545684",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 6820.1,
+ "duration": 11.8,
+ "span": 19.2,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 7,
+  "clarity": 8,
+  "emotion": 6,
+  "rewatch": 5
+ },
+ "category": "story",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Стример показывает зубы на камеру и говорит, что в 33 года ни разу не был у стоматолога.",
+ "what": "Стример показывает свои зубы крупным планом и признаётся, что за все 33 года жизни ни разу не ходил к стоматологу.",
+ "overlay": "Я ни разу не был у стоматолога",
+ "signal": 0.0,
+ "breakdown": {
+  "chat": 0,
+  "keywords": 0,
+  "spam_wave": 0,
+  "audio": 0,
+  "viewer_clips": 0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.433,
+   "stability": 0.406,
+   "tonal": 0.0,
+   "beat": 0.144
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "brain": {
+  "text": {
+   "score": 7,
+   "hook": 7,
+   "payoff": 7,
+   "clarity": 9,
+   "emotion": 6,
+   "rewatch": 6,
+   "why": "Затягивающее жизненное заявление: в 33 года ни разу не был у стоматолога. Тема зубов и генетики провоцирует активные споры в комментариях.",
+   "category": "story"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 7,
+    "payoff": 7,
+    "clarity": 8,
+    "emotion": 6,
+    "rewatch": 5
+   },
+   "what_happens": "Стример показывает свои зубы крупным планом и признаётся, что за все 33 года жизни ни разу не ходил к стоматологу.",
+   "moment": "Стример показывает зубы на камеру и говорит, что в 33 года ни разу не был у стоматолога.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 38.3,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "proofread": [],
+  "length": null,
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 4,
+  "trimmed_s": 7.5
+ },
+ "transcript": "Но у меня нормальные зубы. Хотите - верьте, хотите - нет. Мне 33 года. Смотрите зубы. Ну да, они типа жёлтые. Но они все мои. За 33 года я ни разу не был у стоматолога. Прикиньте?",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Я ни разу не был у стоматолога",
+   "hook_style": "quote",
+   "caption": "Стример показал свои зубы в 33 года и признался что ни разу не был у стоматолога",
+   "hashtags": [
+    "#зубы",
+    "#стоматолог",
+    "#жиза",
+    "#стример",
+    "#историяизжизни"
+   ],
+   "hook_alts": [
+    "Я ни разу не был у стоматолога",
+    "В 33 года ни разу не сделал это",
+    "Желтые зубы зато все свои",
+    "Ни разу у врача за 33 года"
+   ],
+   "asset": "2911545684_6820.mp4",
+   "size": 10016496,
+   "duration": 11.8,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы когда в последний раз были у стоматолога?",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Я ни разу не был у стоматолога",
+   "hook_style": "quote",
+   "caption": "В 33 года ни разу не сделал это",
+   "hashtags": [
+    "#зубы",
+    "#стоматология",
+    "#здоровье",
+    "#стрим"
+   ],
+   "hook_alts": [
+    "Я ни разу не был у стоматолога",
+    "В 33 года ни разу не сделал это",
+    "Желтые зубы зато все свои",
+    "Ни разу у врача за 33 года"
+   ],
+   "asset": "2911545684_6820.mp4",
+   "size": 10016496,
+   "duration": 11.8,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы когда в последний раз были у стоматолога?",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Я ни разу не был у стоматолога",
+   "hook_style": "quote",
+   "title": "Ни разу не был у стоматолога в 33 года",
+   "description": "Стример делится откровенным фактом о своих зубах и посещении врачей\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "стоматолог",
+    "зубы",
+    "история",
+    "стример",
+    "зубы в 33"
+   ],
+   "caption": "Ни разу не был у стоматолога в 33 года",
+   "hook_alts": [
+    "Я ни разу не был у стоматолога",
+    "В 33 года ни разу не сделал это",
+    "Желтые зубы зато все свои",
+    "Ни разу у врача за 33 года"
+   ],
+   "asset": "2911545684_6820.mp4",
+   "size": 10016496,
+   "duration": 11.8,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы когда в последний раз были у стоматолога?",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-27T06:35:33Z",
+ "live_when_made": false,
+ "fresh": false,
+ "uid": "52867bf4",
+ "asset": "2911545684_6820.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2911545684?t=1h53m40s"
+}

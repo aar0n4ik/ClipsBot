@@ -1,0 +1,345 @@
+{
+ "accounts": {
+  "tt_main": {
+   "platform": "tiktok",
+   "connected": true,
+   "plan": {
+    "cap": 4,
+    "gap_min": 120,
+    "mode": "обычный режим",
+    "posts_today": 1,
+    "plan_today": [
+     "17:07",
+     "19:07",
+     "21:07"
+    ],
+    "health": "ok"
+   },
+   "last_post_at": "2026-10-26T03:53:24Z",
+   "last_clip": "2907089925_13868",
+   "last_error": "TikTok /v2/post/publish/video/init/: unaudited_client_can_only_post_to_private_accounts — Please review our integration guidelines at https://developers.tiktok.com/doc/content-sharing-guidelines/ [content]",
+   "count_by_day": {
+    "2026-10-22": 2,
+    "2026-10-23": 2,
+    "2026-10-26": 1
+   },
+   "recent": [
+    {
+     "clip": "2907089925_13868",
+     "category": "funny",
+     "vod_id": "2907089925",
+     "vod_time": 13868.8,
+     "hook_style": "quote"
+    },
+    {
+     "clip": "2907089925_15487",
+     "category": "funny",
+     "vod_id": "2907089925",
+     "vod_time": 15487.8,
+     "hook_style": "conflict"
+    },
+    {
+     "clip": "2907089925_4016",
+     "category": "road",
+     "vod_id": "2907089925",
+     "vod_time": 4016.6,
+     "hook_style": "conflict"
+    },
+    {
+     "clip": "2906042925_6996",
+     "category": "funny",
+     "vod_id": "2906042925",
+     "vod_time": 6996.7,
+     "hook_style": "tease"
+    },
+    {
+     "clip": "2906042925_1862",
+     "category": "money",
+     "vod_id": "2906042925",
+     "vod_time": 1862.9,
+     "hook_style": "conflict"
+    }
+   ],
+   "first_post_at": "2026-10-22T10:03:45Z",
+   "diagnosis": "Приложение TikTok ещё не прошло аудит: публикация только в черновики или приватно. Это ограничение TikTok, а не ошибка бота.\nТекст площадки: TikTok /v2/post/publish/video/init/: unaudited_client_can_only_post_to_private_accounts — Please review our integration guidelines at https://developers.tiktok.com/doc/content-sharing-guidelines/",
+   "last_error_at": "2026-10-26T04:00:53Z",
+   "today": {
+    "published": 0,
+    "drafts": 0,
+    "max": 4
+   },
+   "state": "готова"
+  },
+  "yt_main": {
+   "platform": "youtube",
+   "connected": true,
+   "plan": {
+    "cap": 2,
+    "gap_min": 240,
+    "mode": "режим «остывание»: просмотры упали: медиана 130 против обычных 537",
+    "posts_today": 1,
+    "plan_today": [
+     "19:07"
+    ],
+    "health": "cooldown"
+   },
+   "last_post_at": "2026-10-26T03:48:55Z",
+   "last_clip": "2906042925_24540",
+   "last_error": null,
+   "count_by_day": {
+    "2026-10-22": 2,
+    "2026-10-23": 3,
+    "2026-10-24": 3,
+    "2026-10-25": 1,
+    "2026-10-26": 1
+   },
+   "recent": [
+    {
+     "clip": "2906042925_24540",
+     "category": "america",
+     "vod_id": "2906042925",
+     "vod_time": 24540.6,
+     "hook_style": "tease"
+    },
+    {
+     "clip": "2906042925_17547",
+     "category": "money",
+     "vod_id": "2906042925",
+     "vod_time": 17547.0,
+     "hook_style": "conflict"
+    },
+    {
+     "clip": "2906042925_13225",
+     "category": "money",
+     "vod_id": "2906042925",
+     "vod_time": 13225.4,
+     "hook_style": "quote"
+    },
+    {
+     "clip": "2907089925_4016",
+     "category": "road",
+     "vod_id": "2907089925",
+     "vod_time": 4016.6,
+     "hook_style": "number"
+    },
+    {
+     "clip": "2907089925_13868",
+     "category": "funny",
+     "vod_id": "2907089925",
+     "vod_time": 13868.8,
+     "hook_style": "conflict"
+    },
+    {
+     "clip": "2907089925_9786",
+     "category": "money",
+     "vod_id": "2907089925",
+     "vod_time": 9786.8,
+     "hook_style": "tease"
+    },
+    {
+     "clip": "2907089925_15487",
+     "category": "funny",
+     "vod_id": "2907089925",
+     "vod_time": 15487.8,
+     "hook_style": "conflict"
+    },
+    {
+     "clip": "2906042925_16095",
+     "category": "chat",
+     "vod_id": "2906042925",
+     "vod_time": 16095.0,
+     "hook_style": "tease"
+    },
+    {
+     "clip": "2906042925_6996",
+     "category": "funny",
+     "vod_id": "2906042925",
+     "vod_time": 6996.7,
+     "hook_style": "number"
+    },
+    {
+     "clip": "2906042925_1862",
+     "category": "money",
+     "vod_id": "2906042925",
+     "vod_time": 1862.9,
+     "hook_style": "number"
+    }
+   ],
+   "first_post_at": "2026-10-22T10:03:50Z",
+   "today": {
+    "published": 0,
+    "drafts": 0,
+    "max": 4
+   },
+   "state": "готова"
+  },
+  "ig_main": {
+   "platform": "instagram",
+   "connected": true,
+   "plan": {
+    "cap": 3,
+    "gap_min": 120,
+    "mode": "обычный режим",
+    "posts_today": 1,
+    "plan_today": [
+     "19:07",
+     "21:07"
+    ],
+    "health": "ok",
+    "threshold": 7,
+    "why": []
+   },
+   "last_post_at": "2026-10-26T13:11:25Z",
+   "last_clip": "2907089925_9786",
+   "last_error": null,
+   "count_by_day": {
+    "2026-10-26": 2
+   },
+   "recent": [
+    {
+     "clip": "2907089925_9786",
+     "category": "money",
+     "vod_id": "2907089925",
+     "vod_time": 9786.8,
+     "hook_style": "number"
+    },
+    {
+     "clip": "2907089925_13868",
+     "category": "funny",
+     "vod_id": "2907089925",
+     "vod_time": 13868.8,
+     "hook_style": "tease"
+    }
+   ],
+   "first_post_at": "2026-10-26T06:02:28Z",
+   "today": {
+    "published": 0,
+    "drafts": 0,
+    "max": 4
+   },
+   "state": "готова"
+  }
+ },
+ "timezone": "Europe/Moscow",
+ "updated_at": "2026-10-27T04:52:20Z",
+ "hour_weights": {
+  "tiktok": [
+   0.25,
+   0.15,
+   0.08,
+   0.05,
+   0.05,
+   0.08,
+   0.2,
+   0.45,
+   0.6,
+   0.55,
+   0.5,
+   0.55,
+   0.7,
+   0.75,
+   0.65,
+   0.6,
+   0.65,
+   0.75,
+   0.9,
+   1.0,
+   1.0,
+   0.95,
+   0.8,
+   0.5
+  ],
+  "youtube": [
+   0.25,
+   0.15,
+   0.08,
+   0.05,
+   0.05,
+   0.08,
+   0.2,
+   0.45,
+   0.6,
+   0.55,
+   0.5,
+   0.55,
+   0.7,
+   0.75,
+   0.65,
+   0.6,
+   0.65,
+   0.75,
+   0.9,
+   1.0,
+   1.0,
+   0.95,
+   0.8,
+   0.5
+  ],
+  "instagram": [
+   0.25,
+   0.15,
+   0.08,
+   0.05,
+   0.05,
+   0.08,
+   0.2,
+   0.45,
+   0.6,
+   0.55,
+   0.5,
+   0.55,
+   0.7,
+   0.75,
+   0.65,
+   0.6,
+   0.65,
+   0.75,
+   0.9,
+   1.0,
+   1.0,
+   0.95,
+   0.8,
+   0.5
+  ]
+ },
+ "next_check": "2026-10-27T05:07:00+00:00",
+ "releases": {
+  "by_day": {}
+ },
+ "plan": {
+  "today": [
+   "13:07",
+   "17:07",
+   "19:07",
+   "21:07"
+  ],
+  "slots_left": 4,
+  "cap": 4,
+  "releases_today": 0,
+  "waves": {},
+  "up_next": [
+   {
+    "id": "2910649819_37144",
+    "hook": "Ты знаешь Путина?",
+    "score": 8,
+    "expires_in_h": 32.5,
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   },
+   {
+    "id": "2910649819_39863",
+    "hook": "Clean me please на Кибертраке",
+    "score": 7,
+    "expires_in_h": 32.5,
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,196 @@
+{
+ "id": "2910649819_37144",
+ "vod_id": "2910649819",
+ "vod_title": "Автопилот везет бургеры? Доставка еды на Tesla по LA!",
+ "vod_time": 37144.3,
+ "duration": 13.5,
+ "score": 8,
+ "subscores": {
+  "hook": 8,
+  "payoff": 8,
+  "clarity": 8,
+  "emotion": 8,
+  "rewatch": 7
+ },
+ "category": "funny",
+ "risk": {
+  "level": 0,
+  "flags": [
+   "music"
+  ]
+ },
+ "why": "Американец забрал телефон у стримера и неожиданно признался в любви к Путину.",
+ "what": "Стример в магазине переживает на русском, вернёт ли ему незнакомец телефон, а тот неожиданно поворачивается и спрашивает, знает ли он Путина.",
+ "overlay": "Ты знаешь Путина?",
+ "signal": 14.45,
+ "breakdown": {
+  "chat": 4.05,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.0,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.645,
+   "stability": 0.505,
+   "tonal": 0.0,
+   "beat": 0.168
+  },
+  "action": "flag",
+  "reason": "в фоне слышна музыка — звук оставлен как есть, клип помечен"
+ },
+ "brain": {
+  "text": {
+   "score": 8,
+   "hook": 8,
+   "payoff": 8,
+   "clarity": 8,
+   "emotion": 8,
+   "rewatch": 7,
+   "why": "Отличный абсурдный момент: стример переживает, что незнакомец забрал его телефон, и тут американец внезапно заявляет, что любит Путина. Коротко, смешно и с интригой.",
+   "category": "funny"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 8,
+   "subscores": {
+    "hook": 8,
+    "payoff": 8,
+    "clarity": 8,
+    "emotion": 8,
+    "rewatch": 7
+   },
+   "what_happens": "Стример в магазине переживает на русском, вернёт ли ему незнакомец телефон, а тот неожиданно поворачивается и спрашивает, знает ли он Путина.",
+   "moment": "Американец забрал телефон у стримера и неожиданно признался в любви к Путину.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 20.8,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "critic": {
+   "ok": true,
+   "problems": null,
+   "fix_hook": null,
+   "skipped": true
+  },
+  "cuts": 1,
+  "trimmed_s": 2.8
+ },
+ "transcript": "Интересно, он мне телефон отдаст вообще? Блядь, надеюсь он мне отдаст телефон Ты знаешь Путин? Да Я люблю его Реально? Что это выглядит? Нет, это не здесь",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Ты знаешь Путина?",
+   "hook_style": "quote",
+   "caption": "Американец взял телефон в магазине и внезапно заговорил про Путина",
+   "hashtags": [
+    "#irl",
+    "#стрим",
+    "#сша",
+    "#прикол",
+    "#америка"
+   ],
+   "hook_alts": [
+    "Ты знаешь Путина?",
+    "Забрал телефон и заговорил",
+    "Он вернет мне телефон?",
+    "Взял телефон в магазине ЛА"
+   ],
+   "asset": "2910649819_37144.mp4",
+   "size": 15221833,
+   "duration": 13.5,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы бы что ответили на его месте?",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Ты знаешь Путина?",
+   "hook_style": "quote",
+   "caption": "Забрал телефон и заговорил",
+   "hashtags": [
+    "#irlstream",
+    "#приколы",
+    "#америка",
+    "#сша",
+    "#юмор"
+   ],
+   "hook_alts": [
+    "Ты знаешь Путина?",
+    "Забрал телефон и заговорил",
+    "Он вернет мне телефон?",
+    "Взял телефон в магазине ЛА"
+   ],
+   "asset": "2910649819_37144.mp4",
+   "size": 15221833,
+   "duration": 13.5,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы бы что ответили на его месте?",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Ты знаешь Путина?",
+   "hook_style": "quote",
+   "title": "Американец забрал телефон и заговорил про Путина",
+   "description": "Стример в США переживал за свой телефон, но американец внезапно удивил вопросом\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "irl",
+    "стример",
+    "сша",
+    "прикол",
+    "америка",
+    "жизнь в сша"
+   ],
+   "caption": "Американец забрал телефон и заговорил про Путина",
+   "hook_alts": [
+    "Ты знаешь Путина?",
+    "Забрал телефон и заговорил",
+    "Он вернет мне телефон?",
+    "Взял телефон в магазине ЛА"
+   ],
+   "asset": "2910649819_37144.mp4",
+   "size": 15221833,
+   "duration": 13.5,
+   "variant": {
+    "hook_style": "quote"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "А вы бы что ответили на его месте?",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-27T01:19:55Z",
+ "live_when_made": false,
+ "fresh": false,
+ "uid": "eb4138a5",
+ "asset": "2910649819_37144.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2910649819?t=10h19m4s"
+}

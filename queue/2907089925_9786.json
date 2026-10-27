@@ -1,0 +1,184 @@
+{
+ "id": "2907089925_9786",
+ "vod_id": "2907089925",
+ "vod_title": "Значки за подписку 👻 Гастли → Хонтер → Генгар |  Лос-Анджелес Доставка",
+ "vod_time": 9786.8,
+ "duration": 32.2,
+ "score": 7,
+ "subscores": {
+  "hook": 6,
+  "payoff": 7,
+  "clarity": 7,
+  "emotion": 6,
+  "relate": 5
+ },
+ "category": "money",
+ "risk": {
+  "level": 1,
+  "flags": [
+   "heavy_profanity",
+   "music"
+  ]
+ },
+ "why": "Начало о чаевых и страховке создаёт ожидание, а резкая реакция на прибытие грабителя дает шок и юмор, понятный без контекста, интересен аудитории доставщиков.",
+ "overlay": "Грабитель против курьера",
+ "signal": 18.44,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.06,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.072,
+  "music": {
+   "score": 0.71,
+   "stability": 0.494,
+   "tonal": 0.0,
+   "beat": 0.297
+  },
+  "action": "flag",
+  "reason": "в фоне слышна музыка — звук оставлен как есть, клип помечен"
+ },
+ "opening": {
+  "speech_start": 0.25,
+  "trimmed": 0.0
+ },
+ "notes": [
+  {
+   "t": 0.2,
+   "text": "200$ за заказ"
+  }
+ ],
+ "transcript": "200, что -то с чем -то, с баксом. Медицинская тоже есть. Ой, блядь, грабхаб прилетел.",
+ "thumb": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAgDKL8pUAAD//gAQTGF2YzYyLjExLjEwMAD/2wBDAAgODhAOEBMTExMTExYVFhcXFxYWFhYXFxcZGRkdHR0ZGRkXFxkZHBwdHSAhIB4eHR4hISMjIyoqKCgxMTI8PEj/xACnAAABBQEBAQAAAAAAAAAAAAAABAMFAgYBBwgBAQEBAQEBAQAAAAAAAAAAAAABAgMEBQYQAAICAQMBBQYCBwUHAwUBAAECAAMRBBIhMQVRQRMiYXGRFIEyoVKxQtEjwWIGFTNTckMkkvCT8YLh0qKyFjTCVIOUEQACAgEDAwIFAgYDAQEAAAAAARECIRIDMUEEYVFxExSRIoEyodHB8LFiUuEjM0Lx/8AAEQgBqgDwAwEiAAIRAAMRAP/aAAwDAQACEQMRAD8A+f4QhMGQhCEAIQhACEISgIQhACEIQAhCEAIQhACEIQAhCEAIQhACEIQQITuJbbKCkuBHAsc2wBqWxHts7tlAghCE5mwhCEAIQhKQIQhACEJ2CHIS2J3EApCObZ3bAGoR/bO7YAnncRTtltsoEuJbbFeyX2QBFtltsXbI5sghH7JbZJEJHBXAI3ZHQkkRXHRXKQjQkc2STFcdFcoIrZO7JL+XO+XAMRCEJxOoQhLYlIVnY5iX2ygZxLbYoCxwLAE22XCxWEjwSUCLbL7Iu2RzZBCP2TuySOyW2QQjtktskhsltkAj9kvskhsjgSAR4SOhIvCRwJBBAEjgSSASOBIBHiuOiuSASOhJSCAVx0VyQCR4JAI8Vx0VyRCR4JKCL8uW8uS2yW2QDxWEtiXAnA9BwCPASwEfAlINgR0LHQI+FlAwFjgA7xFQWaDRpp00Vl1lKWFHfqBkjI4yffPbsbPxrNatMJufYJSZsBe8fER8be8fESTN+mvapF0gr3W1+r04IzyOB4yeuqprtCL2f5oOPWoXHP08PfPbXs1dNrdTSaUqtnl/g3onqZYLAbPzL8RF+r0ipq009PpW4Asv5eeSO7gSbfS6S436dKUV0QYYLjkjjB9nGffFexs3daktLhf5OJwTQ8mYO0dSB7yIZT8y/ESS7KpruS821JY6sB6wOu3pk9OYq1dAWiwjQ1j0n1IyEr/NjAPHsivZN7avq5TcaW+PYaMTJCjb+ZfiJ3KfmX4iStmhqtGhVK1XeA1hAwSoQE59/wDGO6yvSLphclFeBao4UDcA+CPccTXyLSs3dQlPHOJ/aR8PyQ+U/MvxEvur/OvxEmtL8nqVtb5RE8vqCFOeCe6RtD6XV6mlV0q1riwnIUhvTx0HhJ8mvt/7avX+nDzmBo4zyN7q/wA6/wC8I5uT8y/ESZbTAMQui0xGeCXUEj3bDiQPZ9dOo1l+6lAu04TqqkMBxxK+yatWuvNnH6Wh8PPIo31/nT/eH7Y4rITgMpPcCIq0o0erNwGlrXyuM4Bz19nsiYaTTvoqHLV6dvSfNwMk88ZyP+BHyTamt08N+nDjqPh+RRiOARDYLdKEdrUvpc7d6jBBPQ8ZBEkhPmbm3batpsoZwaa5LAR8CUEeE4mRwCPASoj4lIAEttlxLwDwjEcAjmI4BPOes4BHwJ0COgEnAVmx12qTj4TaTthKfYhYCPgSoDf4dv8AuN+yOK2RkJYR7EYzr8O/+tvoQfVZcahq9LbpvKYl2Y7wRjkjw+kqti5wdyk/mBX9MfW0H7Essx4ohI+M77Vtzbs9NXLUNR0Y4KgMi0sFLeW6sVHUgRa+r1ept/dmyhNo4ODz35x4xoamocHeG4Gwqd/Psigalf8ADu/5TTpTc3qVdaqyTcuE5kS0JKWs0moa2xLNQSuA2fjnPwiuvWa5SLHG9MnNYChseGDjwlvnKwcbLsnoPLbmd+dpPAFhPiAjZHvE6rf7iqSWpQ545fn1LqshmrWeW2oPythW5txXI44wR08ZX5rbW9en0hqNgwSWJ8MdIo+crPGy7I6/u24nPnKh9wsQd7VsB8Z0+Z7iP0xznTxPORqt/SOf2hYKRWuncOK/LDkjjgDPT2SNa6xtGml8lwVI9eeOGJ6YktZqEQgepiRuGxS3HfxGBrKj0FjHxAQkj3jwmH3O/dcTNdPHQmqzKV3vpPPU0u/mgYKkcejHMS6fzNL5Fvls+wOCo4Pqi/5yvk7bQB1Pltge/uljrKhnG9gOrKhK/HpOXxd5fDx/5/pwZl48DTajTuxZtAxYnJOepjNOq+XNxq0pVrG9Hcq46Hv5yYs+bX8l3/KaU+cq6DeW/KEbd8J6Pmd+Z0pPo9CXP4Narf0hJpLLNB5m6p7PNC8gjrznPxj9esUaeumzSPYEA6kYyPHGIrruW3O3II4IIwR9DGDqUBIC2NtOCVQkZ7siYp3O9X7UphNRpnly5IrW4GLrbNWtdSUeRUjA493uAAEmBIs6pQMlLgPbW06NUv5Lv+W08+493dtNk59uhhzYmAY+DIivUV2HaCQ35WBU/jKjW1+C2sO9a2IPuM4abTEP6GIZoAY+DIuq1bVDKcgxWDMEFwMvmIt0tugHlGI4BHsS4E8p7BsCafsglW1RHgiH8GkABH67b9OX8or+8ADbhnp3fGfR7TdrtbqtZwkn/YLDNF2Zr9RqrWWwqQE3DC45yBFml846FfKZVfe+C/2/3jZmM07X6Q76iu4rtO4Z4zmWazUvR5B2bM56c53buvvn2tvvaKi1Ws7Rf92oyaVsZnqabXNjRMupsqewsNuz3jkDrwM5Mvr7r9IKU0y7a9vUJu6dB/H2zJrp6x1GZKV6nW0qESxWUcDeMkDuzxMrvaX1Tq25SSss2x6vyTV+PJIa13Ok02odQt6uhGR7+MdccA4i/R6u+2vUGwruq6bRgfaTM63n6l1a987eijgD6D9Me/2ms2+SybbfuDDnpjiVd5Vb06raNMP/ACtESxqz4FGj1Wo1Oq07WlSNlpXaMeAzmSlQGlsdz9+q1JVf8gJ/hk/USCrovpFTVModAy+oZGGl3TXW212s9e6r7OPT8I2+8oqLW27qzc+8KfoRXxnk0lZxqtZzjCVc9celuceyNV2tdVaqWjUttwAyeUBkH2cyGU9oK7uGp3Pt3en8owPGOs/aTjBsrUHxVRn+M9Xzuz/tb/66erfmPqmb1r+4h7IP+0KO6lgfZhxxNCKwld40bobmZixJycknjjpjoueJA16a7Ssr0Mu7aVO4Z6nORG6qNXQ7XIyCx924EZByc/pnk2e62tulauebS+tU+q8mFZJQW7MtUWPp3YsL1O4N1FgyGB94jmtA0GjTSqctYxLHvGf48D6Ruo6rTW2WeVXabTnuCt3jx59ko2mu1O+y5gHYDb3Lg8DHdJ8xt12YVtVspPqqt5JqSXn+RrtR80dnkWVIMerzBnPdiIHdDrdKNyNaFs3lf8n7c4BkHbTqNU6HUFCEBHp46zvyrUOlmn2qy5+4ZByMTtbvqO+E9M1ct8R6Loae4pJKyrR36p0aq8WMebBuC5x1yDj8I9pE+Wq1a+YRstb95jcR6VOSPExCdR2keN9Q9yj+MS1HXafcEett7F2LDJ3HrNfNdur6uv3ZVY56Yefca6z/AMDuq1TGizbq2tJGNnkbcg8HnbxxNA3zJ09HkPWh2Lu8znI2jpM/Zd2hYjIzVYYFThfA/WI7K9TqBWlpTZX02jBxjH6JPm9tanqs5qkuV19W7DWvIv7UbdXp0LI2p3AZT2jB9oBOOs0aJbp/l6q0zUqkO2RwccHv65JmN+VNLJZRtDIc+oZHv+kGp1F7tZZZh+MbSQox04BnOve7adrtPU9Khei9X1nqRXXJIIvy2qup/Vb94nuPUfSSmZAsNVddXZaa/RkZUY4PgZLZnxd50e5Z0/S3KPPaJwKt0tuiPMN08xkyeJYCc3S26cYZ6dSL4lsSm6dDiIJqRbE5L5BjJJmkjMoczHAYiLMIz5jeyb0skk0GioNM6LX9keFlvslhkk0oaPhpmhdZ7PhHPmLPZ8JYZk04MtMx81b3j4S3zV3evwiGDTTkzfzd3evwnfm7u9fhEA0c5M981d3r8JYam3+X4RAJ6cmcfVagdNvwgmrubxX4RDBocSuJFefcfy/CPebZ7PhEMgtxOYiTzLO8fCW3v7IgCicic2MO6U80xDLAqlYnFme6PDmIZqAzOZlsTm2IYgyxM7GesvMGSxOJRTKHMrAFuZYcxKMx05EAfMb2iOLz1lG9M3IOYl8RxPVFgQTcgQbTL7Yu2iWCCUCDbLhIu2CX2iAIfLM6EizEvtgCPZLBIr2HukhXo9Q+NtTn/tMAh/LjHlFW4E2a9laxv9PH+YgSTr7D1BOWatfqT+gSkkxArMvielL2H+a74L+0xR/YVP8AiP8ABZYZnUjy0iMHM9fXsLS+LWH6gfoE8g7ZRtFq3qQkKORnriSDpWw0ZzAMzZusP6xjYscfrGDcmsWvuB9s1NPZestA20Pg+JGB+OIi0VqvUAevSeo9ka05+VsOcDNTHxA6p718PZMkbMsn9Patvu2L72z+jMkV/pu39a5B7gT+yem5hKc9TPjfOJzeImzHBOAHgSZccRvpDMAVrFB5iRXj4YHxkNDyZl25z7JxeYuWs8yG4ElQzxJjZxGtPVwT7Zoa1GMTOqGaggNnvj9WkstPXH0mmShT4Sd09QV56TnBB6fsmh61ey1+cnCgfpko3ZmjrA2+YT45bj9EmzSalO0E1nnA5KH2d6/iIhJyBjpMmRD8lpUHFYPvJP8AGLEroX/TrB8PSIwSYprr3LmJgFkdA4wEHtwBJtbjXyTke+RBrAryRzuHwjbjZnE0mZZJNqdzk/CPDUGZTeYuVsiTJiDYVN5gyIp2mZnT3bZOC8TWskEHqu2tJpHatt7uvBCrwPqeJ5H2xqau0bvMRWXA5DYzJHtcFNbcMcMQw+omXIBldjaUEb8vmW+WkiB7Y8Ec9FY+4GYkswM0l6ftM1ul1T2YywWxTlWHHI6SJp0GqvYKlFpz/IQPiRjE9H039LKpDXXk/wAtYx/7j+yJLJ6DpbxqaUs6Ej1DuYdR8YulErSlFRBtVRgCOzRk+KZeVnBOJoeEdicHmPiCjgGY+E2idTmK/LJGMQdCKLMDxmTOnDvjkxjywPDM0OloI5MyzaFdWKwRJBc4JHgIrTTKx5zF7VPUuVGR4zkdGoIXT6znD8TWU2KSCDMhaq2Hn0nviNPOoJK5IE9Scnnk9eR+I1ZQGyyYB7vBv2H2/GYvS9og4DHBmvqvV/GUhEuCDz4dR3Si3bPdNDai3juI6H9vePZIA0sCQwwfDuI7xMQQV2WKyHHjiJbTzHhWVrbI6gxOo8xAT3TRCFyxMXoT0kmNJWRnmNWUiva3xjUuDMMaVgst5pBiUnMa3AxCY4JKwV3rh0Vj3kAyHbT0of7tP90RSGxB2yBMRAJXRmlQv7tfTz9omi+eDDFda9OpOMfATHqg74rVlQ5AOfZ0g3BoW1dyqOQO/A3E/GC9pMMKU8QNx4/CQgtYt9pELzhRxnmSXJuEehA5GePpOzzmrWumBk8dB4TQVdoliFKZz4gzeo5HyjKQMJkoCKI1AcwVCxSfdFyF89TI8SXp4kOyFyJkc9Zp6VAUSGqQk5kyT6RObOyRIVWerrNVW6FDkZ9nfMGnBmgoY9Jk6RJG6qkUWDDZVhuX2ew+6RtVjoTz38zS2YZuRnHSVVd36o+gGZ1TPHZV9TL2V7uVwp68R7Tax6TtbJE047OLfq2LnvUgfiImv7JcKSDOknLBO6fVrYOsmfTauD9D4g94nk2bNGwyRgnibHSa0WAS8miUcvW21sY8Djg/sPsi41HbnjpO5WwYPIMlak3Jjdz0ye6QhmvNKj7SfjKG0kjI4mmOlJ/1D8JddOBwzFx3GGjMsyvm1AEdfpMs99oAZK0YHvfbgfCehXaPSUoznI9JIBPsmRagigtkYCjjHPSZmD07VFdw/EDGnNmpz6ACvUK27jv6CSlmnZMBuOMxD2aHTew4LbcH2c5mrtXzgucDE50u7JTzB37nZrtbl1XhOEQKtsGJXf3EgSUGkXx5x4SXG0LtFaAETqfPkyq2YP3ExQ58zGMxd8nXFS01oMASQbTMyySX0rlCPR7M45k4EUdAI8JrJg+R5YQxKnidClo4vWJsxSs5mkLFGZM1J0kZWMmaOlQRObO1RWh2iU3k2ESSFe4RMaSGzicj1i5JO0CZ9eJodM48ZCiG9ma5aVOC5Hjg8mepaOpKKhWoxt4z4n2kzAW6IG4X1kBsg+o9MSZr1eoqJLqGB54YCdWpSPmN5NqW4MyT6sVWNWw6H8Jxu09wP7p1/wC5f2zGaxdTqLi6FUUhfuPOQOegP6YomuTLEf8AUVaPphYg4DL08M98wek1VlGCzYXwz1M1eudtPpyljrZv/VGfDnJzmZ7R9l26/wDeM61V+DMVGfYASJ3xUvJOr/UFx9NVYb6En8DJJO39XX/e6cqvftdfxMWaHQ1aFy1d4d8YwFL+Oeij/wDKacvbZxsOP5mRR8PUZJ/JRRpe2atWBsxu/KeD9O+S/wAw/cB9Z53quy2/vqNlbr6tqkndju4AB93WL9Fqxra8Mdli/d3/APiT8ENFq7GepidvCn8eJGV2ZXYwBjtumL1squMkcHj/AKxLpdPYpItdSfAgzNk4yenasuOpKV8dOJJ7xjnAibZtjd9JsQq1dpU85VZ5qy2j0X4yK9694+M7uHeJjl0YV/7p8Y5LiwY/3SDFyCtcA6cdPuNlw/j4z6EQk8fzPDplvwaTcO8S2R3iZ1q6uvlsMflvt/jE+Kh4Xj/+pP6ZC6Ga4N7o6DMiq1t9ranPT7kPX/MJwFvOREaw5rZyH2DgEAEFV789Zl46NmdDR89nrK9ZaW74MjEVrGlihBIdCTqE0lUgKAcyaTjE4Wydqmpp6yaFQYSCpsB4mlTGwknjHUczgetcEYdLu8cD8Y6Kkq8fqZH366nT7VFdlzsfSHfaD9F/bK19os7+WE8g4yBtXJ7/AFcmdkn6fV//AKeB2nqToFjDIVsd+MD4nAjZGPvtrHsB3n/28fjI5iznLMze85lcCdIt1f0X8TlC9PqK/MrH57D9EH4ZP4yvm4PprrHvy/8A8yYnBEjtXZspc+yNK8v3KY297O0tXgnHUfQewTRLgbUrU4XjpMhQyK+WYKfDOeveceEkBq/MJO9gfTtG44Hf4c/hOpnk1FmmuuHoNlbfmU447uojI7M7U/V1T/V2/bIT5i0dHYfWcftLU1qcWGdMGCZOh7bT/XJ/7z/ERFp/mdFqVN/+pkE56/8ABibQ624uXZ3J3KPuxgc5k69R1toO7cBzuzke3EkFgutnaBsf96FrDHaSqkkeyadWDDdM/Z2eXH96cjoMDb8OsRUM+jcZJKFhXYhJIrJ6MpPO0zUGkepaI+a+xucAmaxawvQt8Z5xVb5CsRw2Nq/U8ycq1N+0ls+lc+OTOChP0PR9zXODVMzBXPcDiedahmGq8ocgbf0SYOsuc7QeDxg/xMzdl7JrfMUbz+sADxjiS8tRXk6UrpzbiYhcm8r0SOuXHP0kXqtLsJFeQMDOF3RXT2gtgyGAJHQjPMhNbrGFhACn0rnO7rjw5Bm6LhNknPg7YxpClFy38ycHv4KD9MzXztNWr32Fa/3IHOFGWck4+EWDVYOQuD3q7g/pMxmq0T9o22YbGwr18crn+M9bS0pGbtQeay05CeY8pXpHQ+I3OQaknqdR4bfhJEX4/VaZRSR0OIoFjn9YzGk3qZtEfzB1xJCqzU0kjcWRuo6j6d0zNN6oOes0NN6WD7sY75YQljltJfUUWcYGQfZnpOa2zyEW1cb0cAdPHqD9JxNam8g9B+t7Yus09WoKsy58ePH346yGRcrZUHvAhkmI1twcHAA6czg1Kg92PbAFbnapJ8BnjmZG2y3UpceVrQDgjBJz0mrp1QZzg4+vWXuSq5WQ8ZOWI6k+2WAeV4x6z0ERq/PE9Ts7P0zVbPUNxGTnnjuzIBex/KYBhvyTj1HGPDpgymSBD5Ec+VtvIAKjPew/QMn8JutFpNERvCcglSrndgjr7PwkN2jo68NZUoQqM+njM2Uj07M2/fa5UfcFQj9J6fST1bIqja4x0H6uPp/5kNptZZdTtJJernPXcviD7orCJerEcbxnHhuEogl6b2Nhrc8j1Iw8R3H2id1p/wBmdjjOUA787hiQWjfc6o/3KcqfHHiPdJPtWwVqg7ibD9OF/Eyg32iv0tldvmbPRaF3MQOdo8ffJEXof7uwY7g4PSfOK32BCgdtrHcVzwT3kd8cGssUbQ2BOUZO6tCg+iBgWKxy2WHt/REtmmou5Gp8ssNxDALgnw5ZZ47o+13064Kq33HJ3bgSMAggjp1EnU7ZpOdyWofURstcjO30jBPQHmeqldpr7nZPwkzsrbbWZ/B6FoV+UswWpZW+1y69O/GSeY5qtP59llgsX8SPjPPNd22ms0yVnfuQgjIXptwcsMHOZm01KhGPmsrDGE59Xfz0GPbPbtbfb7lM7r27S8Ojf7ou18G6za1H6Wq/5HqK6N3OFIPx/ZPLe0brdNq7VWxlIcg7TxkYEUU9q6iht1drKff+2ZnV2m+02McliWJ7yTJvbNdtJ13qbk9KzK90ybtaVSi9bz6Tj6iOEIT5Z4Ts54TsIB0dJdeIAjujuV7oKN5lldh0M4SvdGxIUVF+MRVVqbq+BY4HdkyNM6MwDQrazcliYpdyBiQaNiKzZmUorUmSdVzqeDIdWipTANB8wWI3ce6SYu86uokbT1P6JlAwziTtfC8wQTaVvL12orH2sA/uJlte+2lx38RJpmHzV9g6fbn2iRnaNu4GaKR3Zn/3KjwYMD7sTQaP0X21eGcj2SH7JT9+GPhJxEPzFxxAFh0xXUJYO/mJ9foO0NdaWp09hrXADHC7seI3EZE1+grNrZb7V65/RNytkyyHy7dpr9M226t627mBH/WR+OZ9YXUU6qs13ItinwPh7QeoPtE+cddovlNbbTnIQ5B/lIyPwkIQEdOZbbLYmyjWTOcxRicxmUkifkcxsnMVW8cRFKUVFSPCNyWY53DwC/iZEzmYLTspLQCkJU9ZaDR2WlZ2ClhLRqdEFFQMfEQ5jgaASYMeFkjt0tugE3TksD3STvu2Jgfc3A+vjIVLNgl1bcd7fT2CASIxTUF695mdtze+0HIlrri52qZJ6aryhk9ZQKKsabaO7BM19FHzDMV6Hx8Ih0vZ1mpYPZla/Djlvd+2eg11pUgVFCgeAkkFaqlqUKOkWLxKCdzMsC4EDrPFO2z5uoFnHqVhnvUMQPwnqmptxWwzgkYz755FcH1OpWngH7EH6PjIZM0V4AwPf4mN7DNvpuxrtSPS6BvFW3A//HEgDUlbsllxR1JUqyEjIPev7J1I/ts6vFlEp85I6up7CQqliOeJxVwxJ/V/TNQmkuC76sWDvrPPw4P4SBvKjI5BPXPEpSAsOWjEu3WPJS7DdjC5xuPAz74NJN8KR5rCQw7zmJp2E5nBM5OzkJTZUzs4Z2CnZzOYSogo5KZxO5MpBosDAQEtAHAYurTeeekSqOklESAcIzKu0fPHEonloytYTtJxgDOe+AL9FonsYeksT0xPRdJ2TtIa0gkcgH7V/bHdFq6a6V8pV2d45Ofb45k4b9444gzkWitl6c+2VII4MQUazD7G8ehiy60VrknA75CjgiHVaivS1tY5wB8T7BIVtVbacqdgHTHU+0yL1NPzahbWZgMkc45+kQSTH6vtdtQ2FyBnr447pDfMsNQtgPKsMH3TV/2Np/E2fRh/6Y7T2Np/mKmW4tUGzYrjDpjnacZDZ7xJpymYeT2KihHRbEAXzFVsj+YZmS7U7F0the5g6sxyzKfp0xPQ6ba7FHlleABhfDHsikhWBDAEHg57p6q7iTyk16Hj+C51a7txEzn9zw89navT1tZprVatRkqzLvGOvB6/pmas0Go1S+Z6VHix4BbuE2B0Fz9oW0AtsV+DzjYRkfgQPfPREWvTKta7cgcDxA7/AHmYu07N146HoorKqVuep88DsyxXHmAv3Csht31GcTUf2cxryyY2jhP1V/aZ695FJG5FVd3PAGYju0jWoQXJH5QAo/Dn8Zz5PR8R6dPC6+fc+ZRzCWxOHAmTzlJ08eEeQDqfhG2yxg6HURrDgCK3KVKa1wx/WbH4CNhmrUgEAnr34iSUot06hixPJAyB3/8ASTdipgAgYwcnAGOP2zLBiOhxLNY7/cxPvMhop4y+I2BPQqv6ds2KdTqaNKzAEVsHewA9N6oPTnuJzOla2u4qnZ+iUmokwQHEdVcz0Jf6YvbcyanStSqktdufCY8GTbvBPhxj2z0D+x+yKlqLUJ5LgAaj5i31YX1HZnO/cDjjbidFtblm1pcrGVGfT38clhniFaAcmKS6gST7R0D6A1fva7UuVijVlsEK20g7lU5Eg00WrvxZVp9RamcbkqdlJHBwQCJyh8RwQo7GLqEWykhu/g/siS7TamuytH096NYfQrVOrOe5QRk/STC6TXIAPktZ/wD57OP/AGxDIJdHe2iu5BKdGXvHf7+6elVtU+Cj5Vuc5/A9xnnK1Watd1VF9mOC1dNjj3EqMZjqDUaa6utqdSjOfTWarAz467VIyfpLDIa7UltPapGSD4x9rnu27vtHh3+2I7W1Fhy+k1oCj/8AWt/9MSrqVK1tsuVLDiux62Wtz3K5GD0kgyycEcidTFEGR3ZEldHlu7c+qSMexKjImXcDxkH2cR5+0309gqzvJXPqY+n3x07a0Z26AZmCoc3tZc3V249wmbHr2Kq188VTtb2X8T0bs+xv9o1NnOQB+OfgI1UX1Lm0tt5PvwPCOXr5GmpoH3MN7+89BHaV8tPbiZR525bfqL6PWlJOfTu/TJlGGcd8h6VKoo986XKc/GaMnzvZTtziR+zP0mksSQdiYMyQTEDOF5gRt48ZY2hVwFwe/wAZ2qxawSRlvCDZwUkctx75TaWO0DmNs7OeT9O6PmzC7FG0eJ/Wb3nu9kGhGesttMIc98GiR0T1VarTtb9i3Vs/+UOCfwnu9jLVfqxYyV2WOGquso+YTYWJOEyAdy4w3hPnaajS9udpaWsVV3k1r9qWIloX2L5itgewcT27O6tvWmm1dJPS9NlDnDNJxPk9lrw47RuqUpQaSBxgbsr0HxOPDMT151enOf7vR6ZvcbXJP/HunmC9u9pmzzTqX3bSoGE8sKcZHl7fL8BztzFrdv8AaYwRqSMZ4FdQU5/MoTDezIOJ9D57n7HM10vVlJJVzjLanPk6a/BstX2avaOm0W28JatV/l1lCRYRYWPrBwvTAyJNdgm3+wKzWmodvPt407VpZjzG8bSFx3zBr/U2s+XKWLXZYN/l3EbWr3rtOEQKpwCcZ8TPPt7pwtlijuWxgPgDPm7t67lnZJrU23Ocy+OOhyeT3bV6C6ztfshvPusYFrXp1DVF6ETaWOa8A5OF8eehkn2b2ldq+3u0qRcbNPVX+7TgqGUorEEDv3eM+ca2fJbzLAx4LB2DEeIJznHshzVuKMydBlWK5+BnGUZPedBrKx2BXbdbquz69MTXvp8sG87sZQMjE5PXgerPMl9VpbdZ2x2PdVl66aGtd3IDbWHpJHGWY9cCfPmmrNgHmM7IOiFjt+gziabTarV6E2fLWgebX5beZuswOfsO709ZcEPcNKnara7tLz9/yzLjSgsmPEcAHcM/zSA0mnst7B7OQdn068qDmu2xawnLjcCwIJ8PrPNdHq9fo3FlOqdn2lWFzPahzg5Cs3B46xinS+n1WW5ySdtjqvJzwAcCQGx7R0Y0es26Kj0rpfmNVp0sBFOD9y7j1Iz6R1xnEbrdbEV15DAEe4zODQhctTY9LMro7fcXSwYYEnnkeM0lNYrRUHRQAPpBlkmg4isCML0isYAJPQDJg5mN7d1OypaVPLcn3R/sXTrYageirvPtx/1nnvaWqOo1Dv7cD2ATddn3PXQBtNa2KF80/qgfwMwz0zFHHWEaK275jVN3Dx9gi5iCQVORiMVabyC75Dhhww6e+QxDK55OO6RHA2FbgDk9JFazWLXgLhievukJrNWaVXxJH6JkX1TNk+Jhs0siN9RpT0uT4mQ1t1J6OpmShIagly9Z/WEayn5h+MjYQWCQyv5hLbk7xI2EhSSyn5hO5X8wlNNo9Tq2IoqezHXaOF/zN9q/UiSNnY3aFSljp2YDk+WyW4HeRWzED3zcOJhx6wIGB5X51/GPr5HjYv4zPQmZBrA2mH+ov4xQH03+Kn/H0mLhEg3Qs0vjakT2fKv0uQTGwiSkwzLWfS6t7RLCxW+5hIWESSDYLqKQPvUR9dVT+dfjMRHAJqSM9CTVUf4ifGSaarT/AOKnxnm6rF6rEkPS01en/wAVPjJBdXp/8VPjPNESL1WSSQekjVaf/FT4xD2hrF+WZKW3s/Hp5wPGZJVisCJJBjfl72Yfu3xnumpo1/aVG1FTKL0BrB/HrJECOSSa5RpNJ2v5p23VvSSME4yh9+OQPePrFlz6VvtsUH35H/iY+VzEmYJTU01akZ81VKA456+6ZXUUNhdmD34klulN0y8m1g8khCEoCEIQUJJaHSnWamqgHbvb1N+VQCzN/wBqgmRs1HYbAa+tTgeYltS/5rK2VfixA+s3VJ2qnhNpP6mjcvaofTaSlRWltq1Uoc7V3EDfYRyzc5Zup8OJN6js+/Ro9o1GmZqt2VTzg/7tkV8EqBlS6+PjMdqmtou02orr3/L2eaQeB6CpwfHw8JrtT21f2lWa/lK9KjhS78G1y21nUcelWZRkn1EAT9Xu27mvcLZ2U67a0wlVaY6tto9dndX014x0MR2zpVsq+cUBXDhLwBgPuzttwOAxIKv3nB6kzOdm9k63tZ3TS17zWoZiWVQATgcsQMnwHsM2+vYJ2dqM/wCq9VS+1g3mH4BefeJsezu0uxuw6NLpBqXexnS6+7T7GqLnjZY5P92vcozgZ8Z8XvqU2+4uq4WHHo2uDhuJKzg8X0nZOs1rahaqwTplLXbmVdgXOepHcendDs7snWdqtYulQOa1DPl1QAHpyxE9sqfsxf7cVO0NJUdc+K3Lgja6ZY8EfrWOPeIh7D/s/srT9o1fP6C2y0oitaSKXUJk7lB3FfWynB5InyzgeaXf032rRdRS9A3aglaiLK2ViBkjcGwOOeccR+/+l+1dMFNlKDfYlS4uqJL2MFUYDZ6n6T2JO1Oyjr+zx83p0XR6e4sKzs0osYKiird44L+JwsiX1OgbtTRXWajskKt1trvpwVckISptdmOfUR7zKDzLVf0v2vo6mus0+UX7illbke0hWJx38cRf/wDR3bWM+TX/AM6r/wBU3HafbWg/s7X26BkF+stNWoWy1jYUGU8ypCcEFcYxjAPsmT7V1tC9g9l6Om9LHybbgjZKMQTtfHQ5cjHsgEC/9NdqV10WNUm2960r/e1ks1v2jAPHtz08YjPZGtTXfIGr/aMgbAQRyN27d0245J6Cev6HXdnVVdhadtVQFoFmovO8YSzyztVj+bfYeP5ZL6T+o+ytRq6biK6tQ6PXfa+VWuqtmKKrHgmwkHjw69JSHkJ7D19aXu1abdPYtVhFinDttwo59X3r08TO6ns7UaG9dPcoFjBSFVg33HA5HeZ6ZX2jorNNQraioNqe021N4Lj0VrY1i7+7ISsfWc1iaG/tavXHtHSuhuq/dg8qla+LbsYyvd4wDB36C/R3jT2qBYduFDBvuOByO+Ti9i646g6cVA2KoZvUu1Q2cbm6AnHTrNNql0V3aya09oaV0N1R8sHlVrXxbdjqvd1MWHtHSa3+1NO2pXTm+0eVefsetVRcbuOPSfEZDcSAyV/ZWs0r1JZWP3zBK2Vgysx6DPgffHx2XrPmG0/lgWInmEFlA2d4bODzNRp9XoNP/Z+hXUramnsa6y9vTWGCvtRSf5m4x0Ai89u6W/S6ywlE1Ci6mv8ANYhJ8sr3g8E+0GAeYAwzGF4AEMyAcJjRMoTGSYBctG90aJjeYB5zCEIKEIQgoSwJUggkEcgjqDKwgp6VR2xp9So+aJpu/WtCFqrP5mVfUjn9baGUnnAi59b2fWMtqhZ/LTXYWP1sWtR9T9J5PCfWp3/cUrpVljCbSbX5/idluXSiSd7Q7QbXOvp8uqsEV1g5256sx43O36zYHQAAASChCfLbdm23LeW2cQhCEyAhCEAIQhKZLCL0keIsUwCVTEkFAkUhi9WghKKBFQxI5WikNAFoxL8RHult0EFe6V3RLuhmAPExomUzKZgh0mUhOQDAQhCQ2EIQgBCEINBCEIAQhCAEIQlAQhCCBCEJSBHVMahBCSVouVpDqYsVoBMK0UhpEq0VBoISO6W3REDL5ggrzO5ifMtmAP5hG5eCFpydnYB59CEJk6BCEIAQhCCyEIQgSEIQgBCEJSBCEJQEIQggQhCAdihTE0uJSEkpioGRymKwYILgY6DEgMeBgCkGORgR0QQeEcEaEdEAcnZWWgh59CEJk6BCEIAQhCAEIQgBCEJQEIQgBCEIAQhCAEIQgBOichBkVLFYiJYqEAViPiJRHxBBSI8InEeEEFAjojIjwgDktOS0EPPYQhB2CEIQAhCEAIQhACEIQAhCEAIQhBAhCEAIQhBAhCEpB8RSIlEUCAKhHxEwj4ggpEUCJhFAggoEeEZEfEAcl5WWgh55CEJDsEIQgBCEIAQhCAEIQgBCEIAQhCCBCEIAQhCDIQhCUDoigROIoEAUCKBEwikQQfEUiJxFAggoEfEZEeEAeEvKCXgh/9k=",
+ "targets": {
+  "tiktok": {
+   "hook": "Грабитель против курьера",
+   "hook_style": "conflict",
+   "caption": "доставка в сша: обещали чаевые, а тут грабитель врывается! 😂",
+   "hashtags": [
+    "#доставка",
+    "#чaевые",
+    "#грабёж",
+    "#курьер",
+    "#америка"
+   ],
+   "hook_alts": [
+    "Грабитель против курьера",
+    "Чаевые обещали, а потом…",
+    "$200 за доставку",
+    "Медицинская тоже есть"
+   ],
+   "asset": "2907089925_9786_tiktok.mp4",
+   "size": 17620175,
+   "duration": 34.7,
+   "variant": {
+    "hook_style": "conflict",
+    "cold_open": true
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "expired",
+   "comment": "Бывали в похожих ситуациях с грабителями?",
+   "cover_ms": 600
+  },
+  "instagram": {
+   "hook": "$200 за доставку",
+   "hook_style": "number",
+   "caption": "Обещали чаевые, а грабитель решил присоединиться. Как бы вы отреагировали?",
+   "hashtags": [
+    "#доставка",
+    "#чaевые",
+    "#грабёж",
+    "#курьер",
+    "#лосанджелес"
+   ],
+   "hook_alts": [
+    "$200 за доставку",
+    "Чаевые обещали, а потом…",
+    "Грабитель против курьера",
+    "Медицинская тоже есть"
+   ],
+   "asset": "2907089925_9786_instagram.mp4",
+   "size": 16344300,
+   "duration": 32.2,
+   "variant": {
+    "hook_style": "number",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "used",
+   "comment": "Бывали в похожих ситуациях с грабителями?",
+   "cover_ms": 600
+  },
+  "youtube": {
+   "hook": "Чаевые обещали, а потом…",
+   "hook_style": "tease",
+   "title": "200$ за доставку и грабитель в ЛА: реальная история",
+   "description": "Начало о чаевых и страховке, а потом неожиданный грабёж. Смотрите, как всё разворачивается\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "доставка",
+    "чaевые",
+    "грабёж",
+    "Лос-Анджелес",
+    "курьер",
+    "америка",
+    "история",
+    "страховка"
+   ],
+   "caption": "200$ за доставку и грабитель в ЛА: реальная история",
+   "hook_alts": [
+    "Чаевые обещали, а потом…",
+    "Грабитель против курьера",
+    "$200 за доставку",
+    "Медицинская тоже есть"
+   ],
+   "asset": "2907089925_9786_youtube.mp4",
+   "size": 16275904,
+   "duration": 32.2,
+   "variant": {
+    "hook_style": "tease",
+    "cold_open": false
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "used",
+   "comment": "Бывали в похожих ситуациях с грабителями?",
+   "cover_ms": 600
+  }
+ },
+ "posts": {
+  "youtube": {
+   "status": "posted",
+   "video_id": "nviqXsfeUaw",
+   "url": "https://youtube.com/shorts/nviqXsfeUaw",
+   "privacy": "public",
+   "account": "yt_main",
+   "posted_at": "2026-10-23T19:06:52Z",
+   "reason": "лучший час по плану",
+   "why": []
+  },
+  "instagram": {
+   "status": "posted",
+   "video_id": "18082675640348026",
+   "url": "https://www.instagram.com/reel/De9W7ZUEdCU/",
+   "privacy": "public",
+   "account": "ig_main",
+   "posted_at": "2026-10-26T13:11:24Z",
+   "reason": "прошло время между постами",
+   "why": []
+  }
+ },
+ "created_at": "2026-10-23T05:23:13Z",
+ "live_when_made": false,
+ "uid": "763b4183"
+}

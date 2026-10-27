@@ -1,0 +1,25 @@
+{
+ "state": "idle",
+ "stage": "Готово, жду новые куски",
+ "vod_id": "2911545684",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "chunk": "3:58:00–4:13:32",
+ "progress": null,
+ "updated_at": "2026-10-27T06:52:17Z",
+ "detail": "обработано кусков: 5",
+ "stage_id": "video",
+ "funnel": {
+  "peaks": 3,
+  "scout": 1,
+  "candidates": 3,
+  "text_pass": 0,
+  "video_checked": 0,
+  "video_pass": 0,
+  "made": 0,
+  "asr": {
+   "gemini": 2,
+   "cloud_fail": 1,
+   "whisper": 1
+  }
+ }
+}

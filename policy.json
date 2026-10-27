@@ -1,0 +1,357 @@
+{
+ "version": 1,
+ "updated_at": "2026-10-27T05:29:23Z",
+ "frozen": true,
+ "pins": {},
+ "paused": {},
+ "arms": {
+  "instagram": {
+   "hook_style": {
+    "tease": 0.25,
+    "conflict": 0.25,
+    "number": 0.25,
+    "quote": 0.25
+   },
+   "cold_open": {
+    "True": 0.5,
+    "False": 0.5
+   },
+   "subtitles": {
+    "ru": 0.5,
+    "both": 0.5
+   },
+   "progress_bar": {
+    "False": 0.5,
+    "True": 0.5
+   }
+  },
+  "tiktok": {
+   "hook_style": {
+    "tease": 0.25,
+    "conflict": 0.25,
+    "number": 0.25,
+    "quote": 0.25
+   },
+   "cold_open": {
+    "True": 0.5,
+    "False": 0.5
+   },
+   "subtitles": {
+    "ru": 0.5,
+    "both": 0.5
+   },
+   "progress_bar": {
+    "False": 0.5,
+    "True": 0.5
+   }
+  },
+  "youtube": {
+   "hook_style": {
+    "tease": 0.25,
+    "conflict": 0.25,
+    "number": 0.25,
+    "quote": 0.25
+   },
+   "cold_open": {
+    "True": 0.5,
+    "False": 0.5
+   },
+   "subtitles": {
+    "ru": 0.5,
+    "both": 0.5
+   },
+   "progress_bar": {
+    "False": 0.5,
+    "True": 0.5
+   }
+  }
+ },
+ "boosts": {},
+ "hours": {
+  "instagram": [
+   0.25,
+   0.15,
+   0.08,
+   0.05,
+   0.05,
+   0.08,
+   0.2,
+   0.45,
+   0.6,
+   0.55,
+   0.5,
+   0.55,
+   0.7,
+   0.75,
+   0.65,
+   0.6,
+   0.65,
+   0.75,
+   0.9,
+   1.0,
+   1.0,
+   0.95,
+   0.8,
+   0.5
+  ],
+  "tiktok": [
+   0.25,
+   0.15,
+   0.08,
+   0.05,
+   0.05,
+   0.08,
+   0.2,
+   0.45,
+   0.6,
+   0.55,
+   0.5,
+   0.55,
+   0.7,
+   0.75,
+   0.65,
+   0.6,
+   0.65,
+   0.75,
+   0.9,
+   1.0,
+   1.0,
+   0.95,
+   0.8,
+   0.5
+  ],
+  "youtube": [
+   0.25,
+   0.15,
+   0.08,
+   0.05,
+   0.05,
+   0.08,
+   0.2,
+   0.45,
+   0.6,
+   0.55,
+   0.5,
+   0.55,
+   0.7,
+   0.75,
+   0.65,
+   0.6,
+   0.65,
+   0.75,
+   0.9,
+   1.0,
+   1.0,
+   0.95,
+   0.8,
+   0.5
+  ]
+ },
+ "caps": {
+  "tt_main": {
+   "cap": 6,
+   "since": "2026-10-20T07:53:43Z",
+   "levels": {}
+  },
+  "yt_main": {
+   "cap": 4,
+   "since": "2026-10-20T07:53:43Z",
+   "levels": {}
+  },
+  "ig_main": {
+   "cap": 3,
+   "since": "2026-10-20T07:53:43Z",
+   "levels": {}
+  }
+ },
+ "warmup": {},
+ "hints": {},
+ "last_change": {},
+ "stats": {
+  "rows": 30,
+  "with_residual": 26,
+  "noise": 1.402
+ },
+ "evidence": {
+  "instagram": {
+   "hook_style": {
+    "tease": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "conflict": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "number": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "quote": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "cold_open": {
+    "True": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "False": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "subtitles": {
+    "ru": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "both": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "progress_bar": {
+    "False": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "True": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   }
+  },
+  "tiktok": {
+   "hook_style": {
+    "tease": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "conflict": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "number": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "quote": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "cold_open": {
+    "True": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "False": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "subtitles": {
+    "ru": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "both": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "progress_bar": {
+    "False": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "True": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   }
+  },
+  "youtube": {
+   "hook_style": {
+    "tease": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "conflict": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "number": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "quote": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "cold_open": {
+    "True": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "False": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "subtitles": {
+    "ru": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "both": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   },
+   "progress_bar": {
+    "False": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    },
+    "True": {
+     "n": 0,
+     "mean": 0.0,
+     "sd": 0.25
+    }
+   }
+  }
+ }
+}

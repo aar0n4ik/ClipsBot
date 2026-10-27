@@ -1,0 +1,203 @@
+{
+ "id": "2911545684_5834",
+ "vod_id": "2911545684",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 5834.1,
+ "duration": 12.7,
+ "span": 37.7,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 7,
+  "clarity": 7,
+  "emotion": 7,
+  "rewatch": 5
+ },
+ "category": "funny",
+ "risk": {
+  "level": 1,
+  "flags": [
+   "heavy_profanity",
+   "music"
+  ]
+ },
+ "why": "Стример возмущается, что чат не сказал ему про повернутую камеру, и читает отговорку зрителей.",
+ "what": "Стример замечает, что камера телефона была повернута вверх и снимала крышу машины, пока чат молча наблюдал. Стример возмущается, а зрители отвечают, что думали, так и задумано.",
+ "overlay": "Чат забыл сказать про камеру",
+ "signal": 0.0,
+ "breakdown": {
+  "chat": 0,
+  "keywords": 0,
+  "spam_wave": 0,
+  "audio": 0,
+  "viewer_clips": 0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.778,
+   "stability": 0.596,
+   "tonal": 0.0,
+   "beat": 0.146
+  },
+  "action": "flag",
+  "reason": "в фоне слышна музыка — звук оставлен как есть, клип помечен"
+ },
+ "brain": {
+  "text": {
+   "score": 6,
+   "hook": 7,
+   "payoff": 6,
+   "clarity": 7,
+   "emotion": 6,
+   "rewatch": 4,
+   "why": "Смешная завязка с повернутой в потолок камерой и шуткой про Трампа, но в середине провал по динамике почти на 20 секунд.",
+   "category": "funny"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 7,
+    "payoff": 7,
+    "clarity": 7,
+    "emotion": 7,
+    "rewatch": 5
+   },
+   "what_happens": "Стример замечает, что камера телефона была повернута вверх и снимала крышу машины, пока чат молча наблюдал. Стример возмущается, а зрители отвечают, что думали, так и задумано.",
+   "moment": "Стример возмущается, что чат не сказал ему про повернутую камеру, и читает отговорку зрителей.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 79.4,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "proofread": [
+   "видите, → видели,",
+   "я → у меня"
+  ],
+  "length": null,
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 4,
+  "trimmed_s": 25.1
+ },
+ "transcript": "А хули вы не говори- Блядь, а хули вы не говорите, что что камера, блядь, перевёрнута, ёпта? Мы думали, так надо? Что надо? Мы думали, так надо, пишут. Чтобы вы меня не видели, а я просто типа в АФК?",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Чат забыл сказать про камеру",
+   "hook_style": "conflict",
+   "caption": "Стример не заметил перевернутую камеру, а чат просто молча смотрел на крышу #стример #irl #юмор #нарезка",
+   "hashtags": [
+    "#стример",
+    "#irl",
+    "#юмор",
+    "#нарезка",
+    "#прикол"
+   ],
+   "hook_alts": [
+    "Чат забыл сказать про камеру",
+    "Чат полчаса смотрел на крышу",
+    "А вы не говорите",
+    "Чат 10 минут молчал про камеру"
+   ],
+   "asset": "2911545684_5834.mp4",
+   "size": 12583718,
+   "duration": 12.7,
+   "variant": {
+    "hook_style": "conflict"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Вы бы сразу сказали в чате или тоже молча смотрели?",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Чат забыл сказать про камеру",
+   "hook_style": "conflict",
+   "caption": "Чат решил не предупреждать стримера про повернутую камеру 😅 Признавайтесь, вы бы сказали?",
+   "hashtags": [
+    "#стример",
+    "#irl",
+    "#юмор",
+    "#прикол",
+    "#нарезка"
+   ],
+   "hook_alts": [
+    "Чат забыл сказать про камеру",
+    "Чат полчаса смотрел на крышу",
+    "А вы не говорите",
+    "Чат 10 минут молчал про камеру"
+   ],
+   "asset": "2911545684_5834.mp4",
+   "size": 12583718,
+   "duration": 12.7,
+   "variant": {
+    "hook_style": "conflict"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Вы бы сразу сказали в чате или тоже молча смотрели?",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Чат забыл сказать про камеру",
+   "hook_style": "conflict",
+   "title": "Чат полчаса молча смотрел на крышу машины",
+   "description": "Стример случайно направил камеру в потолок и долго не замечал этого, пока чат молча наблюдал\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "стример",
+    "irl",
+    "юмор",
+    "прикол",
+    "нарезка",
+    "чат"
+   ],
+   "caption": "Чат полчаса молча смотрел на крышу машины",
+   "hook_alts": [
+    "Чат забыл сказать про камеру",
+    "Чат полчаса смотрел на крышу",
+    "А вы не говорите",
+    "Чат 10 минут молчал про камеру"
+   ],
+   "asset": "2911545684_5834.mp4",
+   "size": 12583718,
+   "duration": 12.7,
+   "variant": {
+    "hook_style": "conflict"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Вы бы сразу сказали в чате или тоже молча смотрели?",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-27T06:36:05Z",
+ "live_when_made": false,
+ "fresh": false,
+ "uid": "0f14b1bb",
+ "asset": "2911545684_5834.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2911545684?t=1h37m14s"
+}
