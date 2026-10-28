@@ -1,0 +1,201 @@
+{
+ "id": "2912272303_16500",
+ "vod_id": "2912272303",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 16500.3,
+ "duration": 34.0,
+ "span": 38.5,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 8,
+  "clarity": 8,
+  "emotion": 7,
+  "rewatch": 6
+ },
+ "category": "funny",
+ "risk": {
+  "level": 0,
+  "flags": []
+ },
+ "why": "Стример в маске Бэтмена заявляет, что философствует о богатстве как Брюс Уэйн.",
+ "what": "Стример в маске Бэтмена за рулём Теслы рассуждает о том, что богатство и дорогие покупки перестают приносить удовольствие, завершая монолог шуткой.",
+ "overlay": "Айфон каждый год и Ролексы",
+ "signal": 18.46,
+ "breakdown": {
+  "chat": 8.0,
+  "keywords": 8.0,
+  "spam_wave": 0.0,
+  "audio": 0.1,
+  "viewer_clips": 0.0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.285,
+   "stability": 0.352,
+   "tonal": 0.0,
+   "beat": 0.072
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "brain": {
+  "text": {
+   "score": 7,
+   "hook": 7,
+   "payoff": 8,
+   "clarity": 9,
+   "emotion": 7,
+   "rewatch": 6,
+   "why": "Стример в костюме Бэтмена философствует о богатстве и вреде шопоголизма, завершая панчлайном «Я вам как Брюс Уэйн это говорю». Смешной визуальный контраст и сильная концовка.",
+   "category": "funny"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 7,
+    "payoff": 8,
+    "clarity": 8,
+    "emotion": 7,
+    "rewatch": 6
+   },
+   "what_happens": "Стример в маске Бэтмена за рулём Теслы рассуждает о том, что богатство и дорогие покупки перестают приносить удовольствие, завершая монолог шуткой.",
+   "moment": "Стример в маске Бэтмена заявляет, что философствует о богатстве как Брюс Уэйн.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 66.7,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "proofread": [
+   "Rolex → роликсы"
+  ],
+  "length": null,
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 2,
+  "trimmed_s": 4.5
+ },
+ "transcript": "понял? Просто мне реально перестало быть интересно. Мне не интересно покупать там какие-то Роликсы дорогие, но мне это Я могу это покупать, могу там айфоны каждый год менять, но мне просто это перестало быть интересно и всё. Просто это всё классно, тебя привлекает, пока ты без денег. Когда у тебя появляются хоть какие-то деньги и появляется возможность это всё покупать, каким-то волшебным образом это всё перестаёт тебе приносить удовольствие, пацаны, я вам клянусь. Это перестаёт тебе приносить удовольствие и тебе это перестаёт быть интересно всё. Вот так. Я вам как Брюс Уэйн это говорю. А не как Альберт Ван Миллер.",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Айфон каждый год и Ролексы",
+   "hook_style": "number",
+   "caption": "Бэтмен за рулём Теслы делится мудростью о богатстве и покупках",
+   "hashtags": [
+    "#бэтмен",
+    "#тесла",
+    "#жиза",
+    "#философия",
+    "#юмор"
+   ],
+   "hook_alts": [
+    "Айфон каждый год и Ролексы",
+    "Когда разбогател и потерял вкус",
+    "Почему дорогие вещи не радуют",
+    "Я вам как Брюс Уэйн говорю"
+   ],
+   "asset": "2912272303_16500.mp4",
+   "size": 29988439,
+   "duration": 34.0,
+   "variant": {
+    "hook_style": "number"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Брюс Уэйн уже не тот",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Айфон каждый год и Ролексы",
+   "hook_style": "number",
+   "caption": "Когда разбогател и потерял вкус",
+   "hashtags": [
+    "#бэтмен",
+    "#жиза",
+    "#мысли",
+    "#тесла",
+    "#юмор"
+   ],
+   "hook_alts": [
+    "Айфон каждый год и Ролексы",
+    "Когда разбогател и потерял вкус",
+    "Почему дорогие вещи не радуют",
+    "Я вам как Брюс Уэйн говорю"
+   ],
+   "asset": "2912272303_16500.mp4",
+   "size": 29988439,
+   "duration": 34.0,
+   "variant": {
+    "hook_style": "number"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Брюс Уэйн уже не тот",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Айфон каждый год и Ролексы",
+   "hook_style": "number",
+   "title": "Бэтмен за рулём Теслы объяснил смысл богатства",
+   "description": "Стример в маске Бэтмена за рулём рассуждает о том, почему дорогие вещи перестают приносить радость\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "бэтмен",
+    "тесла",
+    "жиза",
+    "юмор",
+    "философия",
+    "брюс уэйн"
+   ],
+   "caption": "Бэтмен за рулём Теслы объяснил смысл богатства",
+   "hook_alts": [
+    "Айфон каждый год и Ролексы",
+    "Когда разбогател и потерял вкус",
+    "Почему дорогие вещи не радуют",
+    "Я вам как Брюс Уэйн говорю"
+   ],
+   "asset": "2912272303_16500.mp4",
+   "size": 29988439,
+   "duration": 34.0,
+   "variant": {
+    "hook_style": "number"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Брюс Уэйн уже не тот",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-28T02:51:31Z",
+ "live_when_made": false,
+ "shelf": "forever",
+ "expires_at": null,
+ "fresh": false,
+ "uid": "8d9ac7f5",
+ "asset": "2912272303_16500.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2912272303?t=4h35m0s"
+}
