@@ -375,7 +375,10 @@ def cmd_post(cfg: dict, store: Store, force: bool = False, reset: bool = False):
                   or bool(seen and (now - parse_iso(seen)).total_seconds() < 36 * 3600)
                   or fresh_material)
     base = daymax if stream_day else min(daymax, int(posting.get("offday_max", 2)))
-    cap = min(hard, base + (1 if waves else 0))
+    exc = int((cfg.get("quality") or {}).get("exceptional", 9))
+    epic = any(int(c.get("score", 0)) >= exc and c.get("status") not in ("broken", "skipped", "expired")
+               and not any(p.get("status") in RELEASED for p in c["posts"].values()) for c in queue)
+    cap = min(hard, base + (1 if (waves or epic) else 0))   # +1 слот: волна просмотров или суперклип в очереди
     weights = learn.get(policy, "hours.youtube") or learn.get(policy, "hours.tiktok") or learn.PRIOR_HOURS
     sch = pstate.get("schedule") or {}
     if reset:      # все слоты дня считаются наступившими: лимит открыт заново с этой минуты

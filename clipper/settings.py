@@ -36,7 +36,7 @@ SCHEMA = {
     "quality.reserve_target": (8, (0, 60), "quality.reserve_target"),   # с этого размера банка планка отбора +1
     "quality.reserve_max": (16, (1, 120), "quality.reserve_max"),       # выше — +2: монтируем только сильнее лежащего
     # публикация
-    "posting.daily_max": (4, (0, 12), "posting.daily_max"),        # релизов в сутки в день с эфиром (одинаково на всех площадках)
+    "posting.daily_max": (5, (0, 12), "posting.daily_max"),        # релизов в сутки в день с эфиром (одинаково на всех площадках)
     "posting.offday_max": (2, (0, 12), "posting.offday_max"),      # в день без эфира — из запаса, но меньше
     "posting.daily_min": (1, (0, 6), "posting.daily_min"),         # если есть хоть что-то достойное — хотя бы столько
     "posting.min_gap_minutes": (120, (20, 600), "posting.min_gap_minutes"),
