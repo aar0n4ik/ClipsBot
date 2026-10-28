@@ -833,7 +833,10 @@ def test_late_runner_does_not_lose_slot_and_long_clips_fit_limits():
     assert kept_len(0, e, cuts) == 60 and (95, 99) not in cuts
     import inspect
     from clipper import render
-    assert "0.88 * 95" in inspect.getsource(render.render_clip)                       # битрейт под длину ролика
+    src = inspect.getsource(render.render_clip)
+    assert "0.88 * 95" not in src                      # потолка «под 95 МБ» больше нет: он душил качество
+    assert '"-crf", "18"' in src                       # качество задаёт только CRF — одинаковое от начала до конца
+    assert "loudnorm" not in src.split("if meas is None")[1].split("else")[1]   # в основном тракте — ровное усиление
     assert render.SUB_MAX_W <= 760                                                    # не под кнопками TikTok
 
 

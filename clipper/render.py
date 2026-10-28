@@ -20,7 +20,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .config import FONTS_DIR
-from .util import ffprobe_json, run
+from .util import ffprobe_json, log, run
 
 W, H = 1080, 1920
 TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 300, 860, (64, 60, 56, 52, 48)
@@ -403,7 +403,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         from .framing import static_crop
         keys = static_crop(src, segments[0][0], segments[-1][1], crop_frac) if cl.get("follow_subject", False) else None
     from .framing import x_expr
-    fc = []
+    fc, a_parts = [], []
     audio = has_audio or audio_override is not None
     # каждый кусок — отдельный вход (-ss/-t): ffmpeg не копит кадры одного куска, пока ждёт очереди
     inputs, seg_in = [], []
@@ -426,9 +426,14 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
                   f"scale={fw}:{fh},setsar=1,format=yuv420p[v{i}]")
         if audio and ai is not None:
             d = b - a
-            fade = f",afade=t=in:d=0.025,afade=t=out:st={max(0.0, d - 0.04):.3f}:d=0.04" if n_seg > 1 and d > 0.3 else ""
-            fc.append(f"[{ai}:a]asetpts=PTS-STARTPTS{fade}[a{i}]")
+            # микро-фейды на КАЖДОМ куске: срез посреди волны даёт щелчок в первом же кадре
+            fade = f",afade=t=in:d=0.02,afade=t=out:st={max(0.0, d - 0.04):.3f}:d=0.04" if d > 0.3 else ""
+            seg_a = f"[{ai}:a]asetpts=PTS-STARTPTS{fade}[a{i}]"
+            fc.append(seg_a)
+            a_parts.append(seg_a)
     n = len(segments)
+    # тот же звуковой тракт, но отдельным выходом — для прохода замера громкости (видео не трогаем)
+    a_concat = "".join(f"[a{i}]" for i in range(n)) + f"concat=n={n}:v=0:a=1[acm]"
     fc.append("".join(f"[v{i}]" + (f"[a{i}]" if audio else "") for i in range(n))
               + f"concat=n={n}:v=1:a={1 if audio else 0}[fgc]" + ("[ac]" if audio else ""))
     fc.append("[fgc]split=2[ba][fg]")
@@ -448,7 +453,19 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         last = "vb"
     fc.append(f"[{last}]ass={ass.name}:fontsdir={FONTS_DIR.as_posix()},format=yuv420p[vout]")
     if audio:
-        fc.append("[ac]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=44100[aout]")
+        # Однопроходный loudnorm — ДИНАМИЧЕСКИЙ: первые ~1 с он задирает уровень, потом проваливает его
+        # на несколько дБ и выползает обратно только к 5-8 с. Клип всегда начинается с середины фразы,
+        # поэтому вся эта раскачка приходилась ровно на начало ролика (звук «пропадал и дёргался»).
+        # Меряем громкость отдельным проходом и накладываем ПОСТОЯННОЕ усиление: динамика оригинала
+        # сохраняется кадр в кадр, целевая громкость попадает точно, раскачки нет.
+        meas = measure_lufs(inputs, ";".join(a_parts + [a_concat]), "acm")
+        if meas is None:
+            fc.append("[ac]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[aout]")
+        else:
+            gain = max(-12.0, min(25.0, TARGET_LUFS - meas))
+            log(f"громкость: {meas:.1f} LUFS → {gain:+.1f} дБ (цель {TARGET_LUFS:.0f})")
+            fc.append(f"[ac]volume={gain:.2f}dB,alimiter=limit={_LIMIT:.4f}:level=disabled,"
+                      f"aresample=48000[aout]")
 
     cmd = ["ffmpeg", "-v", "error", "-y"]
     for inp in inputs:
@@ -458,10 +475,14 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     cmd += ["-filter_complex", ";".join(fc), "-map", "[vout]"]
     if audio:
         cmd += ["-map", "[aout]", "-c:a", "aac", "-b:a", "192k"]
-    # битрейт под длину: файл должен влезть в самый строгий лимит площадок (Instagram ~100 МБ) с запасом
-    vmax = int(max(2.5e6, min(14e6, 0.88 * 95 * 1024 * 1024 * 8 / max(dur, 1.0) - 220e3)))
-    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-maxrate", str(vmax),
-            "-bufsize", str(vmax * 2), "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
+    # Потолок битрейта раньше считался из «лимита площадок ~95 МБ». Такого лимита нет: TikTok грузит
+    # чанками (>64 МБ — норма), YouTube и Instagram — возобновляемой загрузкой на гигабайты. Зато на
+    # длинных клипах формула опускала потолок до 3-4 Мбит/с, и как только в кадре начиналось движение,
+    # CRF 18 упирался в него и качество проседало на ~5 дБ PSNR — ровно то «мыло ближе к концу».
+    # Теперь качество задаёт только CRF, а maxrate остаётся страховкой от патологий и никогда не мешает.
+    cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+            "-maxrate", "20M", "-bufsize", "40M",
+            "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
     prev = os.getcwd()
     os.chdir(work)  # ass-фильтр читает файл относительно текущей папки
     try:
@@ -469,6 +490,34 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     finally:
         os.chdir(prev)
     return out
+
+
+# ── звук ────────────────────────────────────────────────────────
+TARGET_LUFS = -14.0     # целевая громкость площадок
+TRUE_PEAK_DB = -1.5     # потолок пиков
+_LIMIT = 10 ** (TRUE_PEAK_DB / 20)
+
+
+def measure_lufs(cmd_inputs: list[dict], graph: str, out_pad: str) -> float | None:
+    """Интегральная громкость собранной звуковой дорожки (один дешёвый проход, видео не декодируется)."""
+    cmd = ["ffmpeg", "-hide_banner", "-y"]
+    for inp in cmd_inputs:
+        if inp["ss"] is not None:
+            cmd += ["-ss", f"{inp['ss']:.3f}", "-t", f"{inp['t']:.3f}"]
+        cmd += ["-i", inp["path"]]
+    cmd += ["-filter_complex", graph + f";[{out_pad}]ebur128=framelog=quiet[m]",
+            "-map", "[m]", "-f", "null", "-"]
+    try:
+        r = run(cmd, timeout=900, check=False, quiet=True)
+    except Exception as e:  # noqa: BLE001
+        log(f"громкость: замер не удался ({str(e)[:120]})")
+        return None
+    m = re.findall(r"I:\s*(-?\d+(?:\.\d+)?)\s*LUFS", r.stderr or "")
+    if not m:
+        log("громкость: замер не дал результата")
+        return None
+    v = float(m[-1])
+    return None if v < -60 else v
 
 
 def thumb_b64(video: Path, at: float = 1.0, width: int = 240) -> str:
