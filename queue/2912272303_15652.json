@@ -141,7 +141,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Альберта жалко больше всего в этой истории",
    "cover_ms": 500
   },
@@ -211,9 +211,14 @@
  },
  "posts": {
   "tiktok": {
+   "publish_id": "v_inbox_file~v2.7701574750895982622",
+   "privacy": "DRAFT",
+   "status": "inbox",
+   "video_id": null,
    "account": "tt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T04:44:49Z"
+   "posted_at": "2026-10-28T04:44:49Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   },
   "youtube": {
    "status": "posted",
