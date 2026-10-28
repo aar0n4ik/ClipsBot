@@ -119,7 +119,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Брюс Уэйн уже не тот",
    "cover_ms": 500
   },
@@ -191,11 +191,14 @@
  },
  "posts": {
   "tiktok": {
+   "publish_id": "v_inbox_file~v2.7701776667244496926",
+   "privacy": "DRAFT",
+   "status": "inbox",
+   "video_id": null,
    "account": "tt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T17:47:43Z",
-   "error": "TikTok /v2/post/publish/inbox/video/init/: spam_risk_too_many_pending_share — spam_risk_too_many_pending_share",
-   "last_try": "2026-10-28T17:00:16Z"
+   "posted_at": "2026-10-28T17:47:43Z",
+   "reason": "дотягиваю tiktok: клип уже вышел на других площадках",
+   "by": "синхрон"
   },
   "youtube": {
    "status": "posted",
