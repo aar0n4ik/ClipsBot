@@ -114,7 +114,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "used",
+   "status": "removed_by_user",
    "comment": "Бывали в похожих ситуациях с грабителями?",
    "cover_ms": 600
   },
@@ -168,7 +168,7 @@
    "why": []
   },
   "instagram": {
-   "status": "posted",
+   "status": "removed_by_user",
    "video_id": "18082675640348026",
    "url": "https://www.instagram.com/reel/De9W7ZUEdCU/",
    "privacy": "public",

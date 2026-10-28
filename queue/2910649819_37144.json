@@ -147,7 +147,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "used",
+   "status": "removed_by_user",
    "comment": "А вы бы что ответили на его месте?",
    "cover_ms": 500
   },
@@ -181,7 +181,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "used",
+   "status": "removed_by_user",
    "comment": "А вы бы что ответили на его месте?",
    "cover_ms": 500
   }
@@ -198,7 +198,7 @@
    "by": "ИИ-продюсер"
   },
   "youtube": {
-   "status": "posted",
+   "status": "removed_by_user",
    "video_id": "fgNBg08WWYo",
    "url": "https://youtube.com/shorts/fgNBg08WWYo",
    "privacy": "public",
@@ -208,7 +208,7 @@
    "by": "ИИ-продюсер"
   },
   "instagram": {
-   "status": "posted",
+   "status": "removed_by_user",
    "video_id": "18059762795797890",
    "url": "https://www.instagram.com/reel/DfAWE0fgiVX/",
    "privacy": "public",
