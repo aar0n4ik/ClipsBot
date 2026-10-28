@@ -404,10 +404,10 @@
   "created_at": "2026-10-27T16:37:21Z",
   "duration": 19175,
   "llm": {
-   "usd": 0.3103
+   "usd": 0.3159
   },
-  "processed_until": 18000,
-  "finished": false,
+  "processed_until": 19175,
+  "finished": true,
   "candidate_times": [
    290,
    1022,
@@ -449,10 +449,13 @@
    17647,
    15470.0,
    15663.0,
-   17235.0
+   17235.0,
+   18015,
+   18236,
+   18670
   ],
   "clips": 5,
-  "updated_at": "2026-10-28T02:51:33Z",
+  "updated_at": "2026-10-28T02:52:18Z",
   "gaps": []
  }
 }
