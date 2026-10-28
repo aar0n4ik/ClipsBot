@@ -889,6 +889,10 @@ body{color:#0F172A}
 .pbn .btn{min-height:38px}
 .chip.info{color:var(--k-softink);border-color:transparent;background:var(--k-soft)}
 button.m-next{border:0;cursor:pointer;font-family:inherit}
+button.m-pl{width:100%;text-align:left;border:0;background:none;cursor:pointer;font:inherit;color:inherit}
+button.m-pl:hover .m-pn{text-decoration:underline}
+.clip.flash{animation:clipFlash 1.6s ease-out}
+@keyframes clipFlash{0%{box-shadow:0 0 0 3px rgba(76,141,255,.55)}100%{box-shadow:0 0 0 3px rgba(76,141,255,0)}}
 button.m-next:hover{filter:brightness(.96);text-decoration:underline}
 .pm-list{min-width:300px}
 .pm-sep{height:1px;background:var(--k-line);margin:8px 4px}
@@ -2291,13 +2295,17 @@ function sceneHtml(idx) {
 
   /* 5 · монтаж */
   if (idx === 5) {
-    const c0 = cs.find(c => c.status === "ready") || cs[0];
+    /* показываем именно тот клип, который сейчас в работе: из текущего куска текущей записи */
+    const inWork = cs.find(c => String(c.vod_id || "") === String(P.vod_id || "") && c.vod_time != null
+      && (!r || (c.vod_time >= r.start - 60 && c.vod_time <= r.end + 60)));
+    const c0 = inWork || cs.find(c => c.status === "ready") || cs[0];
     if (!c0) return box("Монтаж клипа", `<div class="s5g"><p class="mute small">Монтировать пока нечего.</p></div>`);
     const b = c0.brain || {}, cuts = +b.cuts || 0, len = Math.round(c0.duration || 0);
     const t0 = c0.vod_time || 0;
     const marks = Array.from({ length: Math.max(1, Math.min(cuts + 1, 7)) });
     return box("Монтаж клипа", `<div class="s5g"><div class="s5t">
       <div class="ph9">${pic(c0)}<div class="cap">${esc(String(c0.overlay || "").slice(0, 60))}</div></div>
+      <div class="s5n mute small">${inWork ? "Монтируется" : "Последний собранный клип"}: «${esc(String(c0.overlay || c0.id).slice(0, 60))}»</div>
       <div class="s5i"><div class="chh">Экспорт</div><dl>
         <dt>Формат</dt><dd>9:16, 1080×1920</dd>
         <dt>Длина</dt><dd>${len ? esc(mmss(len)) : "—"}</dd>
@@ -2436,10 +2444,21 @@ function renderOverview() {
   const toks = D.status.tokens || {};
   const nowH_ = hourIn(tz);
   const nextSlot = (plan.today || []).find(t2 => { const [h2, m2] = t2.split(":").map(Number); return h2 + m2 / 60 > nowH_; });
-  $("connChip").textContent = nextSlot ? `Пост в ${nextSlot}` : `${Object.values(toks).filter(t => t.connected).length} из ${D.accounts.length} подключено`;
-  const byPlat = {};
-  for (const g of Object.values(G)) for (const p of g.posts) byPlat[p.platform] = (byPlat[p.platform] || 0) + (p.views || 0);
+  const nextClip = (D.clips.find(c => c.force_post && clipBucket(c) === "ready") || {}).id || ((plan.up_next || [])[0] || {}).id;
+  $("connChip").textContent = nextClip ? (nextSlot ? `Следующим: пост в ${nextSlot}` : "Следующий клип")
+    : nextSlot ? `Пост в ${nextSlot}` : `${Object.values(toks).filter(t => t.connected).length} из ${D.accounts.length} подключено`;
+  if (nextClip) $("connChip").dataset.jump = nextClip; else delete $("connChip").dataset.jump;
+  const byPlat = {}, earnedBy = {};
+  for (const g of Object.values(G)) {
+    for (const p of g.posts) byPlat[p.platform] = (byPlat[p.platform] || 0) + (p.views || 0);
+    /* платят за клип один раз — по лучшей площадке; так сумма по площадкам = общий доход */
+    if (!g.preexisting && g.best) earnedBy[g.best.platform] = (earnedBy[g.best.platform] || 0) + (g.bestViews || 0);
+  }
   const totalV = Object.values(byPlat).reduce((a, b) => a + b, 0) || 1;
+  /* последний клип, вышедший на площадке, — к нему ведёт клик по строке */
+  const lastOn = {};
+  for (const c of D.clips) for (const [pl, p] of Object.entries(c.posts || {}))
+    if (p.posted_at && (!lastOn[pl] || p.posted_at > lastOn[pl].at)) lastOn[pl] = { at: p.posted_at, id: c.id };
   const PCOL = { tiktok: "#0b0b0d", youtube: "#ff0000", instagram: "#e4405f" };
   $("plats").innerHTML = D.accounts.map(a => {
     const sa = (S.accounts || {})[a.id] || {}, t = toks[a.id] || {}, td = sa.today || {};
@@ -2447,12 +2466,14 @@ function renderOverview() {
     const chip = !t.connected ? `<a class="chip warn" href="connect.html">подключить</a>`
       : sa.state === "готова" ? `<span class="chip good">готова</span>`
       : `<span class="chip warn">${esc((sa.state || "нет данных").split(":")[0])}</span>`;
-    return `<div class="m-pl" style="--c1:${PCOL[a.platform] || "var(--accent)"};--c2:${PCOL[a.platform] || "var(--accent)"}">
+    const earned = earnedBy[a.platform] || 0, jump = lastOn[a.platform];
+    const tag = jump ? ` data-jump="${esc(jump.id)}"` : "";
+    return `<${jump ? "button type=\"button\"" : "div"} class="m-pl"${tag} style="--c1:${PCOL[a.platform] || "var(--accent)"};--c2:${PCOL[a.platform] || "var(--accent)"}">
       <span class="m-pi"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="${PLG[a.platform] || ""}"></use></svg></span>
       <div class="m-pm"><div class="m-pn">${esc(a.name)} ${chip}</div>
-        <small>${fmtInt(v)} просмотров</small>
+        <small>${fmtInt(v)} просмотров${td.drafts ? ` · ${td.drafts} в черновиках` : ""}</small>
         ${sa.last_error ? `<small style="color:var(--bad)">${esc(String(sa.diagnosis || sa.last_error).replace(/\s*\[[^\]]*\]\s*$/, "").slice(0, 90))}</small>` : ""}</div>
-      <b class="m-pinc">${money(v * rate() / 1000)}</b></div>`;
+      <b class="m-pinc" title="Доход клипов, у которых эта площадка — лучшая. Клип оплачивается один раз, поэтому суммы площадок не повторяют друг друга.">${money(earned * rate() / 1000)}</b></${jump ? "button" : "div"}>`;
   }).join("") || `<p class="empty">Площадок пока нет.</p>`;
 
   /* ── топ клипов по деньгам ── */
@@ -2502,6 +2523,12 @@ function clipBucket(c) {
   if (ps.some(p => ["posted", "inbox_stale", "processing", "uploading"].includes(p.status))) return "out";
   return "other";
 }
+/* Какой клип бот поставит следующим: нажатый «Опубликовать сейчас» или первый в очереди плана. */
+function nextUpId() {
+  const forced = D.clips.filter(c => c.force_post && clipBucket(c) === "ready")
+    .sort((a, b) => String(b.force_post).localeCompare(String(a.force_post)))[0];
+  return forced ? forced.id : (((D.status.post || {}).plan || {}).up_next || [])[0]?.id;
+}
 function clipCard(c) {
   const vids = D.settings?.values || {};
   const plats = Object.entries(c.targets || {}).map(([p, t]) => {
@@ -2521,7 +2548,7 @@ function clipCard(c) {
     return `<div class="copyline">${plChip(p)}<span>${esc(txt)}</span><button class="mini" type="button" data-copy="${esc(txt)}">копировать</button></div>`; }).join("");
   return `<article class="clip" id="clip-${esc(c.id)}">${thumbHtml(c.thumb)}<div style="min-width:0">
     <div class="row"><span class="score ${c.score >= 8 ? "hi" : ""}" title="Финальная оценка после просмотра видео">${c.score}/10</span><span class="muted small">${esc(CATS[c.category] || "")} · ${Math.round(c.duration || 0)} с · ${ago(c.created_at)}</span>
-      ${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}${c.force_post ? `<span class="chip acc">выложу при ближайшем запуске</span>` : ""}</div>
+      ${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}${c.force_post ? `<span class="chip acc">выложу при ближайшем запуске</span>` : nextUpId() === c.id ? `<span class="chip acc">следующим в очереди</span>` : ""}</div>
     <div class="hook" style="margin-top:6px">${esc(c.overlay || t0.hook || "")}</div>
     ${c.what ? `<div class="what">${esc(c.what)}</div>` : c.why ? `<div class="what">${esc(c.why)}</div>` : ""}
     <div class="plats">${plats}</div>
@@ -3052,7 +3079,12 @@ function bind() {
   // клики в контенте
   $("app").addEventListener("click", async ev => {
     const t = ev.target.closest("button, .rel"); if (!t) return;
-    if (t.dataset.jump) { ui.clipSeg = "out"; location.hash = "#clips"; setTimeout(() => $("clip-" + t.dataset.jump)?.scrollIntoView({ block: "center" }), 50); return; }
+    if (t.dataset.jump) {
+      const cj = D.clips.find(x => x.id === t.dataset.jump);
+      ui.clipSeg = cj ? clipBucket(cj) : "out"; location.hash = "#clips";
+      setTimeout(() => { const el = $("clip-" + t.dataset.jump); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600); } }, 60);
+      return;
+    }
     if (t.dataset.copy !== undefined) return copy(t.dataset.copy, t);
     if (t.dataset.vmenu) return videoMenu(t.dataset.vmenu);
     if (t.dataset.statement) { const e = ledger.entries.find(x => x.id === t.dataset.statement); if (e) statement(e); return; }

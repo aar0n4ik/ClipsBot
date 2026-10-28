@@ -17,15 +17,13 @@
 
   function viewsAt(p, day, dayKey) {
     const h = p.history || {}, keys = Object.keys(h).sort();
-    if (!keys.length) return 0;
-    if (day < keys[0]) {
-      const created = p.create_time ? dayKey(new Date(p.create_time * 1000)) : keys[0];
-      return created < keys[0] ? h[keys[0]] : 0;
-    }
+    if (!keys.length) return day >= dayOf(p, dayKey) ? (p.views || 0) : 0;   // снимков ещё не было — берём текущее
+    if (day < keys[0]) return 0;                 // до первого снимка ролика роста не было
     let v = 0;
     for (const k of keys) { if (k <= day) v = h[k]; else break; }
-    return v;
+    return day >= keys[keys.length - 1] ? Math.max(v, p.views || 0) : v;     // последний день — живое число
   }
+  const dayOf = (p, dayKey) => (p.create_time && dayKey ? dayKey(new Date(p.create_time * 1000)) : "0000-00-00");
 
   const rawKey = p => p.clip_id || `ext:${p.platform}:${p.id}`;
 
@@ -46,8 +44,16 @@
   }
   const same = k => k;
 
+  /* Первый день, когда бот вообще собирал статистику: до него роликов бота на аккаунтах не было. */
+  function trackedFrom(posts) {
+    let first = null;
+    for (const p of posts) for (const k of Object.keys(p.history || {})) if (first === null || k < first) first = k;
+    return first;
+  }
+
   function groups(posts, clips, alias) {
     alias = alias || same;
+    const since = trackedFrom(posts);
     const byClip = Object.fromEntries((clips || []).map(c => [c.id, c]));
     const g = {};
     for (const p of posts) {
@@ -63,6 +69,9 @@
       x.title = (x.clip && (x.clip.overlay || "")) || x.best.title || "Без названия";
       x.created = Math.min(...x.posts.map(p => p.create_time || 9e12));
       x.thumb = (x.clip && x.clip.thumb) || x.posts.find(p => p.thumb)?.thumb || null;
+      /* Ролики, лежавшие на аккаунте до бота (не его клипы): ни в «к выплате», ни в доход. */
+      x.preexisting = !x.clip && !x.posts.some(p => p.clip_id) && !!since
+        && x.posts.every(p => p.create_time && new Date(p.create_time * 1000).toISOString().slice(0, 10) < since);
     }
     return g;
   }
@@ -90,7 +99,7 @@
   function owed(G, paid, rate, excluded) {
     const lines = [], skip = new Set(excluded || []);
     for (const x of Object.values(G)) {
-      if (skip.has(x.key)) continue;          // исключённые из расчёта клипы (MONEY_CONFIG → excluded)
+      if (skip.has(x.key) || x.preexisting) continue;   // исключённые клипы и ролики, что были до бота
       const was = paid[x.key] || 0;
       const inc = Math.max(0, x.bestViews - was);
       if (!inc) continue;
@@ -137,6 +146,7 @@
     let total = 0;
     const byPlat = {};
     for (const x of Object.values(G)) {
+      if (x.preexisting) continue;              // те же ролики, что исключены из выплат
       const at = d => Math.max(0, ...x.posts.map(p => viewsAt(p, d, dayKey)));
       const gain = Math.max(0, at(d2) - at(addDays(d1, -1)));
       if (!gain) continue;
@@ -187,6 +197,6 @@
     return out;
   }
 
-  root.Money = { viewsAt, aliasMap, groups, paidTo, owed, summarize, makeEntry, periodGain, livePosts, hiddenClips, applyOverrides };
+  root.Money = { viewsAt, trackedFrom, aliasMap, groups, paidTo, owed, summarize, makeEntry, periodGain, livePosts, hiddenClips, applyOverrides };
   if (typeof module !== "undefined") module.exports = root.Money;
 })(typeof window !== "undefined" ? window : globalThis);

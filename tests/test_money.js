@@ -86,3 +86,28 @@ assert(rest.length === 1 && rest[0].g === "c1", "частичная выплат
 // корректировка без клипов не трогает «оплачено до»
 assert(Object.keys(M.paidTo([{ v: 2, kind: "adjust", amount: -3, lines: [] }], {})).length === 0, "корректировка не закрывает клипы");
 console.log("✅ money: все проверки пройдены");
+
+/* Деньги сходятся: «к выплате» и «доход за всё время» считают одно и то же.
+   Старые ролики, лежавшие на аккаунте до бота, не попадают ни туда, ни туда. */
+{
+  const h = (o) => o;
+  const mk = (id, plat, clip, views, hist, created) => ({ id, platform: plat, clip_id: clip, views, history: h(hist), create_time: created });
+  const ts = d => Math.floor(new Date(d + "T12:00:00Z").getTime() / 1000);
+  const posts = [
+    mk("v1", "youtube", "c1", 1000, { "2026-10-21": 400, "2026-10-23": 1000 }, ts("2026-10-21")),
+    mk("v2", "tiktok", "c1", 300, { "2026-10-21": 100, "2026-10-23": 300 }, ts("2026-10-21")),
+    // клип вышел вчера, первый снимок — только сегодня: весь результат должен попасть в доход
+    mk("v3", "youtube", "c2", 700, { "2026-10-23": 700 }, ts("2026-10-22")),
+    // чужой ролик, который лежал на канале задолго до бота
+    mk("v4", "youtube", null, 5000, { "2026-10-21": 4990, "2026-10-23": 5000 }, ts("2026-05-20")),
+  ];
+  const G2 = M.groups(posts, [{ id: "c1", overlay: "Клип 1" }, { id: "c2", overlay: "Клип 2" }]);
+  const owedSum = M.summarize(M.owed(G2, M.paidTo([], {}), 1)).total;
+  const gain = M.periodGain(G2, "2026-10-01", "2026-10-23", addDays, dayKey).total;
+  assert(gain === 1700, "доход за всё время = 1000 + 700, старое чужое видео не в счёт (получено " + gain + ")");
+  assert(Math.abs(owedSum - gain / 1000) < 1e-9, "«к выплате» и «доход за всё время» сходятся (" + owedSum + " vs " + gain / 1000 + ")");
+  assert(M.owed(G2, M.paidTo([], {}), 1).every(l => l.g !== "ext:youtube:v4"), "старое чужое видео не в выплатах");
+  const byPlat = M.periodGain(G2, "2026-10-01", "2026-10-23", addDays, dayKey).byPlat;
+  assert(byPlat.youtube === 1700 && !byPlat.tiktok, "доход засчитан по лучшей площадке клипа");
+}
+console.log("✅ money: деньги сходятся");
