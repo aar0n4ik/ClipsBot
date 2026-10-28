@@ -18,11 +18,11 @@
   "last_ok": "2026-10-28T19:47:24Z"
  },
  "post": {
-  "level": "warn",
-  "msg": "tt_main: TikTok /v2/post/publish/inbox/video/init/: spam_risk_too_many_pending_share — spam_risk_too_many_pending_share",
-  "at": "2026-10-28T18:39:34Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40746976673",
-  "since": "2026-10-28T18:39:34Z",
+  "level": "paused",
+  "msg": "остановлено вручную из дашборда",
+  "at": "2026-10-28T20:58:13Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40767879263",
+  "since": "2026-10-28T20:58:13Z",
   "fails": 0,
   "last_ok": "2026-10-28T17:48:32Z"
  },
