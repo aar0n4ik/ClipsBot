@@ -120,7 +120,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "А вы чавкаете когда едите дома в одиночестве?",
    "cover_ms": 500
   },
@@ -191,9 +191,14 @@
  },
  "posts": {
   "tiktok": {
+   "publish_id": "v_inbox_file~v2.7701540886379350047",
+   "privacy": "DRAFT",
+   "status": "inbox",
+   "video_id": null,
    "account": "tt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T02:33:56Z"
+   "posted_at": "2026-10-28T02:33:56Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   },
   "youtube": {
    "status": "posted",
