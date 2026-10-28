@@ -1,20 +1,23 @@
 {
  "state": "running",
- "stage": "Расшифровываю речь: 9 окон одновременно",
+ "stage": "ИИ смотрит видео 2 финалистов одновременно",
  "vod_id": "2912994542",
  "vod_title": "🦇 ГОРОД ПРОГНИЛ. LA погружается во тьму… Сегодня ночью Бэтмен выходит на охоту. Что скрывают улицы Города Ангелов? Глава 1: Ночная вылазка.",
  "chunk": "1:58:00–3:00:00",
- "progress": 22,
- "updated_at": "2026-10-28T17:52:15Z",
+ "progress": 58,
+ "updated_at": "2026-10-28T17:57:43Z",
  "detail": "обработано кусков: 2",
- "stage_id": "speech",
+ "stage_id": "video",
  "funnel": {
   "peaks": 6,
   "scout": 4,
   "candidates": 9,
-  "text_pass": 0,
+  "text_pass": 2,
   "video_checked": 0,
   "video_pass": 0,
-  "made": 0
+  "made": 0,
+  "asr": {
+   "gemini": 9
+  }
  }
 }
