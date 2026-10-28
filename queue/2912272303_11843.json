@@ -1,0 +1,203 @@
+{
+ "id": "2912272303_11843",
+ "vod_id": "2912272303",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 11843.2,
+ "duration": 22.1,
+ "span": 32.6,
+ "score": 7,
+ "subscores": {
+  "hook": 7,
+  "payoff": 7,
+  "clarity": 8,
+  "emotion": 7,
+  "rewatch": 5
+ },
+ "category": "road",
+ "risk": {
+  "level": 1,
+  "flags": [
+   "phone_driving",
+   "heavy_profanity"
+  ]
+ },
+ "why": "Стример осознает, что Тесла сама затормозила и спасa его от аварии.",
+ "what": "Стример едет за рулем Теслы, когда потоку резко приходится тормозить. В процессе ругани он осознает, что Тесла сама заблокировала колеса и затормозила быстрее него.",
+ "overlay": "Тесла сама экстренно затормозила",
+ "signal": 0.0,
+ "breakdown": {
+  "chat": 0,
+  "keywords": 0,
+  "spam_wave": 0,
+  "audio": 0,
+  "viewer_clips": 0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.262,
+   "stability": 0.298,
+   "tonal": 0.0,
+   "beat": 0.178
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "brain": {
+  "text": {
+   "score": 7,
+   "hook": 7,
+   "payoff": 7,
+   "clarity": 8,
+   "emotion": 7,
+   "rewatch": 6,
+   "why": "Наглядная и эмоциональная ситуация на дороге: Тесла среагировала и затормозила быстрее водителя. Понятно любому зрителю.",
+   "category": "road"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 7,
+   "subscores": {
+    "hook": 7,
+    "payoff": 7,
+    "clarity": 8,
+    "emotion": 7,
+    "rewatch": 5
+   },
+   "what_happens": "Стример едет за рулем Теслы, когда потоку резко приходится тормозить. В процессе ругани он осознает, что Тесла сама заблокировала колеса и затормозила быстрее него.",
+   "moment": "Стример осознает, что Тесла сама затормозила и спасa его от аварии.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 39.3,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "proofread": [],
+  "length": null,
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 5,
+  "trimmed_s": 10.5
+ },
+ "transcript": "Блядь! Да хуле вы все тормозите, блядь, так резко? Долбоёбы, блядь. Что за хуйня сегодня происходит? Кстати, Tesla сама затормозила, заблокировала. Еб твою мать, блядь. Я аж испугался сам. Такая тема, короче, вот сейчас сработала, что Tesla сама заблокировала колёса. Ну я успел бы, конечно, затормозить. Но она это сделала быстрее даже, чем я.",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "Тесла сама экстренно затормозила",
+   "hook_style": "tease",
+   "caption": "Тесла резко затормозила сама на дороге в ЛА #тесла #tesla #автопилот #irl #стрим",
+   "hashtags": [
+    "#тесла",
+    "#tesla",
+    "#автопилот",
+    "#авто",
+    "#ла"
+   ],
+   "hook_alts": [
+    "Тесла сама экстренно затормозила",
+    "Чуть не врезался на дороге в ЛА",
+    "Автоторможение Теслы в ЛА",
+    "Она сделала это быстрее меня"
+   ],
+   "asset": "2912272303_11843.mp4",
+   "size": 15762348,
+   "duration": 22.1,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Доверяете автоторможению в современной машине?",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "Тесла сама экстренно затормозила",
+   "hook_style": "tease",
+   "caption": "Тесла сама заблокировала колеса и спасa ситуацию на дороге! А вы доверяете автопилоту?",
+   "hashtags": [
+    "#тесла",
+    "#tesla",
+    "#автопилот",
+    "#авто",
+    "#лосанджелес"
+   ],
+   "hook_alts": [
+    "Тесла сама экстренно затормозила",
+    "Чуть не врезался на дороге в ЛА",
+    "Автоторможение Теслы в ЛА",
+    "Она сделала это быстрее меня"
+   ],
+   "asset": "2912272303_11843.mp4",
+   "size": 15762348,
+   "duration": 22.1,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Доверяете автоторможению в современной машине?",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "Тесла сама экстренно затормозила",
+   "hook_style": "tease",
+   "title": "Тесла экстренно затормозила быстрее водителя",
+   "description": "Стример ехал по Лос-Анджелесу, когда машина впереди резко затормозила, а Тесла среагировала быстрее человека\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "тесла",
+    "tesla",
+    "автопилот",
+    "лосанджелес",
+    "автоновости",
+    "стример",
+    "irl"
+   ],
+   "caption": "Тесла экстренно затормозила быстрее водителя",
+   "hook_alts": [
+    "Тесла сама экстренно затормозила",
+    "Чуть не врезался на дороге в ЛА",
+    "Автоторможение Теслы в ЛА",
+    "Она сделала это быстрее меня"
+   ],
+   "asset": "2912272303_11843.mp4",
+   "size": 15762348,
+   "duration": 22.1,
+   "variant": {
+    "hook_style": "tease"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Доверяете автоторможению в современной машине?",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-28T02:45:47Z",
+ "live_when_made": false,
+ "shelf": "forever",
+ "expires_at": null,
+ "fresh": false,
+ "uid": "9c343976",
+ "asset": "2912272303_11843.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2912272303?t=3h17m23s"
+}
