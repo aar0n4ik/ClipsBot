@@ -145,7 +145,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "used",
+   "status": "removed_by_user",
    "comment": "Забыли про машину за 100 тысяч долларов 😅",
    "cover_ms": 500
   },
@@ -179,7 +179,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "used",
+   "status": "removed_by_user",
    "comment": "Забыли про машину за 100 тысяч долларов 😅",
    "cover_ms": 500
   }
@@ -196,7 +196,7 @@
    "by": "владелец"
   },
   "youtube": {
-   "status": "posted",
+   "status": "removed_by_user",
    "video_id": "yRzxiV5Wemw",
    "url": "https://youtube.com/shorts/yRzxiV5Wemw",
    "privacy": "public",
@@ -206,7 +206,7 @@
    "by": "владелец"
   },
   "instagram": {
-   "status": "posted",
+   "status": "removed_by_user",
    "video_id": "17936213010406109",
    "url": "https://www.instagram.com/reel/DfB4C3nmlXP/",
    "privacy": "public",
