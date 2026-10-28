@@ -17,13 +17,12 @@
    },
    "last_post_at": "2026-10-28T07:16:45Z",
    "last_clip": "2910649819_39863",
-   "last_error": "TikTok /v2/post/publish/inbox/video/init/: spam_risk_too_many_pending_share — spam_risk_too_many_pending_share [rate]",
    "count_by_day": {
     "2026-10-22": 2,
     "2026-10-23": 2,
     "2026-10-26": 1,
     "2026-10-27": 2,
-    "2026-10-28": 3
+    "2026-10-28": 0
    },
    "recent": [
     {
@@ -63,8 +62,6 @@
     }
    ],
    "first_post_at": "2026-10-22T10:03:45Z",
-   "diagnosis": "Слишком много запросов. Бот подождёт и повторит сам.\nТекст площадки: TikTok /v2/post/publish/inbox/video/init/: spam_risk_too_many_pending_share — spam_risk_too_many_pending_share",
-   "last_error_at": "2026-10-28T17:00:16Z",
    "today": {
     "published": 0,
     "drafts": 3,
@@ -73,10 +70,8 @@
    "state": "готова",
    "drafts_by_day": {
     "2026-10-27": 2,
-    "2026-10-28": 3
-   },
-   "cooldown_until": "2026-10-28T18:00:16.600660+00:00",
-   "cooldown_reason": "TikTok /v2/post/publish/inbox/video/init/: spam_risk_too_many_pending_share — spam_risk_too_many_pending_share"
+    "2026-10-28": 0
+   }
   },
   "yt_main": {
    "platform": "youtube",
@@ -93,7 +88,6 @@
    },
    "last_post_at": "2026-10-28T07:19:51Z",
    "last_clip": "2912272303_16500",
-   "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
     "2026-10-23": 3,
@@ -101,7 +95,7 @@
     "2026-10-25": 1,
     "2026-10-26": 1,
     "2026-10-27": 2,
-    "2026-10-28": 4
+    "2026-10-28": 0
    },
    "recent": [
     {
@@ -181,8 +175,7 @@
     "drafts": 0,
     "max": 4
    },
-   "state": "готова",
-   "diagnosis": null
+   "state": "готова"
   },
   "ig_main": {
    "platform": "instagram",
@@ -202,11 +195,10 @@
    },
    "last_post_at": "2026-10-28T07:19:51Z",
    "last_clip": "2912272303_16500",
-   "last_error": null,
    "count_by_day": {
     "2026-10-26": 2,
     "2026-10-27": 2,
-    "2026-10-28": 4
+    "2026-10-28": 0
    },
    "recent": [
     {
@@ -230,8 +222,7 @@
     "drafts": 0,
     "max": 4
    },
-   "state": "готова",
-   "diagnosis": null
+   "state": "готова"
   }
  },
  "timezone": "Europe/Moscow",
@@ -320,9 +311,8 @@
  "releases": {
   "by_day": {
    "2026-10-27": 2,
-   "2026-10-28": 4
+   "2026-10-28": 0
   },
-  "last_at": "2026-10-28T07:19:51Z",
   "recent": [
    {
     "clip": "2912272303_16500",
@@ -481,5 +471,6 @@
    19,
    22
   ]
- }
+ },
+ "limits_reset_at": "2026-10-28T17:47:43Z"
 }

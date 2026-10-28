@@ -324,5 +324,19 @@
   "account": null,
   "platform": null,
   "reverted": false
+ },
+ {
+  "id": "e118efa8d4",
+  "at": "2026-10-28T17:47:43Z",
+  "kind": "limits",
+  "summary": "Лимиты за 2026-10-28 сброшены вручную: счётчики, паузы площадок и интервал между релизами",
+  "path": null,
+  "before": null,
+  "after": null,
+  "evidence": {},
+  "reversible": false,
+  "account": null,
+  "platform": null,
+  "reverted": false
  }
 ]
