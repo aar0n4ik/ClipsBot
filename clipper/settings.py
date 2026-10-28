@@ -39,7 +39,7 @@ SCHEMA = {
     "posting.daily_max": (4, (0, 12), "posting.daily_max"),        # релизов в сутки в день с эфиром (одинаково на всех площадках)
     "posting.offday_max": (2, (0, 12), "posting.offday_max"),      # в день без эфира — из запаса, но меньше
     "posting.daily_min": (1, (0, 6), "posting.daily_min"),         # если есть хоть что-то достойное — хотя бы столько
-    "posting.min_gap_minutes": (180, (20, 600), "posting.min_gap_minutes"),
+    "posting.min_gap_minutes": (120, (20, 600), "posting.min_gap_minutes"),
     "posting.hot_now": (True, bool, "posting.hot_now"),            # сильный клип во время эфира — сразу
     "platforms.tiktok": (True, bool, "platforms.tiktok"),
     "platforms.youtube": (True, bool, "platforms.youtube"),
