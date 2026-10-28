@@ -2442,11 +2442,11 @@ function renderOverview() {
 
   /* ── площадки ── */
   const toks = D.status.tokens || {};
-  const nowH_ = hourIn(tz);
-  const nextSlot = (plan.today || []).find(t2 => { const [h2, m2] = t2.split(":").map(Number); return h2 + m2 / 60 > nowH_; });
-  const nextClip = (D.clips.find(c => c.force_post && clipBucket(c) === "ready") || {}).id || ((plan.up_next || [])[0] || {}).id;
-  $("connChip").textContent = nextClip ? (nextSlot ? `Следующим: пост в ${nextSlot}` : "Следующий клип")
-    : nextSlot ? `Пост в ${nextSlot}` : `${Object.values(toks).filter(t => t.connected).length} из ${D.accounts.length} подключено`;
+  const nextClip = nextUpId(), nextAt = nextPostAt();
+  $("connChip").textContent = (plan.slots_left ?? 1) <= 0 ? "Лимит на сегодня исчерпан"
+    : nextAt && nextClip ? `Следующий в ${atHM(nextAt)}`
+    : nextAt ? `Проверка в ${atHM(nextAt)}`
+    : `${Object.values(toks).filter(t => t.connected).length} из ${D.accounts.length} подключено`;
   if (nextClip) $("connChip").dataset.jump = nextClip; else delete $("connChip").dataset.jump;
   const byPlat = {}, earnedBy = {};
   for (const g of Object.values(G)) {

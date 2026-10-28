@@ -966,6 +966,28 @@
   /* Составные фразы собираются в коде из кусков и числа. Пословная замена давала «клипов 3 из 7»:
      половина по-английски, половина нет. Поэтому целая строка сначала проверяется этими шаблонами. */
   const RX = [
+    /* строки, которые бот собирает на ходу: лимиты, следующий клип, монтаж, ошибки площадок */
+    [/^Лимит сегодня: вышло (\d+) из (\d+)$/, "Today's limit: $1 of $2 posted"],
+    [/^осталось (\d+), следующий в (\d\d:\d\d)$/, "$1 left, next at $2"],
+    [/^осталось (\d+)$/, "$1 left"],
+    [/^лимит на сегодня исчерпан$/, "today's limit is used up"],
+    [/^Лимит на сегодня исчерпан$/, "Today's limit is used up"],
+    [/^Следующий в (\d\d:\d\d)$/, "Next at $1"],
+    [/^Проверка в (\d\d:\d\d)$/, "Check at $1"],
+    [/^следующим в очереди$/, "next in queue"],
+    [/^Монтируется: «(.+)»$/, "Rendering: “$1”"],
+    [/^Последний собранный клип: «(.+)»$/, "Last rendered clip: “$1”"],
+    [/^([\d  ,.\u00a0\u202f]+) просмотров$/, "$1 views"],
+    [/^(\d+) в черновиках$/, "$1 in drafts"],
+    [/^Слишком много запросов$/, "Too many requests"],
+    [/^Бот подождёт и повторит сам$/, "The bot will wait and retry on its own"],
+    [/^Лимит сегодня$/, "Today's limit"],
+    [/^вышло (\d+) из (\d+)$/, "$1 of $2 posted"],
+    [/^Площадка считает аккаунт спамящим\. Пауза 24 ч\. Лимит в сутки уже снижен до (\d+)\.$/, "The platform treats the account as spammy. 24h pause. The daily limit is already down to $1."],
+    [/^Суточный лимит публикаций площадки почти исчерпан\. Продолжим завтра\.$/, "The platform's daily posting limit is nearly used up. We continue tomorrow."],
+    [/^Временный сбой на стороне площадки\. Бот повторит попытку сам\.$/, "Temporary failure on the platform's side. The bot will retry on its own."],
+    [/^Токен истёк или отозван\. Подключите аккаунт заново: Actions → «0 · Connect account»\.$/, "The token expired or was revoked. Reconnect the account: Actions → “0 · Connect account”."],
+    [/^Площадка не приняла сам файл\. Текст ошибки ниже — по нему видно, что именно не понравилось\.$/, "The platform rejected the file itself. The error text below shows what it disliked."],
     [/^Доход за (?:период )?(.+)$/, "Earnings for $1"],
     [/^Просмотры за (?:период )?(.+)$/, "Views for $1"],
     [/^Выбрано (\d+) из (\d+) на (.+)$/, "Selected $1 of $2 totaling $3"],
