@@ -177,5 +177,5 @@ clipper/
   poster.py — when and what to post · stats.py — views, doctor
   learn.py — learning and the post cap · health.py — early warning, system · decisions.py — log and rollbacks
 docs/                 — dashboard (index.html + money.js), account connection, privacy/terms
-tests/                — python tests/test_core.py · test_v3.py · test_v4.py · test_v5.py · node tests/test_money.js
+tests/                — python tests/test_core.py · test_v3.py · test_v4.py · test_v5.py · node tests/test_money.js · test_i18n.js
 ```
