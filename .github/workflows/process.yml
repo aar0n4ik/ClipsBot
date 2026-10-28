@@ -2,11 +2,6 @@ name: 2 · Process (нарезка)
 # Запускается из Watch. Звук+чат куска записи → пики → речь → ИИ → проверка звука → монтаж под каждую площадку.
 on:
   workflow_dispatch:
-    inputs:
-      retry_gaps:
-        description: "Повторить пропуски (куски, которые 3 раза не обработались)"
-        type: boolean
-        default: false
 
 permissions:
   contents: write      # ветка data + Release с клипами
@@ -38,7 +33,6 @@ jobs:
       DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
       TOKEN_KEY: ${{ secrets.TOKEN_KEY }}
       MONEY_CONFIG: ${{ vars.MONEY_CONFIG }}
-      RETRY_GAPS: ${{ inputs.retry_gaps && '1' || '0' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
