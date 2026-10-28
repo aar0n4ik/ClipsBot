@@ -184,11 +184,28 @@
    "cover_ms": 500
   }
  },
- "posts": {},
+ "posts": {
+  "tiktok": {
+   "account": "tt_main",
+   "status": "uploading",
+   "started_at": "2026-10-28T07:16:45Z"
+  },
+  "youtube": {
+   "account": "yt_main",
+   "status": "uploading",
+   "started_at": "2026-10-28T07:16:45Z"
+  },
+  "instagram": {
+   "account": "ig_main",
+   "status": "uploading",
+   "started_at": "2026-10-28T07:16:45Z"
+  }
+ },
  "created_at": "2026-10-27T01:21:55Z",
  "live_when_made": false,
  "fresh": false,
  "uid": "fd11e442",
  "asset": "2910649819_39863.mp4",
- "vod_url": "https://www.twitch.tv/videos/2910649819?t=11h4m23s"
+ "vod_url": "https://www.twitch.tv/videos/2910649819?t=11h4m23s",
+ "force_post": "2026-10-28T07:16:45Z"
 }
