@@ -192,8 +192,10 @@
  "posts": {
   "tiktok": {
    "account": "tt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T07:19:51Z"
+   "status": "retry",
+   "started_at": "2026-10-28T07:19:51Z",
+   "error": "TikTok /v2/post/publish/inbox/video/init/: spam_risk_too_many_pending_share — spam_risk_too_many_pending_share",
+   "last_try": "2026-10-28T07:19:51Z"
   },
   "youtube": {
    "account": "yt_main",
