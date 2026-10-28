@@ -70,7 +70,7 @@
     "drafts": 3,
     "max": 4
    },
-   "state": "готова",
+   "state": "отдыхает до 08:19 UTC: TikTok /v2/post/publish/inbox/video/init/: spam_risk_too_many_pending_share — spam_risk_too_many_pending_share",
    "drafts_by_day": {
     "2026-10-27": 2,
     "2026-10-28": 3
@@ -177,7 +177,7 @@
    ],
    "first_post_at": "2026-10-22T10:03:50Z",
    "today": {
-    "published": 3,
+    "published": 4,
     "drafts": 0,
     "max": 4
    },
@@ -226,7 +226,7 @@
    ],
    "first_post_at": "2026-10-26T06:02:28Z",
    "today": {
-    "published": 3,
+    "published": 4,
     "drafts": 0,
     "max": 4
    },
@@ -235,7 +235,7 @@
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-28T07:19:51Z",
+ "updated_at": "2026-10-28T08:19:17Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -316,7 +316,7 @@
    0.5
   ]
  },
- "next_check": "2026-10-28T08:07:00+00:00",
+ "next_check": "2026-10-28T09:07:00+00:00",
  "releases": {
   "by_day": {
    "2026-10-27": 2,
@@ -414,13 +414,13 @@
   "cap": 4,
   "releases_today": 4,
   "waves": {},
-  "backlog": 6,
+  "backlog": 5,
   "up_next": [
    {
     "id": "2912272303_11843",
     "hook": "Тесла сама экстренно затормозила",
     "score": 7,
-    "age_h": 4.6,
+    "age_h": 5.6,
     "platforms": [
      "tiktok",
      "youtube",
@@ -431,7 +431,7 @@
     "id": "2911545684_6820",
     "hook": "Я ни разу не был у стоматолога",
     "score": 7,
-    "age_h": 24.8,
+    "age_h": 25.7,
     "platforms": [
      "tiktok",
      "youtube",
@@ -442,7 +442,7 @@
     "id": "2911545684_7991",
     "hook": "Типичный день в Лос-Анджелесе",
     "score": 7,
-    "age_h": 24.6,
+    "age_h": 25.6,
     "platforms": [
      "tiktok",
      "youtube",
@@ -453,7 +453,18 @@
     "id": "2912272303_5127",
     "hook": "Нашёл ковбойскую шляпу",
     "score": 7,
-    "age_h": 11.8,
+    "age_h": 12.7,
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   },
+   {
+    "id": "2911545684_1202",
+    "hook": "Донатит сам на стриме",
+    "score": 7,
+    "age_h": 25.8,
     "platforms": [
      "tiktok",
      "youtube",
