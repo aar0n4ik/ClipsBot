@@ -11,11 +11,11 @@
  "watch": {
   "level": "ok",
   "msg": "эфир идёт, нарезка запущена",
-  "at": "2026-10-28T14:21:06Z",
+  "at": "2026-10-28T17:42:47Z",
   "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40705021688",
   "since": "2026-10-28T02:33:37Z",
   "fails": 0,
-  "last_ok": "2026-10-28T14:21:06Z"
+  "last_ok": "2026-10-28T17:42:47Z"
  },
  "post": {
   "level": "warn",
