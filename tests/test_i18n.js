@@ -53,12 +53,26 @@ function ok(cond, msg) { if (!cond) { console.error("  FAIL " + msg); failed++; 
     `смесь языков: ${JSON.stringify(ru)} -> ${JSON.stringify(out)}`);
 });
 
+/* 1d · строки, которые приходят от бота и в HTML не лежат */
+[
+  ["Последний эфир был 12 ч назад. Проверка раз в 10 минут.", "Last stream was 12 h ago. Checking every 10 minutes."],
+  ["Публикация: выложено: tiktok, youtube, instagram", "Publishing: posted to tiktok, youtube, instagram"],
+  ["Кусок 4:58:00–5:19:35: кандидатов 3, по тексту 0, по видео 0, клипов 0", "Segment 4:58:00–5:19:35: 3 candidates, 0 passed text, 0 passed video, 0 clips"],
+  ["владелец нажал «Выложить сейчас»", "owner pressed “Post now”"],
+  ["владелец", "owner"],
+  ["после прошлого релиза прошло 60 мин из 90", "60 of 90 min have passed since the last release"],
+  ["следующий слот в 19:07", "next slot at 19:07"],
+  ["ночь аудитории (2:00 по Europe/Moscow)", "audience night (2:00 Europe/Moscow)"],
+  ["жду instagram (отдыхает до 18:00) — клип выходит только на всех площадках сразу", "waiting for instagram (resting until 18:00) — a clip goes out only on all platforms at once"],
+].forEach(([ru, en]) => ok(toEn(ru) === en, `${JSON.stringify(ru)} -> ${JSON.stringify(toEn(ru))}, ожидалось ${JSON.stringify(en)}`));
+
 /* 2 · ни одна строка интерфейса не остаётся русской */
 const html = fs.readFileSync(path.join(ROOT, "docs/index.html"), "utf8");
 const cand = new Set();
 for (const m of html.matchAll(/"([^"\\\n]{2,400})"/g)) cand.add(m[1]);
 for (const m of html.matchAll(/'([^'\\\n]{2,400})'/g)) cand.add(m[1]);
 for (const m of html.matchAll(/>([^<>${}]{2,400})</g)) cand.add(m[1]);
+for (const m of html.matchAll(/(?:placeholder|title|aria-label)="([^"]{2,400})"/g)) cand.add(m[1]);
 const ui = [...cand].map(x => x.trim()).filter(x => CYR.test(x) && !/[<>{}`]|\$\{/.test(x));
 /* «Русский» в списке языков остаётся по-русски в обоих режимах — так принято в переключателях. */
 const KEEP_RU = new Set(["Русский"]);

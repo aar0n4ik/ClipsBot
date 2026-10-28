@@ -846,6 +846,20 @@
     "Просмотры": "Views",
     "· кусок": "· segment",
     "Все выводы": "All payouts",
+    "(не согласен)": "(disagrees)",
+    "Финальная оценка после просмотра видео": "Final score after watching the video",
+    "Например: подними ставку до $1.50 за 1000 просмотров": "For example: raise the rate to $1.50 per 1,000 views",
+    "выложено": "posted",
+    "жду": "waiting",
+    "владелец": "owner",
+    "синхрон": "sync",
+    "план": "plan",
+    "предпроверка": "pre-check",
+    "сильный клип с идущего эфира — занимает следующий слот раньше": "a strong clip from the live stream — takes the next slot early",
+    "слоты на сегодня прошли": "today's slots are over",
+    "ни одна площадка не подключена": "no platform is connected",
+    "нет клипов нужного качества — ничего слабого не выкладываю": "no clips of the required quality — nothing weak gets posted",
+    "проверка раз в 10 минут": "checking every 10 minutes",
     "Чат": "Chat",
     "Клиенты": "Customers",
     "выложил": "posted",
@@ -892,6 +906,19 @@
   /* Составные фразы собираются в коде из кусков и числа. Пословная замена давала «клипов 3 из 7»:
      половина по-английски, половина нет. Поэтому целая строка сначала проверяется этими шаблонами. */
   const RX = [
+    [/^Кусок (.+?): кандидатов (\d+), по тексту (\d+), по видео (\d+), клипов (\d+)$/, "Segment $1: $2 candidates, $3 passed text, $4 passed video, $5 clips"],
+    [/^Публикация: выложено: (.+)$/, "Publishing: posted to $1"],
+    [/^владелец нажал «Выложить сейчас»$/, "owner pressed “Post now”"],
+    [/^клип (\S+) вышел не везде — жду (.+), чтобы дотянуть; новые клипы не выходят, пока площадки не сравняются$/, "clip $1 didn't go out everywhere — waiting for $2 to catch up; new clips are held until the platforms match"],
+    [/^дотягиваю (.+): клип уже вышел на других площадках$/, "catching up $1: the clip is already out on other platforms"],
+    [/^жду (.+) — клип выходит только на всех площадках сразу$/, "waiting for $1 — a clip goes out only on all platforms at once"],
+    [/^сегодня уже (\d+) релиз\(ов\) из (\d+) — лучшие из очереди уйдут завтра$/, "$1 of $2 releases already today — the best in the queue go out tomorrow"],
+    [/^после прошлого релиза прошло (\d+) мин из (\d+)$/, "$1 of $2 min have passed since the last release"],
+    [/^слот (\d\d:\d\d) — лучший клип очереди$/, "slot $1 — the queue's best clip"],
+    [/^следующий слот в (\d\d:\d\d)$/, "next slot at $1"],
+    [/^(.+) не прошла проверку перед загрузкой — клип ждёт, не выходит никуда$/, "$1 failed the pre-upload check — the clip waits and goes nowhere"],
+    [/^ночь аудитории \((\S+) по (.+)\)$/, "audience night ($1 $2)"],
+    [/^Проверка раз в (\d+) минут$/, "Checking every $1 minutes"],
     [/^(\d[\d\s  .,]*) зрител(?:ь|я|ей)$/, "$1 viewers"],
     [/^клипов (\d+) из (\d+)$/, "clips $1 of $2"],
     [/^Запись куска (.+)$/, "Recording segment $1"],
@@ -960,11 +987,31 @@
      Главное правило: либо кусок переводится целиком, либо не трогаем вовсе. Смесь языков
      («паузу platforms», «Views за 7 days») хуже честного русского. */
   function phrase(s, depth) {
-    s = s.trim();
+    s = s.trim().replace(/\(отдыхает до (\d\d:\d\d)\)/g, "(resting until $1)");
     if (!s || !CYR.test(s)) return null;
 
     const full = EN[s];
     if (full !== undefined) return full;
+
+    // «Проверка раз в 10 минут.» — то же, что без точки, плюс точка
+    if (/[^.…]\.$/.test(s)) {
+      const r = phrase(s.slice(0, -1), depth + 1);
+      if (r !== null) return r + ".";
+    }
+    // Начало с заглавной («Проверка…») ищем как строчное из словаря и поднимаем регистр
+    if (/^[А-ЯЁ]/.test(s)) {
+      const low = s[0].toLowerCase() + s.slice(1);
+      if (EN[low] !== undefined) return EN[low][0].toUpperCase() + EN[low].slice(1);
+    }
+
+    // Несколько предложений подряд: переводим каждое отдельно, иначе жадный шаблон съедает хвост
+    if (depth < 4) {
+      const sents = s.split(/(?<=[.!?…])\s+/);
+      if (sents.length > 1) {
+        const tr = sents.map(x => phrase(x, depth + 1));
+        if (tr.every(x => x !== null)) return tr.join(" ");
+      }
+    }
 
     for (const [re_, to] of RX) {
       const m = s.match(re_);

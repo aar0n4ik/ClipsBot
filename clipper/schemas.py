@@ -52,10 +52,11 @@ REVIEW = obj({"ok": B, "title_matches": B, "makes_sense": B, "problems": STRS})
 EDITOR = obj({"clips": {"type": "array", "items": obj({
     "id": S, "hooks": {"type": "array", "items": HOOK}, "pick": I, **PLATFORM_TEXTS, "comment": S})}})
 
-PRODUCER = obj({"action": {"type": "string", "enum": ["post", "wait"]}, "clip": {"type": ["string", "null"]}, "reason": S})
+PRODUCER = obj({"action": {"type": "string", "enum": ["post", "wait"]}, "clip": {"type": ["string", "null"]}, "reason": S,
+                "reason_en": S})
 
 PRODUCER_CRITIC = obj({"agree": B, "action": {"type": "string", "enum": ["post", "wait"]},
-                       "clip": {"type": ["string", "null"]}, "reason": S})
+                       "clip": {"type": ["string", "null"]}, "reason": S, "reason_en": S})
 
 BUNDLES = obj({"groups": {"type": "array", "items": obj({"ids": STRS, "title": S, "why": S,
                                                           "category": {"type": "string", "enum": CATS}})}})

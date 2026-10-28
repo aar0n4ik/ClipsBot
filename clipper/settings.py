@@ -30,7 +30,7 @@ SCHEMA = {
     "clips.min_seconds": (10, (6, 30), "clips.min_seconds"),
     "clips.max_seconds": (175, (20, 175), "clips.max_seconds"),  # потолок площадок; ИИ держит коротко
     "clips.trim_silence": (True, bool, "clips.trim_silence"),
-    "clips.trim_gap_seconds": (1.2, (0.6, 4.0), "clips.trim_gap_seconds"),
+    "clips.trim_gap_seconds": (4.0, (1.0, 10.0), "clips.trim_gap_seconds"),
     "clips.follow_subject": (False, bool, "clips.follow_subject"),
     # запас
     "quality.reserve_target": (8, (0, 60), "quality.reserve_target"),   # с этого размера банка планка отбора +1

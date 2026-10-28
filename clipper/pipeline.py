@@ -15,7 +15,7 @@ import random
 from . import health, learn, releases, reserve
 from .audio import inspect_clip_audio
 from .bundles import record_moment
-from .cuts import speech_runs
+from .cuts import drop_short_pauses, speech_runs
 from .clips import normalize
 from .config import WORK_DIR, env
 from .judge import edit_clips, grounded, judge_candidates, snap_bounds, target_texts
@@ -686,11 +686,13 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     mn = float(cl.get("min_seconds", 10))
     segs = [(pad, pad + dur)]
     if cl.get("trim_silence", True):
-        runs = speech_runs(words_src, pad, pad + dur, max_gap=float(cl.get("trim_gap_seconds", 1.2)))
+        runs = speech_runs(words_src, pad, pad + dur, max_gap=float(cl.get("trim_gap_seconds", 4.0)))
         if sum(b - a for a, b in runs) >= 0.75 * mn:
             segs = runs
-    if pl.get("cuts"):
-        cut = brain.apply_cuts(segs, [(to_src(a), to_src(b)) for a, b in pl["cuts"]])
+    ai_cuts = drop_short_pauses([(to_src(a), to_src(b)) for a, b in pl.get("cuts") or []], words_src,
+                                float(cl.get("trim_gap_seconds", 4.0)))
+    if ai_cuts:
+        cut = brain.apply_cuts(segs, ai_cuts)
         if sum(b - a for a, b in cut) >= 0.75 * mn:
             segs = cut
     kept = sum(b - a for a, b in segs)

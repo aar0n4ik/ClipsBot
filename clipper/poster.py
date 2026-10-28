@@ -219,14 +219,14 @@ PRODUCER = """Ты — продюсер каналов с нарезками с�
 • Невыбранные клипы не пропадают — уйдут в следующие слоты.
 Состояние (очередь уже отсортирована по силе):
 {state}
-Ответ строго JSON: {{"action":"post","clip":"id","reason":"1–2 предложения по-русски"}}"""
+Ответ строго JSON: {{"action":"post","clip":"id","reason":"1–2 предложения по-русски","reason_en":"тот же текст по-английски"}}"""
 
 CRITIC = """Ты — второй продюсер, проверяешь выбор коллеги: какой клип выходит в этот слот. Будь конкретен.
 Состояние:
 {state}
 Выбор коллеги: {proposal}
 Согласен? Если нет — назови клип лучше. Ответ строго JSON:
-{{"agree":true,"action":"post","clip":"id","reason":"1–2 предложения"}}"""
+{{"agree":true,"action":"post","clip":"id","reason":"1–2 предложения по-русски","reason_en":"тот же текст по-английски"}}"""
 
 
 def _state_text(ctx: dict) -> str:
@@ -256,9 +256,9 @@ def think(cfg: dict, ctx: dict, fallback: dict) -> dict:
         return {**fallback, "by": "план (ИИ недоступен)"}
     final = prop if crit.get("agree", True) else crit
     return {"action": "post", "clip": final.get("clip") or fallback.get("clip"),
-            "reason": str(final.get("reason", ""))[:400], "by": "ИИ-продюсер" + ("" if crit.get("agree", True) else " (поправил критик)"),
-            "thoughts": [{"who": "продюсер", **{k: prop.get(k) for k in ("action", "clip", "reason")}},
-                         {"who": "критик", **{k: crit.get(k) for k in ("agree", "action", "clip", "reason")}}]}
+            "reason": str(final.get("reason", ""))[:400], "reason_en": str(final.get("reason_en", ""))[:400], "by": "ИИ-продюсер" + ("" if crit.get("agree", True) else " (поправил критик)"),
+            "thoughts": [{"who": "продюсер", **{k: prop.get(k) for k in ("action", "clip", "reason", "reason_en")}},
+                         {"who": "критик", **{k: crit.get(k) for k in ("agree", "action", "clip", "reason", "reason_en")}}]}
 
 
 def preflight(cl) -> None:
@@ -507,7 +507,7 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     store.write_json("status/post.json", pstate)
     br = store.read_json(BRAIN, {}) or {}
     feed = br.get("feed", [])
-    feed.append({"at": _iso(now), "local": ctx["now_local"], **{k: decision.get(k) for k in ("action", "clip", "reason", "by")},
+    feed.append({"at": _iso(now), "local": ctx["now_local"], **{k: decision.get(k) for k in ("action", "clip", "reason", "reason_en", "by") if k != "reason_en" or decision.get(k)},
                  "thoughts": decision.get("thoughts") or [], "released": released, "pool": len(pool)})
     br.update(feed=feed[-120:], last=feed[-1], context=ctx)
     store.write_json(BRAIN, br)

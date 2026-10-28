@@ -1411,6 +1411,12 @@ a.m-cp:hover img{transform:scale(1.06)}
   .scenes .u{width:960px}
 }
 
+/* Отступ под рядом фильтров: .page — обычный блок, поэтому у соседа сверху отступа не было вовсе,
+   и карточки клипов вплотную налезали на кнопки (вкладки «Клипы» и «Аналитика»). */
+.page > .row{margin-bottom:20px}
+.page > .row + *{margin-top:0}
+.page .seg{row-gap:6px}
+
 /* Экран пароля: выбор языка рядом со входом, пока настройки ещё недоступны */
 .gate-lang{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px;font-size:14px;color:var(--mute,#6B7689)}
 .gate-lang .sel{min-width:140px}
@@ -1660,9 +1666,9 @@ a.m-cp:hover img{transform:scale(1.06)}
 <div class="tip" id="tip" hidden></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
-<script src="app-config.js?v=20261027b"></script>
-<script src="money.js?v=20261027b"></script>
-<script src="i18n.js?v=20261027b"></script>
+<script src="app-config.js?v=20261028"></script>
+<script src="money.js?v=20261028"></script>
+<script src="i18n.js?v=20261028"></script>
 <script>
 (() => {
 "use strict";
@@ -2359,7 +2365,6 @@ function clipBucket(c) {
 }
 function clipCard(c) {
   const vids = D.settings?.values || {};
-  const age = (Date.now() - new Date(c.created_at)) / 36e5;
   const plats = Object.entries(c.targets || {}).map(([p, t]) => {
     const post = (c.posts || {})[p];
     const st = post?.status || (t.status === "used" ? "posted" : t.status) || "ready";
@@ -2377,7 +2382,7 @@ function clipCard(c) {
     return `<div class="copyline">${plChip(p)}<span>${esc(txt)}</span><button class="mini" type="button" data-copy="${esc(txt)}">копировать</button></div>`; }).join("");
   return `<article class="clip" id="clip-${esc(c.id)}">${thumbHtml(c.thumb)}<div style="min-width:0">
     <div class="row"><span class="score ${c.score >= 8 ? "hi" : ""}" title="Финальная оценка после просмотра видео">${c.score}/10</span><span class="muted small">${esc(CATS[c.category] || "")} · ${Math.round(c.duration || 0)} с · ${ago(c.created_at)}</span>
-      ${c.status === "ready" ? `<span class="muted small">· в очереди ${age < 24 ? Math.round(age) + " ч" : Math.round(age / 24) + " дн."}</span>` : ""}${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}${c.force_post ? `<span class="chip acc">выложу при ближайшем запуске</span>` : ""}</div>
+      ${(c.risk?.level || 0) >= 2 ? `<span class="chip warn" title="${esc((c.risk.flags || []).join(", "))}">риск</span>` : ""}${c.force_post ? `<span class="chip acc">выложу при ближайшем запуске</span>` : ""}</div>
     <div class="hook" style="margin-top:6px">${esc(c.overlay || t0.hook || "")}</div>
     ${c.what ? `<div class="what">${esc(c.what)}</div>` : c.why ? `<div class="what">${esc(c.why)}</div>` : ""}
     <div class="plats">${plats}</div>
@@ -2481,16 +2486,18 @@ function renderStats() {
 
 /* ── МОЗГ ────────────────────────────────────────── */
 const KIND = { arms: "вариант", boost: "темы", hours: "часы", health: "здоровье", revert: "откат", hint: "подсказка", freeze: "обучение", pause: "пауза", skip: "отмена", cap: "объём", warmup: "разгон", audio: "звук" };
+/* Объяснение решения: ИИ-продюсер пишет и по-русски, и по-английски (reason_en); старые записи — только по-русски. */
+const why = o => (LANG() === "en" && o.reason_en) ? o.reason_en : (o.reason || "");
 function renderBrain() {
   const br = D.status.brain || {}, feed = (br.feed || []).slice().reverse();
   $("brainNote").textContent = feed.length ? `последнее решение ${ago(feed[0].at)}` : "";
   const hook = id => (D.clips.find(c => c.id === id) || {}).overlay || id;
   // одинаковые подряд «жду: ночь» схлопываем
   const out = []; for (const f of feed) { const p = out[out.length - 1]; if (p && p.action === "wait" && f.action === "wait" && p.reason === f.reason) { p.n = (p.n || 1) + 1; continue; } out.push({ ...f }); }
-  $("feed").innerHTML = out.length ? out.slice(0, 40).map(f => `<div class="fitem"><span class="t">${new Date(f.at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: TZ })}</span>
-    <div><span class="chip ${f.action === "post" ? "good" : ""}">${f.action === "post" ? "выложил" : "ждёт"}</span> ${f.clip ? `<b>«${esc(hook(f.clip))}»</b> ` : ""}${esc(f.reason || "")}
+  $("feed").innerHTML = out.length ? out.slice(0, 40).map(f => `<div class="fitem"><span class="t">${new Date(f.at).toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit", timeZone: TZ, hour12: LANG() === "en" })}</span>
+    <div><span class="chip ${f.action === "post" ? "good" : ""}">${f.action === "post" ? "выложил" : "ждёт"}</span> ${f.clip ? `<b>«${esc(hook(f.clip))}»</b> ` : ""}${esc(why(f))}
       <span class="muted small">· ${esc(f.by || "")}${f.n ? ` · ×${f.n}` : ""}${(f.released || []).length ? " · " + f.released.map(p => PL[p]).join(", ") : ""}</span></div>
-    ${(f.thoughts || []).length ? `<div class="thoughts">${f.thoughts.map(t => `<div><b>${esc(t.who)}:</b> ${esc(t.reason || "")}${t.agree === false ? " (не согласен)" : ""}</div>`).join("")}</div>` : ""}</div>`).join("")
+    ${(f.thoughts || []).length ? `<div class="thoughts">${f.thoughts.map(t => `<div><b>${esc(t.who)}:</b> ${esc(why(t))}${t.agree === false ? " (не согласен)" : ""}</div>`).join("")}</div>` : ""}</div>`).join("")
     : `<p class="empty">Решений ещё нет — появятся после первого запуска публикации с новым мозгом.</p>`;
   const pol = D.policy || {};
   $("freezeBtn").textContent = pol.frozen ? "Включить обучение" : "Поставить обучение на паузу";
@@ -3003,8 +3010,8 @@ function demoData() {
   return {
     generated_at: ago_(3), title: "Нарезки albert1million", timezone: "America/Chicago", streamer: { display_name: "albert1million" }, accounts,
     money: { rate_per_1000: 1, currency: "USD", payout_min: 20 }, posting: { timezone: tzA },
-    settings: { values: { "quality.make_min": 7, "quality.post_min": 7, "quality.max_per_chunk": 2, "quality.exceptional": 9, "quality.reserve_target": 8, "quality.reserve_max": 16, "ai.scout_audio": true, "ai.video_review": true, "ai.video_model": "gemini-4-argon", "ai.planner": true, "ai.planner_model": "gemini-4-argon", "clips.min_seconds": 10, "clips.max_seconds": 59, "clips.trim_silence": true, "clips.trim_gap_seconds": 1.2, "clips.follow_subject": false, "posting.daily_max": 4, "posting.offday_max": 2, "posting.daily_min": 1, "posting.min_gap_minutes": 180, "posting.hot_now": true, "platforms.tiktok": true, "platforms.youtube": true, "platforms.instagram": true },
-      schema: { "quality.make_min": [7, [5, 10]], "quality.post_min": [7, [5, 10]], "quality.max_per_chunk": [2, [1, 10]], "quality.exceptional": [9, [7, 10]], "quality.reserve_target": [8, [0, 60]], "quality.reserve_max": [16, [1, 120]], "ai.scout_audio": [true, "bool"], "ai.video_review": [true, "bool"], "ai.video_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "ai.planner": [true, "bool"], "ai.planner_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "clips.min_seconds": [10, [6, 30]], "clips.max_seconds": [59, [20, 90]], "clips.trim_silence": [true, "bool"], "clips.trim_gap_seconds": [1.2, [0.6, 4]], "clips.follow_subject": [false, "bool"], "posting.daily_max": [4, [0, 12]], "posting.offday_max": [2, [0, 12]], "posting.daily_min": [1, [0, 6]], "posting.min_gap_minutes": [180, [20, 600]], "posting.hot_now": [true, "bool"], "platforms.tiktok": [true, "bool"], "platforms.youtube": [true, "bool"], "platforms.instagram": [true, "bool"] } },
+    settings: { values: { "quality.make_min": 7, "quality.post_min": 7, "quality.max_per_chunk": 2, "quality.exceptional": 9, "quality.reserve_target": 8, "quality.reserve_max": 16, "ai.scout_audio": true, "ai.video_review": true, "ai.video_model": "gemini-4-argon", "ai.planner": true, "ai.planner_model": "gemini-4-argon", "clips.min_seconds": 10, "clips.max_seconds": 59, "clips.trim_silence": true, "clips.trim_gap_seconds": 4, "clips.follow_subject": false, "posting.daily_max": 4, "posting.offday_max": 2, "posting.daily_min": 1, "posting.min_gap_minutes": 180, "posting.hot_now": true, "platforms.tiktok": true, "platforms.youtube": true, "platforms.instagram": true },
+      schema: { "quality.make_min": [7, [5, 10]], "quality.post_min": [7, [5, 10]], "quality.max_per_chunk": [2, [1, 10]], "quality.exceptional": [9, [7, 10]], "quality.reserve_target": [8, [0, 60]], "quality.reserve_max": [16, [1, 120]], "ai.scout_audio": [true, "bool"], "ai.video_review": [true, "bool"], "ai.video_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "ai.planner": [true, "bool"], "ai.planner_model": ["gemini-4-argon", ["gemini-4-argon", "gemini-3.8-flash"]], "clips.min_seconds": [10, [6, 30]], "clips.max_seconds": [59, [20, 90]], "clips.trim_silence": [true, "bool"], "clips.trim_gap_seconds": [4, [1, 10]], "clips.follow_subject": [false, "bool"], "posting.daily_max": [4, [0, 12]], "posting.offday_max": [2, [0, 12]], "posting.daily_min": [1, [0, 6]], "posting.min_gap_minutes": [180, [20, 600]], "posting.hot_now": [true, "bool"], "platforms.tiktok": [true, "bool"], "platforms.youtube": [true, "bool"], "platforms.instagram": [true, "bool"] } },
     switches: {},
     status: {
       live: { is_live: true, title: "Доставка по ЛА на Тесле", started_at: ago_(202), viewers: 1840 },
