@@ -83,7 +83,8 @@ def build(store: Store, cfg: dict) -> dict:
                                                   "comment", "variant", "status", "duration", "hook_quality", "asset")}
                         for p, t in c["targets"].items()},
             "posts": {p: {k: x.get(k) for k in ("account", "status", "posted_at", "video_id", "url", "reason", "why", "by",
-                                                "error", "privacy", "published_at")} for p, x in c["posts"].items()}})
+                                                "error", "privacy", "published_at", "started_at")}
+                      for p, x in c["posts"].items()}})
     vods = store.read_json("vods.json", {}) or {}
     meta = store.read_json("meta.json", {}) or {}
     name = (cfg["streamer"].get("display_name") or "").strip()

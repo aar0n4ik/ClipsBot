@@ -496,7 +496,14 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     # Теперь качество задаёт только CRF, а maxrate остаётся страховкой от патологий и никогда не мешает.
     cmd += ["-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
             "-maxrate", "20M", "-bufsize", "40M",
-            "-profile:v", "high", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out.resolve()]
+            "-profile:v", "high", "-pix_fmt", "yuv420p",
+            # Площадки перекодируют залитый файл, и часть таких конвейеров ИГНОРИРУЕТ edit list —
+            # ту самую запись, которой mp4 компенсирует задержку кодера. Браузер её соблюдает, поэтому
+            # на сайте клип звучит ровно, а после заливки звук уезжал на 43 мс (замерено прогоном через
+            # перекодирование с -ignore_editlist). negative_cts_offsets переносит компенсацию видео
+            # внутрь самого потока, и файл перестаёт зависеть от edit list: остаётся только задержка
+            # кодера AAC в 21 мс, и та в сторону «звук позже», которая на слух не ловится.
+            "-movflags", "+faststart+negative_cts_offsets", out.resolve()]
     prev = os.getcwd()
     os.chdir(work)  # ass-фильтр читает файл относительно текущей папки
     try:

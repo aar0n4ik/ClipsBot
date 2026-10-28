@@ -1948,9 +1948,37 @@ const STAGE_PHASE = { peaks: 2, scout: 2, speech: 3, judge: 3, video: 4, render:
 /* Нарезка и выкладка идут параллельно: пока режется новый кусок, предыдущий клип
    может уже уходить на площадки. Этап-герой — тот, что требует внимания (нарезка),
    но выкладка при этом не исчезает: её шаг на рельсе тоже горит. */
-function uploadBusy() {
-  return (D.clips || []).some(c => Object.values(c.posts || {}).some(p => ["uploading", "processing", "retry"].includes(p.status)));
+/* Заливка «идёт прямо сейчас» — это начатая загрузка, а не любой незакрытый статус.
+   Раньше сюда попадал retry: площадка один раз не приняла ролик, статус висел сутками, и дашборд
+   всё это время показывал этап «Выкладка», перекрывая то, что реально происходит со стримом.
+   Теперь окно 10 минут от начала загрузки (или от нажатия «выложить сейчас»), дальше этап отпускает. */
+const UPLOAD_WINDOW_MS = 10 * 60 * 1000;
+const fresh = iso => { const t = iso ? Date.parse(iso) : NaN; return Number.isFinite(t) && Date.now() - t < UPLOAD_WINDOW_MS ? t : 0; };
+/* когда клип начали заливать: самый свежий старт среди площадок, либо нажатие «выложить сейчас» */
+/* Команда уходит в репозиторий и вернётся в данные только после следующего прогона бота.
+   Чтобы сцена не показывала прошлую заливку всё это время, отмечаем нажатие сразу здесь. */
+const postingNow = new Map();
+function markPosting(id) {
+  postingNow.set(id, Date.now());
+  render();
+  // когда окно истечёт, сцена должна отпустить этап сама, без ожидания следующей загрузки данных
+  clearTimeout(markPosting.t);
+  markPosting.t = setTimeout(() => { postingNow.clear(); render(); }, UPLOAD_WINDOW_MS + 1000);
 }
+function uploadStartedAt(c) {
+  const local = postingNow.get(c.id) || 0;
+  let t = Date.now() - local < UPLOAD_WINDOW_MS ? local : 0;
+  t = Math.max(t, fresh(c.force_post));
+  for (const p of Object.values(c.posts || {}))
+    if (["uploading", "processing"].includes(p.status)) t = Math.max(t, fresh(p.started_at));
+  return t;
+}
+function uploadingClip() {
+  let best = null, bt = 0;
+  for (const c of (D.clips || [])) { const t = uploadStartedAt(c); if (t > bt) { best = c; bt = t; } }
+  return best;
+}
+function uploadBusy() { return !!uploadingClip(); }
 function phaseNow() {
   const P = D.status.process || {}, L = D.status.live || {};
   const busy = uploadBusy();
@@ -2112,7 +2140,11 @@ function sceneHtml(idx) {
   }
 
   /* 6 · выкладка */
-  const c0 = cs.find(c => Object.values(c.posts || {}).some(p => ["uploading", "processing", "retry"].includes(p.status)))
+  /* Клип берём тот, что уходит ПРЯМО СЕЙЧАС. Раньше список сортировался по дате создания, поэтому
+     после «выложить сейчас» на старом клипе сцена показывала чужой ролик с чужим текстом —
+     обычно прошлую заливку, зависшую в retry. */
+  const c0 = uploadingClip()
+    || cs.find(c => Object.values(c.posts || {}).some(p => ["uploading", "processing"].includes(p.status)))
     || cs.find(c => Object.keys(c.posts || {}).length) || cs[0];
   if (!c0) return box("Выкладка", `<div class="s6g"><p class="mute small">Выкладывать пока нечего.</p></div>`);
   const rows = (D.accounts || []).map((a, i) => {
@@ -2864,7 +2896,7 @@ function bind() {
     const c = D.clips.find(x => x.id === (t.dataset.postnow || t.dataset.cancel || t.dataset.retry));
     if (t.dataset.postnow) {
       if (!await confirmBox({ title: "Выложить сейчас?", body: `<div class="diff"><b>«${esc(c.overlay)}»</b> · ${c.score}/10</div><div>Выйдет на все готовые площадки при ближайшем запуске публикации (бот сразу его запустит). Правила паузы между релизами для этого клипа не действуют.</div>`, yes: "Выложить" })) return;
-      return act(t, async () => { await sendCommand({ cmd: "post_now", clip: c.id }, "выложить сейчас"); const ok = await runWorkflow("post.yml"); toast(ok ? "Публикация запущена — через пару минут клип выйдет" : "Команда отправлена; выйдет при ближайшем запуске (для мгновенного запуска ключу нужны права Actions)"); });
+      return act(t, async () => { markPosting(c.id); await sendCommand({ cmd: "post_now", clip: c.id }, "выложить сейчас"); const ok = await runWorkflow("post.yml"); toast(ok ? "Публикация запущена — через пару минут клип выйдет" : "Команда отправлена; выйдет при ближайшем запуске (для мгновенного запуска ключу нужны права Actions)"); });
     }
     if (t.dataset.cancel) { if (!await confirmBox({ title: "Не выкладывать клип?", body: `<div class="diff"><b>«${esc(c.overlay)}»</b></div><div>Клип не выйдет ни на одну площадку. Файл удалится.</div>`, yes: "Не выкладывать", danger: true })) return; return act(t, () => sendCommand({ cmd: "cancel_clip", clip: c.id }, "отмена клипа"), "Отправлено: бот выполнит до следующей публикации"); }
     if (t.dataset.retry) return act(t, () => sendCommand({ cmd: "retry_clip", clip: t.dataset.retry, platform: t.dataset.plat }, "повтор"), "Отправлено");

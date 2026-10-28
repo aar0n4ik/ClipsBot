@@ -675,15 +675,6 @@ def make_clip(cfg, store: Store, llm: LLM, policy: dict, vod: dict, pl: dict, pl
     if au["action"] == "skip":
         note_reject(store, vod, abs_s, "звук", au["reason"], pl["score"], pl.get("what", ""))
         return False
-    # Глухая голова (заглушка Twitch или просто пауза перед речью) — сдвигаем старт клипа вперёд,
-    # иначе ролик открывается мёртвой паузой: зритель слышит всплеск и 1-2 с тишины.
-    head = float(au.get("head_silence") or 0.0)
-    if head >= 0.25:
-        shift = min(head, max(0.0, dur - float(cl.get("min_seconds", 10))))
-        if shift >= 0.25:
-            pad, dur = pad + shift, dur - shift
-            s = s + shift
-            log(f"{clip_id}: в начале {head:.1f} с тишины — старт сдвинут на {shift:.1f} с")
     risk = dict(v.get("risk") or {"level": 0, "flags": []})
     if au["action"] == "flag":
         risk["flags"] = sorted(set(risk.get("flags", [])) | {"music"})
