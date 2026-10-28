@@ -1,12 +1,12 @@
 {
  "stats": {
-  "level": "paused",
-  "msg": "остановлено вручную из дашборда",
-  "at": "2026-10-28T00:41:11Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40610310748",
-  "since": "2026-10-27T21:28:05Z",
+  "level": "ok",
+  "msg": "статистика собрана",
+  "at": "2026-10-28T07:17:50Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40649114904",
+  "since": "2026-10-28T07:17:50Z",
   "fails": 0,
-  "last_ok": "2026-10-27T17:02:03Z"
+  "last_ok": "2026-10-28T07:17:50Z"
  },
  "watch": {
   "level": "ok",

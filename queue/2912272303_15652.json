@@ -213,12 +213,14 @@
   "tiktok": {
    "publish_id": "v_inbox_file~v2.7701574750895982622",
    "privacy": "DRAFT",
-   "status": "inbox",
-   "video_id": null,
+   "status": "posted",
+   "video_id": "7701577639714147614",
    "account": "tt_main",
    "posted_at": "2026-10-28T04:44:49Z",
    "reason": "владелец нажал «Выложить сейчас»",
-   "by": "владелец"
+   "by": "владелец",
+   "url": "https://www.tiktok.com/@twitch.albert1million/video/7701577639714147614?utm_campaign=tt4d_open_api&utm_source=sbawc9gz7oalb1o86a",
+   "published_at": 1793163292
   },
   "youtube": {
    "status": "posted",
