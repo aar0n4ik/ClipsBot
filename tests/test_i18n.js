@@ -31,7 +31,7 @@ function ok(cond, msg) { if (!cond) { console.error("  FAIL " + msg); failed++; 
   ["клипов 3 из 7", "clips 3 of 7"],
   ["В эфире 2 ч 15 мин", "Live 2 h 15 min"],
   ["Оценка по видео 8 из 10", "Video score 8 of 10"],
-  ["Вышел 5 мин назад, просмотры соберу через час", "Posted 5 min ago, views in an hour"],
+  ["Вышел 5 мин назад, просмотры соберу через час", "Posted 5 min ago, stats in an hour"],
   ["Запись куска 14:00", "Recording segment 14:00"],
 ].forEach(([ru, en]) => ok(toEn(ru) === en, `${JSON.stringify(ru)} -> ${JSON.stringify(toEn(ru))}, ожидалось ${JSON.stringify(en)}`));
 
@@ -75,7 +75,8 @@ for (const m of html.matchAll(/>([^<>${}]{2,400})</g)) cand.add(m[1]);
 for (const m of html.matchAll(/(?:placeholder|title|aria-label)="([^"]{2,400})"/g)) cand.add(m[1]);
 const ui = [...cand].map(x => x.trim()).filter(x => CYR.test(x) && !/[<>{}`]|\$\{/.test(x));
 /* «Русский» в списке языков остаётся по-русски в обоих режимах — так принято в переключателях. */
-const KEEP_RU = new Set(["Русский"]);
+/* Ключи словаря этапов (STAGE) — это то, как бот пишет этап; на экран они попадают только через stageName(). */
+const KEEP_RU = new Set(["Русский", "текст", "тексты", "видео", "критик", "отбор", "дубль", "звук", "монтаж"]);
 const left = ui.filter(x => !KEEP_RU.has(x) && CYR.test(toEn(x))).sort();
 ok(ui.length > 300, `строк для проверки подозрительно мало (${ui.length}) — сломался разбор index.html`);
 if (left.length) {

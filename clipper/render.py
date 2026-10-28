@@ -544,10 +544,12 @@ def measure_audio(cmd_inputs: list[dict], graph: str, out_pad: str) -> tuple[flo
         return None
     return (None if i < -60 else (i, tp))
 
-def thumb_b64(video: Path, at: float = 1.0, width: int = 240) -> str:
+def thumb_b64(video: Path, at: float = 1.0, width: int = 420) -> str:
+    """Превью для дашборда. Было 240 px и q:v 7 — на карточках «Лучшие клипы» (≈300 px, на ретине ×2) картинка мылилась.
+    420 px и q:v 3 дают чёткий кадр при ~35–45 КБ на клип."""
     jpg = video.with_suffix(".thumb.jpg")
     run(["ffmpeg", "-v", "error", "-y", "-ss", f"{at:.2f}", "-i", video, "-frames:v", "1",
-         "-vf", f"scale={width}:-2", "-q:v", "7", jpg], quiet=True)
+         "-vf", f"scale={width}:-2:flags=lanczos", "-q:v", "3", jpg], quiet=True)
     return "data:image/jpeg;base64," + base64.b64encode(jpg.read_bytes()).decode()
 
 

@@ -37,7 +37,22 @@
     "7 дней": "7 days",
     "30 дней": "30 days",
     "Всё время": "All time",
-    "Свой период": "Custom",
+    "Просмотры вчера": "Views yesterday",
+    "Доход за 14 дней": "Earnings for 14 days",
+    "Просмотры за 14 дней": "Views for 14 days",
+    "Доход за прошлый месяц": "Earnings for last month",
+    "Просмотры за прошлый месяц": "Views for last month",
+    "Свой период": "Custom range",
+    "за": "for",
+    "за период": "for period",
+    "за прошлый месяц": "for last month",
+    "за 14 дней": "for 14 days",
+    "вчера": "yesterday",
+    "По": "To",
+    "С": "From",
+    "Применить": "Apply",
+    "Статистика считается по дням": "Stats are counted per day",
+    "14 дней": "14 days",
 
     /* platform select */
     "Все площадки": "All platforms",
@@ -91,7 +106,7 @@
     /* clips table */
     "Клипы и доход": "Clips & earnings",
     "Клип": "Clip",
-    "Где вышел (просмотры)": "Where posted (views)",
+    "Где опубликован (просмотры)": "Where published (views)",
     "Дата": "Date",
     "За период": "Period views",
     "Лучший": "Best",
@@ -399,12 +414,12 @@
     "эфиров ещё не было": "no streams yet",
     "Последняя запись": "Last recording",
     "Обработано": "Processed",
-    "Пишется кусок записи": "Recording a chunk",
-    "Последние куски": "Recent chunks",
+    "Идёт запись фрагмента": "Recording a segment",
+    "Последние фрагменты": "Recent segments",
     "эфир идёт": "live now",
     "Поиск моментов": "Finding moments",
-    "Кусок стрима": "Stream chunk",
-    "Моментов в этом куске пока не отмечено.": "No moments marked in this chunk yet.",
+    "Фрагмент стрима": "Stream segment",
+    "В этом фрагменте пока нет отмеченных моментов.": "No moments marked in this segment yet.",
     "Анализ куска": "Chunk analysis",
     "Расшифровка речи": "Speech transcript",
     "Расшифровки пока нет: бот ещё не разбирал речь в этом куске.": "No transcript yet: the bot has not parsed speech in this chunk.",
@@ -429,7 +444,7 @@
     "ещё не уходил": "not sent yet",
     "идёт загрузка": "uploading",
     "Бот ещё не обработал ни одной записи.": "The bot has not processed a recording yet.",
-    "Первый кусок ещё пишется.": "The first chunk is still recording.",
+    "Первый фрагмент ещё записывается.": "The first segment is still recording.",
     /* помощь */
     "Это крупная правка": "That is a big change",
     "Поправил сам": "Changed it myself",
@@ -498,7 +513,7 @@
     "с такой оценкой берём сверх всех лимитов": "at this score we take it regardless of any limit",
     "Стример реагирует на ситуацию на заказе": "The streamer reacts to something on a delivery",
     "клипы режутся и копятся, но не выходят": "clips are cut and queued, but nothing ships",
-    "нарезка, анализ, выкладка и статистика": "clipping, analysis, posting and stats",
+    "нарезка, анализ, публикация и статистика": "clipping, analysis, publishing and stats",
     "ИИ-продюсер решает, когда выкладывать": "the AI producer decides when to post",
     "Идущая сейчас нарезка будет прервана.": "The clipping run in progress will be interrupted.",
     "Пока пусто — бот ещё ничего не делал.": "Empty for now — the bot hasn't done anything yet.",
@@ -589,10 +604,10 @@
     "Минимальная длина, с": "Minimum length, s",
     "Не выкладывать клип?": "Don't post this clip?",
     "Остановлено вручную:": "Stopped manually:",
-    "Почему взял и тексты": "Why it was taken, and the copy",
+    "Почему выбран и тексты": "Why it was selected, and the copy",
     "Сохранить изменения?": "Save changes?",
     "Сохранить настройки?": "Save settings?",
-    "запись куска по часу": "one-hour recording segments",
+    "запись фрагментами по часу": "recording in one-hour segments",
     "обработано кусков: 1": "segments processed: 1",
     "ИИ (ключи и модели)": "AI (keys and models)",
     "Изменения поведения": "Behaviour changes",
@@ -611,13 +626,13 @@
     "Площадок пока нет.": "No platforms yet.",
     "дашборд: настройки": "dashboard: settings",
     "поправил заголовок": "fixed the title",
-    "Жду окна выкладки": "Waiting for a posting slot",
+    "Ожидание окна публикации": "Waiting for a publishing slot",
     "ИИ оценивает речь": "the AI scores the speech",
     "Откатить решение?": "Roll back the decision?",
     "Поиск по названию": "Search by title",
     "Этапы работы бота": "Bot pipeline stages",
     "жду: вечерний пик": "waiting: evening peak",
-    "Выложить сейчас?": "Post now?",
+    "Опубликовать сейчас?": "Publish now?",
     "ИИ смотрит кадры": "the AI looks at the frames",
     "Изменить запись?": "Edit the record?",
     "К выплате сейчас": "Payable now",
@@ -641,12 +656,12 @@
     "Отменить правки": "Discard changes",
     "Оценка по видео": "Video score",
     "Ставка за 1 000": "Rate per 1,000",
-    "Только выкладка": "Posting only",
+    "Только публикация": "Publishing only",
     "без комментария": "no comment",
-    "выложить сейчас": "post now",
+    "Опубликовать сейчас": "Publish now",
     "GitHub ответил": "GitHub replied",
     "Бот остановлен": "Bot is stopped",
-    "Выкладка клипа": "Posting the clip",
+    "Публикация клипа": "Publishing the clip",
     "Место в стриме": "Position in stream",
     "Не выкладывать": "Don't post",
     "Остановка бота": "Stopping the bot",
@@ -657,11 +672,11 @@
     "Что изменилось": "What changed",
     "Это устройство": "This device",
     "до пика 2 часа": "2 hours to the peak",
-    "не выкладывать": "don't post",
+    "Не публиковать": "Don't publish",
     "обрабатывается": "processing",
     "#доставкавсша": "#deliveryintheusa",
     "Анализ текста": "Text analysis",
-    "Ждут выкладки": "Awaiting posting",
+    "Ожидают публикации": "Awaiting publication",
     "Как в системе": "As in the system",
     "Корректировка": "Adjustment",
     "Почему тогда:": "Why then:",
@@ -706,7 +721,7 @@
     "статистика": "stats",
     "Аналитика": "Analytics",
     "Все этапы": "All stages",
-    "Жду ответ": "Awaiting a reply",
+    "Ожидание ответа": "Waiting for a reply",
     "Запустить": "Start",
     "Кандидаты": "Candidates",
     "Недоплата": "Underpaid",
@@ -722,8 +737,8 @@
     "обновлено": "updated",
     "повторить": "retry",
     "просмотра": "views",
-    "Выкладка": "Posting",
-    "Выложить": "Post",
+    "Публикация": "Posting",
+    "Опубликовать": "Publish",
     "Действия": "Actions",
     "Записано": "Recorded",
     "Изменить": "Edit",
@@ -731,8 +746,8 @@
     "Отменить": "Cancel",
     "Площадка": "Platform",
     "Спросить": "Ask",
-    "в стриме": "in the stream",
-    "выкладка": "posting",
+    "На стриме": "On stream",
+    "публикация": "publishing",
     "дашборд:": "dashboard:",
     "исключён": "excluded",
     "обучение": "learning",
@@ -749,7 +764,7 @@
     "Выплата": "Payout",
     "Выплаты": "Payouts",
     "История": "History",
-    "Не взял": "Passed on",
+    "Отклонённые": "Rejected",
     "Пометки": "Flags",
     "Причина": "Reason",
     "Разделы": "Sections",
@@ -790,7 +805,7 @@
     "повтор": "retry",
     "Видео": "Video",
     "Вышел": "Posted",
-    "Вышли": "Posted",
+    "Опубликованные": "Published",
     "Клипы": "Clips",
     "Обзор": "Overview",
     "Опции": "Options",
@@ -807,7 +822,7 @@
     "Звук": "Audio",
     "Идёт": "Live",
     "Ключ": "Key",
-    "Мозг": "Brain",
+    "Решения": "Decisions",
     "Пики": "Peaks",
     "Тема": "Topic",
     "Темы": "Topics",
@@ -841,11 +856,56 @@
     "выключено — работает простой план по лучшим часам": "off — a simple plan by best hours is used",
     "ИИ смотрит видео финалиста 2/4": "The AI watches finalist 2/4",
     ", просмотры соберу через час": ", views in an hour",
+    ", статистику соберу через час": ", stats in an hour",
     "дашборд: стоп (": "dashboard: stop (",
     "остановлен": "stopped",
     "Просмотры": "Views",
     "· кусок": "· segment",
     "Все выводы": "All payouts",
+    "лучший час по плану": "best hour per the plan",
+    "согласен": "agrees",
+    "· фрагмент": "· segment",
+    "Запись фрагмента": "Recording segment",
+    "Опубликовал": "Posted",
+    "Ожидает": "Waiting",
+    "Думает": "Thinking",
+    "Анализ текста": "Text analysis",
+    "Заголовки": "Titles",
+    "Анализ видео": "Video analysis",
+    "Контроль качества": "Quality control",
+    "Отбор": "Selection",
+    "Дубликат": "Duplicate",
+    "Звук": "Audio",
+    "На паузе": "Paused",
+
+    "Удалён вручную": "Removed manually",
+    "Отменён": "Cancelled",
+    "Пропущен для синхронизации": "Skipped for sync",
+    "Публикуется": "Publishing",
+    "Обработка": "Processing",
+    "В черновиках TikTok": "In TikTok drafts",
+    "Ожидает публикации": "Awaiting publication",
+    "кадров": "frames",
+    "Просмотр": "Reviewing",
+    "речи": "speech",
+    "Разбор": "Analyzing",
+    "моментов": "moments",
+    "стрима": "stream",
+    "Ожидание": "Waiting for",
+    "Сейчас нечего публиковать: слабые клипы бот не выпускает. Новые клипы появятся после обработки следующего фрагмента стрима.": "Nothing to publish right now: the bot doesn't release weak clips. New clips will appear after the next stream segment is processed.",
+    "За последние сутки публикаций не было.": "Nothing was published in the last 24 hours.",
+    "Сумма выплаты": "Payout amount",
+    "Считается по выбранным клипам": "Calculated from the selected clips",
+    "Изменить вручную": "Edit manually",
+    "Вернуть расчёт": "Use calculated amount",
+    "Дата и время получения": "Date and time received",
+    "Что закрывает эта выплата": "What this payout covers",
+    "Все": "All",
+    "Новый": "New",
+    "Доплата": "Top-up",
+    "Выбрать клип": "Select clip",
+    "Невыбранные останутся к выплате": "Unselected ones remain payable",
+
     "(не согласен)": "(disagrees)",
     "Финальная оценка после просмотра видео": "Final score after watching the video",
     "Например: подними ставку до $1.50 за 1000 просмотров": "For example: raise the rate to $1.50 per 1,000 views",
@@ -906,8 +966,11 @@
   /* Составные фразы собираются в коде из кусков и числа. Пословная замена давала «клипов 3 из 7»:
      половина по-английски, половина нет. Поэтому целая строка сначала проверяется этими шаблонами. */
   const RX = [
-    [/^Кусок (.+?): кандидатов (\d+), по тексту (\d+), по видео (\d+), клипов (\d+)$/, "Segment $1: $2 candidates, $3 passed text, $4 passed video, $5 clips"],
-    [/^Публикация: выложено: (.+)$/, "Publishing: posted to $1"],
+    [/^Доход за (?:период )?(.+)$/, "Earnings for $1"],
+    [/^Просмотры за (?:период )?(.+)$/, "Views for $1"],
+    [/^Выбрано (\d+) из (\d+) на (.+)$/, "Selected $1 of $2 totaling $3"],
+    [/^(?:Кусок|Фрагмент) (.+?): кандидатов (\d+), по тексту (\d+), по видео (\d+), клипов (\d+)$/, "Segment $1: $2 candidates, $3 passed text, $4 passed video, $5 clips"],
+    [/^Публикация: (?:выложено|опубликовано): (.+)$/, "Publishing: posted to $1"],
     [/^владелец нажал «Выложить сейчас»$/, "owner pressed “Post now”"],
     [/^клип (\S+) вышел не везде — жду (.+), чтобы дотянуть; новые клипы не выходят, пока площадки не сравняются$/, "clip $1 didn't go out everywhere — waiting for $2 to catch up; new clips are held until the platforms match"],
     [/^дотягиваю (.+): клип уже вышел на других площадках$/, "catching up $1: the clip is already out on other platforms"],
@@ -921,14 +984,14 @@
     [/^Проверка раз в (\d+) минут$/, "Checking every $1 minutes"],
     [/^(\d[\d\s  .,]*) зрител(?:ь|я|ей)$/, "$1 viewers"],
     [/^клипов (\d+) из (\d+)$/, "clips $1 of $2"],
-    [/^Запись куска (.+)$/, "Recording segment $1"],
-    [/^Кусок (.+)$/, "Segment $1"],
+    [/^Запись (?:куска|фрагмента) (.+)$/, "Recording segment $1"],
+    [/^(?:Кусок|Фрагмент) (.+)$/, "Segment $1"],
     [/^В эфире (.+)$/, "Live $1"],
     [/^В эфире$/, "Live"],
     [/^(\d+) пик(?:ов|а|)$/, "$1 peaks"],
     [/^кандидатов (\d+)$/, "candidates $1"],
     [/^Оценка по видео (\d+) из 10$/, "Video score $1 of 10"],
-    [/^Вышел (.+), просмотры соберу через час$/, "Posted $1, views in an hour"],
+    [/^(?:Вышел|Опубликован) (.+), (?:просмотры|статистику) соберу через час$/, "Posted $1, stats in an hour"],
     [/^(\d+) из (\d+) подключено$/, "$1 of $2 connected"],
     [/^1 площадка подключено$/, "1 platform connected"],
     [/^(\d+) площад(?:ка|ки|ок) подключено$/, "$1 platforms connected"],
@@ -958,9 +1021,9 @@
     [/^Эфир идёт (.+)$/, "Live now $1"],
     [/^Последний эфир был (.+)$/, "Last stream was $1"],
     [/^Эфиров ещё не было$/, "No streams yet"],
-    [/^(.+) на куске (.+)$/, "$1 on segment $2"],
-    [/^Вышел «(.+)» на (.+)$/, "Posted “$1” on $2"],
-    [/^Вышел (.+)$/, "Posted $1"],
+    [/^(.+) на (?:куске|фрагменте) (.+)$/, "$1 on segment $2"],
+    [/^(?:Вышел|Опубликован) «(.+)» на (.+)$/, "Posted “$1” on $2"],
+    [/^(?:Вышел|Опубликован) (.+)$/, "Posted $1"],
     [/^([\d\s  .,]+) просм\.$/, "$1 views"],
     [/^лучшая: (.+)$/, "best: $1"],
     [/^Просмотры за (.+)$/, "Views for $1"],
@@ -1076,6 +1139,40 @@
   }
   window.i18nMisses = reportMisses;
 
+  /* Профессиональная лексика. Бот (и старые записи в журнале) пишет «кусок», «вышел», «жду» —
+     на странице показываем «фрагмент», «опубликован», «ожидание». Только в журнале, ленте решений
+     и статусах: названия клипов и тексты ИИ не трогаем. */
+  const RW = w => new RegExp("(?<![А-Яа-яЁё])" + w + "(?![А-Яа-яЁё])", "g");
+  const RU_PRO = [
+    [RW("Кусок"), "Фрагмент"], [RW("кусок"), "фрагмент"], [RW("куска"), "фрагмента"], [RW("куске"), "фрагменте"],
+    [RW("куски"), "фрагменты"], [RW("кусков"), "фрагментов"],
+    [/Вышел (?=«)/g, "Опубликован "], [RW("выложено"), "опубликовано"],
+    [RW("Выкладка"), "Публикация"], [RW("выкладка"), "публикация"], [RW("выкладку"), "публикацию"],
+    [RW("выкладки"), "публикации"], [RW("выкладке"), "публикации"], [RW("выкладкой"), "публикацией"],
+    [RW("Жду"), "Ожидание"], [/(?<![А-Яа-яЁё])жду:/g, "ожидание:"], [RW("жду"), "ожидаю"],
+    [RW("отдыхает"), "на паузе"],
+  ];
+  const PRO_SCOPE = ".log, .fitem, #sys, #alerts, .alert";
+  function ruPro(s) { let o = s; for (const [re_, to] of RU_PRO) o = o.replace(re_, to); return o; }
+
+  /* Заглавная первая буква: подписи, статусы, кнопки, описания, тексты в ленте — всё, что начинает строку.
+     Не трогаем ники и хэштеги (в первом слове есть цифра, _, @, #, точка), код и поля ввода. Инлайновый кусок
+     в середине фразы («… <b>текст</b> …») тоже остаётся как есть. */
+  const NO_CAP = "a.tw, .tw, code, pre, .mono, input, textarea, select, option, [data-nocap]";
+  const CAP_ALWAYS = ".chip, .mini, .kind, .btn, .iconbtn, button, th, .fi-t, .thoughts b";
+  const INLINE = /^(SPAN|B|EM|STRONG|A|I|SMALL|TIME|U)$/;
+  function capFirst(node, t) {
+    if (!/^\s*[a-zа-яё]/.test(t)) return t;
+    if (/[0-9_@#./]/.test(t.trim().split(/\s/)[0])) return t;
+    let el = node.parentElement;
+    if (!el || node.previousSibling || el.closest(NO_CAP)) return t;
+    while (el && INLINE.test(el.tagName) && !el.matches(CAP_ALWAYS)) {
+      if (el.previousSibling) return t;
+      el = el.parentElement;
+    }
+    return t.replace(/^(\s*)([a-zа-яё])/, (m, a, b) => a + b.toUpperCase());
+  }
+
   function translate(node) {
     const current = node.nodeValue;
     // Если приложение само поменяло текст, считаем новое значение оригиналом.
@@ -1084,7 +1181,9 @@
     const src = original.get(node) || "";
     if (!src.trim()) return;
 
-    const target = lang === "en" ? toEn(src) : src;
+    const pe = node.parentElement;
+    let target = lang === "en" ? toEn(src) : (pe && pe.closest(PRO_SCOPE) ? ruPro(src) : src);
+    target = capFirst(node, target);
     if (node.nodeValue !== target) node.nodeValue = target;
     applied.set(node, target);
   }

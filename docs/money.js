@@ -95,7 +95,7 @@
       const inc = Math.max(0, x.bestViews - was);
       if (!inc) continue;
       lines.push({
-        g: x.key, merged: x.merged, title: x.title, kind: was > 0 ? "topup" : "new", prev_paid: was, paid_to: x.bestViews, views: inc,
+        g: x.key, merged: x.merged, title: x.title, thumb: x.thumb || null, kind: was > 0 ? "topup" : "new", prev_paid: was, paid_to: x.bestViews, views: inc,
         amount: Math.round(inc * rate / 10) / 100,
         best: { platform: x.best.platform, account: x.best.account, url: x.best.url, views: x.bestViews },
         links: x.posts.map(p => ({ platform: p.platform, account: p.account, url: p.url, views: p.views || 0 })),

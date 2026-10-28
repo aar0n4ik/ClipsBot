@@ -1417,6 +1417,96 @@ a.m-cp:hover img{transform:scale(1.06)}
 .page > .row + *{margin-top:0}
 .page .seg{row-gap:6px}
 
+
+/* Шапка выше: сверху был лишний воздух */
+.shell{padding-top:max(6px,env(safe-area-inset-top))}
+.top{padding:8px 0 6px}
+.tw svg{overflow:visible}
+
+/* Сцена «стрима нет»: картинка целиком, без обрезки снизу и без увеличения под ширину экрана.
+   Раньше object-fit:cover растягивал её на всю ширину, а нижние ~140px закрывал док с этапами —
+   у машины пропадали колёса. Теперь картинка вписана в область над доком (его высоту меряет JS)
+   и прижата вправо; ширина — по пропорциям оригинала, поэтому маска-растушёвка слева работает как в макете. */
+@media(min-width:1181px){
+  .scenes .sceneBox.full{inset:auto 0 var(--dock-h,141px) auto;height:calc(100% - var(--dock-h,141px));aspect-ratio:1440/820;width:auto}
+  .scenes .sceneBox.full img.sv{object-fit:contain;object-position:100% 100%}
+}
+
+/* Логотипы площадок (вместо TT / IG / YT) */
+.plg{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;border-radius:8px;color:#fff;fill:#fff;text-decoration:none;box-shadow:0 0 0 1px rgba(15,23,42,.08);vertical-align:middle}
+.plg svg{width:15px;height:15px;display:block}
+.plg.tiktok{background:#0B0B0D}.plg.youtube{background:#FF0000}.plg.instagram{background:#E4405F}
+a.plg{transition:transform .15s ease,box-shadow .15s ease}
+a.plg:hover{transform:translateY(-1px);box-shadow:0 6px 14px -6px rgba(15,23,42,.45)}
+.plats>div{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+
+/* Окно выплаты: ровные отступы, сумма считается сама */
+#fdBody{display:grid;gap:20px}
+dialog .field{gap:8px}
+dialog .field>label{font-weight:600;font-size:14px}
+.amt-row{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap}
+.amt-auto b{display:block;font-size:32px;line-height:1.1;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.amt-auto span{display:block;margin-top:4px}
+.amt-edit{display:flex;align-items:center;gap:8px;flex:1;min-width:170px}
+.amt-edit .cur{font-weight:700;font-size:20px}
+.pay-sec{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px;padding-top:4px}
+.pay-list{max-height:340px;overflow:auto;margin:0 -4px;padding:0 4px}
+.payline{display:grid;grid-template-columns:20px 46px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--k-line)}
+.payline:first-child{border-top:0}
+.pay-th{display:block;width:46px;aspect-ratio:9/16;border-radius:10px;overflow:hidden;background:#DDE3EF}
+.pay-th img{display:block;width:100%;height:100%;object-fit:cover}
+a.pay-th:hover img{transform:scale(1.06);transition:transform .3s ease}
+.pay-t{display:block;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.pay-s{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-top:8px;font-size:13px;color:var(--k-mute)}
+.pay-p{display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.pay-p.win{color:var(--k-ink);font-weight:700}
+.pay-r{text-align:right;white-space:nowrap}
+.pay-r b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.pay-r small{display:block;margin-top:3px;font-size:12.5px;color:var(--k-mute)}
+.pay-sum{margin:2px 0 0}
+@media(max-width:520px){.payline{grid-template-columns:20px 40px minmax(0,1fr);gap:10px}.pay-th{width:40px}.pay-r{grid-column:3;text-align:left}}
+
+/* Тексты и таблицы: воздух между элементами, ровные колонки */
+.clip{gap:16px;padding:18px}
+.clip .plats{gap:10px;margin-top:12px}
+.clip .plats>div{gap:10px}
+.clip .row{gap:10px 12px}
+.clip .hook{margin-top:10px!important}
+.mini{padding:7px 13px;font-size:13px;border-radius:10px;gap:6px}
+.clip .row .mini{margin:0}
+.chip{margin-top:0}
+.tbl-wrap table.rej{table-layout:fixed;min-width:780px}
+.rej th,.rej td{padding:14px 18px 14px 0;vertical-align:middle;text-align:left}
+.rej th.r,.rej td.r{text-align:right;padding-right:32px}
+.rej th:last-child,.rej td:last-child{padding-right:0}
+.rej td:first-child{white-space:nowrap}
+.rej td .mini{padding:5px 11px}
+.rej .chip{margin:0}
+
+/* Лента решений: время слева, дальше фраза со статусом в конце */
+.fitem{grid-template-columns:72px minmax(0,1fr);gap:6px 18px;padding:18px 0;align-items:start}
+.fitem .t{font-variant-numeric:tabular-nums;color:var(--k-mute,var(--muted));padding-top:2px}
+.fi-b{min-width:0}
+.fi-m{margin:0;line-height:1.55;font-size:15px}
+.fi-m .chip{margin-left:6px;vertical-align:1px}
+.fitem .thoughts{grid-column:auto;margin-top:10px;gap:6px}
+
+
+/* Выбор периода */
+.seg{gap:8px}
+.seg button{padding:0 18px}
+.ppop{position:absolute;z-index:60;width:300px;max-width:calc(100vw - 24px);padding:16px;border-radius:16px;background:#fff;color:#0F172A;border:1px solid #D9DFEA;box-shadow:0 24px 48px -16px rgba(30,50,100,.4)}
+.dk .ppop{background:#161F36;color:#EAF0FF;border-color:#2B3858}
+.ppop .pp-l{display:flex;flex-direction:column;gap:6px}
+.ppop .pp-l button{min-height:40px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer}
+.ppop .pp-l button:hover{background:rgba(47,107,255,.1)}
+.ppop .pp-l button.on{background:#2F6BFF;color:#fff}
+.ppop .pp-h{margin:16px 0 8px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;opacity:.6}
+.ppop .pp-d{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ppop label{display:flex;flex-direction:column;gap:6px;font-size:12px;opacity:.9}
+.ppop input[type=date]{min-height:40px;padding:0 10px;border-radius:10px;border:1px solid #D9DFEA;background:transparent;color:inherit;font:inherit;color-scheme:light dark}
+.ppop .pp-n{margin:10px 0 14px;font-size:12px;opacity:.6}
+.ppop .pp-go{width:100%;justify-content:center;min-height:42px}
 /* Экран пароля: выбор языка рядом со входом, пока настройки ещё недоступны */
 .gate-lang{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px;font-size:14px;color:var(--mute,#6B7689)}
 .gate-lang .sel{min-width:140px}
@@ -1444,10 +1534,10 @@ a.m-cp:hover img{transform:scale(1.06)}
     <div class="wrap shell">
       <header class="top">
         <h1 class="logo">Нарезки</h1>
-        <a class="tw" id="twLink" href="https://twitch.tv/" target="_blank" rel="noopener" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142z"/><path d="M11.857 3.143h-1.143V6.57h1.143zm-3.143 0H7.571V6.57h1.143z"/></svg><span id="twName">Twitch</span></a>
+        <a class="tw" id="twLink" href="https://twitch.tv/" target="_blank" rel="noopener" hidden><svg viewBox="-1.5 -1.5 19 19" aria-hidden="true"><path d="M3.857 0 1 2.857v10.286h3.429V16l2.857-2.857H9.57L14.714 8V0zm9.714 7.429-2.285 2.285H9l-2 2v-2H4.429V1.143h9.142z"/><path d="M11.857 3.143h-1.143V6.57h1.143zm-3.143 0H7.571V6.57h1.143z"/></svg><span id="twName">Twitch</span></a>
       </header>
       <nav class="tabs" id="tabs" aria-label="Разделы">
-        <a class="tab" href="#overview" data-l="Обзор" data-s="Обзор">Обзор</a><a class="tab" href="#clips" data-l="Клипы" data-s="Клипы">Клипы</a><a class="tab" href="#stats" data-l="Аналитика" data-s="Цифры">Аналитика</a><a class="tab" href="#brain" data-l="Мозг" data-s="Мозг">Мозг</a><a class="tab" href="#manage" data-l="Выплаты" data-s="Деньги">Выплаты</a><a class="tab" href="#help" data-l="Помощь" data-s="Помощь">Помощь</a><a class="tab" href="#settings" data-l="Настройки" data-s="Опции">Настройки</a>
+        <a class="tab" href="#overview" data-l="Обзор" data-s="Обзор">Обзор</a><a class="tab" href="#clips" data-l="Клипы" data-s="Клипы">Клипы</a><a class="tab" href="#stats" data-l="Аналитика" data-s="Цифры">Аналитика</a><a class="tab" href="#brain" data-l="Решения" data-s="Решения">Решения</a><a class="tab" href="#manage" data-l="Выплаты" data-s="Деньги">Выплаты</a><a class="tab" href="#help" data-l="Помощь" data-s="Помощь">Помощь</a><a class="tab" href="#settings" data-l="Настройки" data-s="Опции">Настройки</a>
       </nav>
       <div class="demo-note" id="demoNote" hidden>Демо с выдуманными цифрами. На GitHub Pages будут только настоящие данные бота.</div>
       <div class="alerts" id="alerts"></div>
@@ -1478,7 +1568,7 @@ a.m-cp:hover img{transform:scale(1.06)}
         <div class="m-head">
           <div><h2>Деньги</h2><span class="m-sub" id="moneySub"></span></div>
           <div class="seg" id="period" role="group" aria-label="Период">
-            <button type="button" data-p="today">Сегодня</button><button type="button" data-p="7">7 дней</button><button type="button" data-p="30">30 дней</button><button type="button" data-p="all">Всё время</button>
+            <button type="button" data-p="today">Сегодня</button><button type="button" data-p="7">7 дней</button><button type="button" data-p="30">30 дней</button><button type="button" data-p="all">Всё время</button><button type="button" data-p="pick" class="pick-btn" aria-haspopup="dialog">Выбрать</button>
           </div>
         </div>
 
@@ -1515,15 +1605,14 @@ a.m-cp:hover img{transform:scale(1.06)}
     <section class="page" data-page="clips" hidden>
       <div class="row">
         <div class="seg" id="clipSeg" role="group" aria-label="Какие клипы">
-          <button type="button" data-c="ready">Ждут выкладки</button><button type="button" data-c="drafts">Черновики TikTok</button><button type="button" data-c="out">Вышли</button><button type="button" data-c="problems">Ошибки</button><button type="button" data-c="rejected">Не взял</button>
+          <button type="button" data-c="ready">Ожидают публикации</button><button type="button" data-c="drafts">Черновики TikTok</button><button type="button" data-c="out">Опубликованные</button><button type="button" data-c="problems">Ошибки</button><button type="button" data-c="rejected">Отклонённые</button>
         </div>
       </div>
       <div class="alert info" id="draftHint" hidden><b>TikTok пока без аудита API</b> <span class="msg">— бот кладёт ролик в черновики TikTok в ту же минуту, что и на Shorts и Reels. Открой TikTok → Профиль → Черновики (Входящие) и нажми «Опубликовать», чтобы вышло одновременно.</span></div>
       <div class="clips" id="clipList"></div>
       <div class="panel" id="rejPanel" hidden>
         <div class="ph2"><h3>Почему моменты не стали клипами</h3><select class="sel" id="rejStage" aria-label="Этап"><option value="">Все этапы</option></select></div>
-        <div id="rejTop" class="row" style="margin-bottom:12px"></div>
-        <div class="tbl-wrap"><table class="wide"><thead><tr><th>Когда</th><th>Место в стриме</th><th>Этап</th><th class="r">Оценка</th><th>Причина</th></tr></thead><tbody id="rejRows"></tbody></table></div>
+        <div class="tbl-wrap"><table class="wide rej"><colgroup><col style="width:120px"><col style="width:140px"><col style="width:190px"><col style="width:90px"><col></colgroup><thead><tr><th>Когда</th><th>Место в стриме</th><th>Этап</th><th class="r">Оценка</th><th>Причина</th></tr></thead><tbody id="rejRows"></tbody></table></div>
       </div>
     </section>
 
@@ -1531,7 +1620,7 @@ a.m-cp:hover img{transform:scale(1.06)}
     <section class="page" data-page="stats" hidden>
       <div class="row">
         <div class="seg" id="period2" role="group" aria-label="Период">
-          <button type="button" data-p="today">Сегодня</button><button type="button" data-p="7">7 дней</button><button type="button" data-p="30">30 дней</button><button type="button" data-p="all">Всё время</button>
+          <button type="button" data-p="today">Сегодня</button><button type="button" data-p="7">7 дней</button><button type="button" data-p="30">30 дней</button><button type="button" data-p="all">Всё время</button><button type="button" data-p="pick" class="pick-btn" aria-haspopup="dialog">Выбрать</button>
         </div>
         <select class="sel" id="platform" aria-label="Площадка"><option value="">Все площадки</option></select>
       </div>
@@ -1546,7 +1635,7 @@ a.m-cp:hover img{transform:scale(1.06)}
       <div class="panel">
         <div class="ph2"><h3>Клипы и доход</h3><span class="muted small" id="tblNote"></span></div>
         <div class="tbl-wrap"><table class="wide">
-          <thead><tr><th>Клип</th><th>Где вышел (просмотры)</th><th><button type="button" data-sort="date">Дата</button></th>
+          <thead><tr><th>Клип</th><th>Где опубликован (просмотры)</th><th><button type="button" data-sort="date">Дата</button></th>
             <th class="r"><button type="button" data-sort="pviews">За период</button></th><th class="r"><button type="button" data-sort="best">Лучший</button></th>
             <th class="r"><button type="button" data-sort="owed">К выплате</button></th><th></th></tr></thead>
           <tbody id="rows"></tbody></table></div>
@@ -1559,12 +1648,7 @@ a.m-cp:hover img{transform:scale(1.06)}
         <div class="ph2"><h3>Как продюсер решает, что и когда выкладывать</h3><span class="muted small" id="brainNote"></span></div>
         <div class="feed" id="feed"></div>
       </div>
-      <div class="panel">
-        <div class="ph2"><h3>Изменения поведения</h3>
-          <div class="row"><label class="check"><input type="checkbox" id="decAll"> Показать всё</label><button class="iconbtn" type="button" id="freezeBtn">Поставить обучение на паузу</button></div></div>
-        <div id="decisions"></div>
-      </div>
-    </section>
+          </section>
 
     <!-- УПРАВЛЕНИЕ -->
     <section class="page" data-page="manage" hidden>
@@ -1595,17 +1679,11 @@ a.m-cp:hover img{transform:scale(1.06)}
     <section class="page" data-page="help" hidden>
       <div class="panel">
         <div class="ph2"><h3>Помощь</h3><span class="chip" id="askChip">—</span></div>
-        <p class="muted small" style="margin:0 0 14px;max-width:76ch">Отвечает тот же ИИ, что отбирает клипы: он читает настоящие данные бота — очередь, оценки, площадки, деньги. Вопрос и ответ зашифрованы паролем дашборда. Ответ приходит за минуту-две, страницу можно закрыть.</p>
-        <div class="ask-can">
-          <div><b>Поправит сам:</b> <span>ставку, порог вывода и валюту, пороги отбора и длину клипа, расписание и часы тишины, паузу площадки, стоп и запуск, повтор или отмену клипа, паузу обучения.</span></div>
-          <div><b>Не возьмёт:</b> <span>новые функции, переделку сайта, правки кода и логики отбора, новую площадку, починку багов. На такое ответит прямо и скажет, что нужно сделать в коде, — эту работу лучше отдать полноценной модели с доступом к репозиторию.</span></div>
-        </div>
         <div class="say" id="say"></div>
         <div class="ask-in">
           <textarea id="ask" rows="2" placeholder="Например: подними ставку до $1.50 за 1000 просмотров"></textarea>
           <button class="btn amber" type="button" id="askSend">Спросить</button>
         </div>
-        <div class="ask-hint" id="askHints"></div>
       </div>
     </section>
 
@@ -1666,9 +1744,9 @@ a.m-cp:hover img{transform:scale(1.06)}
 <div class="tip" id="tip" hidden></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
-<script src="app-config.js?v=20261028"></script>
-<script src="money.js?v=20261028"></script>
-<script src="i18n.js?v=20261028"></script>
+<script src="app-config.js?v=20261028b"></script>
+<script src="money.js?v=20261028b"></script>
+<script src="i18n.js?v=20261028b"></script>
 <script>
 (() => {
 "use strict";
@@ -1859,10 +1937,14 @@ async function copy(text, btn) {
 
 /* ── справочники ─────────────────────────────────── */
 const PL = { tiktok: "TikTok", youtube: "Shorts", instagram: "Reels" };
-const plChip = p => `<span class="pl ${esc(p)}" title="${esc(PL[p] || p)}"></span>`;
-const PSTAT = { ready: ["ждёт релиза", "acc"], inbox: ["в черновиках — опубликуй", "warn"], inbox_stale: ["черновик так и не опубликован", "warn"],
-  posted: ["вышел", "good"], processing: ["обрабатывается", ""], uploading: ["выкладывается", ""], skipped_sync: ["пропущен ради синхрона", ""], failed: ["ошибка", "bad"], expired: ["устарел", ""], used: ["вышел", "good"],
-  retry: ["повтор", "warn"], skipped: ["отменён", ""], removed_by_user: ["удалён тобой", ""] };
+/* Логотип площадки (настоящий значок). С url — кликабельный, ведёт на видео, как карточки в «Лучших клипах». */
+const plChip = (p, url) => {
+  const tag = url ? "a" : "span", lk = url ? ` href="${esc(url)}" target="_blank" rel="noopener"` : "";
+  return `<${tag} class="plg ${esc(p)}"${lk} title="${esc(PL[p] || p)}"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="${PLG[p] || ""}"></use></svg></${tag}>`;
+};
+const PSTAT = { ready: ["Ожидает публикации", "acc"], inbox: ["В черновиках TikTok", "warn"], inbox_stale: ["Черновик не опубликован", "warn"],
+  posted: ["Опубликован", "good"], processing: ["Обработка", ""], uploading: ["Публикуется", ""], skipped_sync: ["Пропущен для синхронизации", ""], failed: ["Ошибка", "bad"], expired: ["Устарел", ""], used: ["Опубликован", "good"],
+  retry: ["Повтор", "warn"], skipped: ["Отменён", ""], removed_by_user: ["Удалён вручную", ""] };
 const CATS = { funny: "Смешное", conflict: "Конфликт", money: "Деньги", america: "Америка", customer: "Клиенты", road: "Дорога", emotional: "Эмоции", chat: "Чат", story: "История", other: "Другое" };
 const VALS = { tease: "недосказанность", conflict: "конфликт", number: "цифра", quote: "цитата" };
 const accName = id => ((D.accounts || []).find(a => a.id === id) || {}).name || id;
@@ -1915,13 +1997,47 @@ async function act(btn, fn, okMsg) {
 }
 
 /* ── состояние интерфейса ────────────────────────── */
-const ui = { page: "overview", period: LS.get("period", "7"), platform: "", sort: LS.get("sort", "pviews"), clipSeg: "ready", rejStage: "",
+const ui = { page: "overview", period: LS.get("period", "7"), pFrom: LS.get("pFrom", ""), pTo: LS.get("pTo", ""), platform: "", sort: LS.get("sort", "pviews"), clipSeg: "ready", rejStage: "",
              decAll: false, lvoid: false, vidSearch: "", setDraft: null, moneyDraft: null, payOpen: {} };
 
 function periodRange() {
   const today = dayKey(new Date());
   const first = D.posts.flatMap(v => Object.keys(v.history || {})).sort()[0] || today;
-  return { today: [today, today], "7": [addDays(today, -6), today], "30": [addDays(today, -29), today], all: [first, today] }[ui.period] || [addDays(today, -6), today];
+  const ym = addDays(today, -1), lm0 = addDays(today.slice(0, 8) + "01", -1);
+  const r = { today: [today, today], yesterday: [ym, ym], "7": [addDays(today, -6), today], "14": [addDays(today, -13), today], "30": [addDays(today, -29), today],
+              lastmonth: [lm0.slice(0, 8) + "01", lm0], all: [first, today],
+              custom: [ui.pFrom || today, ui.pTo || ui.pFrom || today] }[ui.period] || [addDays(today, -6), today];
+  return r[0] > r[1] ? [r[1], r[0]] : r;
+}
+const PERIOD_LABEL = { today: "сегодня", yesterday: "вчера", "7": "за 7 дней", "14": "за 14 дней", "30": "за 30 дней", lastmonth: "за прошлый месяц", all: "за всё время" };
+const periodLabel = () => ui.period === "custom" ? (ui.pFrom === ui.pTo ? "за " : "за период ") + fmtShortDate(ui.pFrom) + (ui.pFrom === ui.pTo ? "" : " – " + fmtShortDate(ui.pTo)) : PERIOD_LABEL[ui.period];
+function syncPeriod() {
+  document.querySelectorAll("#period button, #period2 button").forEach(b => {
+    const on = b.dataset.p === "pick" ? !["today", "7", "30", "all"].includes(ui.period) : b.dataset.p === ui.period;
+    b.setAttribute("aria-pressed", String(on)); b.classList.toggle("on", on);
+  });
+}
+function openPeriodPicker(anchor) {
+  document.getElementById("ppop")?.remove();
+  const today = dayKey(new Date()), [c1, c2] = periodRange();
+  const pop = document.createElement("div"); pop.id = "ppop"; pop.className = "ppop"; pop.setAttribute("role", "dialog");
+  const presets = [["yesterday", "Вчера"], ["14", "14 дней"], ["lastmonth", "Прошлый месяц"]];
+  pop.innerHTML = `<div class="pp-l">${presets.map(([k, n]) => `<button type="button" data-k="${k}" class="${ui.period === k ? "on" : ""}">${n}</button>`).join("")}</div>
+    <div class="pp-h">Свой период</div>
+    <div class="pp-d"><label><span>С</span><input type="date" id="ppFrom" max="${today}" value="${c1}"></label><label><span>По</span><input type="date" id="ppTo" max="${today}" value="${c2}"></label></div>
+    <div class="pp-n">Статистика считается по дням</div>
+    <button type="button" class="btn amber pp-go">Применить</button>`;
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect(), w = pop.offsetWidth;
+  pop.style.top = (r.bottom + scrollY + 8) + "px";
+  pop.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w)) + "px";
+  const close = () => { pop.remove(); document.removeEventListener("mousedown", away, true); document.removeEventListener("keydown", esc2, true); };
+  const away = e => { if (!pop.contains(e.target) && e.target !== anchor) close(); };
+  const esc2 = e => { if (e.key === "Escape") close(); };
+  setTimeout(() => { document.addEventListener("mousedown", away, true); document.addEventListener("keydown", esc2, true); });
+  const apply = () => { ui.period = "custom"; ui.pFrom = $("ppFrom").value || today; ui.pTo = $("ppTo").value || ui.pFrom; LS.set("period", "custom"); LS.set("pFrom", ui.pFrom); LS.set("pTo", ui.pTo); close(); render(); };
+  pop.querySelectorAll(".pp-l button").forEach(b => b.onclick = () => { ui.period = b.dataset.k; LS.set("period", ui.period); close(); render(); });
+  pop.querySelector(".pp-go").onclick = apply;
 }
 const filteredGroups = () => ui.platform ? Object.fromEntries(Object.entries(G).filter(([, x]) => x.posts.some(p => p.platform === ui.platform))
   .map(([k, x]) => [k, { ...x, posts: x.posts.filter(p => p.platform === ui.platform) }])) : G;
@@ -1946,7 +2062,7 @@ function renderAlerts() {
   const L = D.status.live || {};
   if (L.is_live && L.vod_missing) out.push(["bad", "Стрим идёт, но Twitch не сохраняет запись.", "Стример должен включить «Сохранять прошлые трансляции»."]);
   const s = stopState();
-  if (s.process || s.post || s.stats) out.push(["warn", "Бот остановлен вручную:", [s.process && "нарезка и анализ", s.post && "выкладка", s.stats && "статистика"].filter(Boolean).join(", ") + ". Включить — кнопка «Стоп» вверху."]);
+  if (s.process || s.post || s.stats) out.push(["warn", "Бот остановлен вручную:", [s.process && "нарезка и анализ", s.post && "публикация", s.stats && "статистика"].filter(Boolean).join(", ") + ". Включить — кнопка «Стоп» вверху."]);
   for (const [comp, x] of Object.entries(D.status.system || {})) if (x.level === "error") out.push(["bad", `Сбой: ${esc(sysName(comp))}.`, esc(x.msg) + (x.run_url ? ` <a href="${esc(x.run_url)}" target="_blank" rel="noopener">Лог</a>` : "")]);
   Object.entries(D.status.tokens || {}).forEach(([acc, t]) => { if (t.error && t.kind === "auth") out.push(["bad", `${esc(accName(acc))}: нужен повторный вход.`, esc(t.error) + ' — <a href="connect.html">подключение</a>.']); });
   Object.entries(D.status.health || {}).forEach(([acc, h]) => { if (h.state === "restricted") out.push(["warn", `${esc(accName(acc))}: площадка ограничила публикации.`, esc(h.reason)]); });
@@ -1974,12 +2090,12 @@ function dayIn(tz, d = new Date()) { return new Intl.DateTimeFormat("en-CA", { t
    поэтому рельс показывает то, что бот делает прямо сейчас, а не заготовку. */
 const PHASES = [
   ["Нет стрима", "проверка раз в 10 минут"],
-  ["Идёт стрим", "запись куска по часу"],
+  ["Идёт стрим", "запись фрагментами по часу"],
   ["Поиск", "звук, чат, клипы зрителей"],
   ["Анализ", "ИИ оценивает речь"],
   ["Видео", "ИИ смотрит кадры"],
   ["Монтаж", "9:16, субтитры, звук"],
-  ["Выкладка", "TikTok, Shorts, Reels"],
+  ["Публикация", "TikTok, Shorts, Reels"],
 ];
 const STAGE_PHASE = { peaks: 2, scout: 2, speech: 3, judge: 3, video: 4, render: 5 };
 /* Нарезка и выкладка идут параллельно: пока режется новый кусок, предыдущий клип
@@ -2017,6 +2133,8 @@ function uploadingClip() {
 }
 function uploadBusy() { return !!uploadingClip(); }
 function phaseNow() {
+  const forced = DEMO && /[?&]phase=(\d)\b/.exec(location.search);   // только в демо: показать нужную сцену для проверки
+  if (forced) return +forced[1];
   const P = D.status.process || {}, L = D.status.live || {};
   const busy = uploadBusy();
   if (P.state === "running" && STAGE_PHASE[P.stage_id] != null) return STAGE_PHASE[P.stage_id];
@@ -2035,12 +2153,12 @@ function logEvents() {
   const L = D.status.live || {};
   if (L.is_live) add(L.started_at, `Эфир идёт${L.title ? ": " + L.title : ""}${L.viewers ? ` · ${fmtInt(L.viewers)} зрителей` : ""}`);
   const P = D.status.process || {};
-  if (P.state === "running") add(P.updated_at, `${P.stage || "нарезка"}${P.chunk ? " · кусок " + P.chunk : ""}${P.progress != null ? ` · ${Math.round(P.progress)}%` : ""}`);
+  if (P.state === "running") add(P.updated_at, `${P.stage || "нарезка"}${P.chunk ? " · фрагмент " + P.chunk : ""}${P.progress != null ? ` · ${Math.round(P.progress)}%` : ""}`);
   for (const c of (((D.status.funnel || {}).chunks) || []).slice(-3))
-    add(c.at, `Кусок ${c.chunk}: кандидатов ${c.candidates ?? 0}, по тексту ${c.text_pass ?? 0}, по видео ${c.video_pass ?? 0}, клипов ${c.made ?? 0}`);
+    add(c.at, `Фрагмент ${c.chunk}: кандидатов ${c.candidates ?? 0}, по тексту ${c.text_pass ?? 0}, по видео ${c.video_pass ?? 0}, клипов ${c.made ?? 0}`);
   for (const d of (D.decisions || []).slice(-6)) add(d.at, d.summary, "dim");
   for (const c of D.clips) for (const [plat, p] of Object.entries(c.posts || {}))
-    if (p.posted_at) add(p.posted_at, `Вышел «${c.overlay || c.id}» на ${PL[plat] || plat}`);
+    if (p.posted_at) add(p.posted_at, `Опубликован «${c.overlay || c.id}» на ${PL[plat] || plat}`);
   const seen = new Set();
   return ev.filter(e => { const k = e.at + e.text; if (seen.has(k)) return false; seen.add(k); return true; })
     .sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 7);
@@ -2106,12 +2224,12 @@ function sceneHtml(idx) {
         <span class="live"><i></i>LIVE</span>${L.viewers ? `<span class="vwr">${esc(fmtInt(L.viewers))} зрителей</span>` : ""}
         <div class="pbar"><span class="tri"></span><span class="vol"><i></i><i></i><i></i></span><span class="tt">В эфире${up != null ? " " + esc(dur(up)) : ""}</span></div></div>
       <div class="inf"><span class="av">${esc((name[0] || "?").toUpperCase())}</span><div><b>${esc(name)}</b><small>${esc(L.title || "без названия")}</small></div></div>
-      <div class="rec"><div class="rh"><span class="rd"></span><b>${esc(r ? "Запись куска " + r.label : "Пишется кусок записи")}</b><em>${esc(fmtHms(done * total))} / ${esc(fmtHms(total))}</em></div>
+      <div class="rec"><div class="rh"><span class="rd"></span><b>${esc(r ? "Запись фрагмента " + r.label : "Идёт запись фрагмента")}</b><em>${esc(fmtHms(done * total))} / ${esc(fmtHms(total))}</em></div>
         <div class="rt"><i style="transform:scaleX(${done.toFixed(3)});animation:none"></i></div></div>
       </div>
-      <div class="s1c"><div class="chh">Последние куски</div><div class="cl"><div class="cm" style="animation:none">${
+      <div class="s1c"><div class="chh">Последние фрагменты</div><div class="cl"><div class="cm" style="animation:none">${
         chunks.length ? chunks.map(c => `<p><b>${esc(String(c.chunk || "").split(/[–-]/)[0])}</b> клипов ${c.made ?? 0} из ${c.candidates ?? 0}</p>`).join("")
-                      : `<p class="mute">Первый кусок ещё пишется.</p>`}</div></div></div></div>`);
+                      : `<p class="mute">Первый фрагмент ещё записывается.</p>`}</div></div></div></div>`);
   }
 
   /* 2 · поиск моментов */
@@ -2120,13 +2238,13 @@ function sceneHtml(idx) {
     const pos = t => r ? Math.max(1.5, Math.min(98.5, (t - r.start) / (r.end - r.start) * 100)) : 50;
     const top = mm.slice(0, 4);
     return box("Поиск моментов", `<div class="s2b">
-      <div class="s2h"><b>${esc(r ? "Кусок " + r.label : "Кусок стрима")}</b>${f.peaks != null ? `<span class="chip2">${esc(String(f.peaks))} пиков</span>` : ""}${f.candidates != null ? `<span class="mute small">кандидатов ${esc(String(f.candidates))}</span>` : ""}</div>
+      <div class="s2h"><b>${esc(r ? "Кусок " + r.label : "Фрагмент стрима")}</b>${f.peaks != null ? `<span class="chip2">${esc(String(f.peaks))} пиков</span>` : ""}${f.candidates != null ? `<span class="mute small">кандидатов ${esc(String(f.candidates))}</span>` : ""}</div>
       <div class="plot">        <div class="wf2">${r ? mm.map(x => `<i class="${x.took ? "hot" : ""}" style="left:${pos(x.t).toFixed(1)}%;height:${Math.max(14, Math.min(92, (+x.score || 5) * 10))}%"></i>`).join("") : ""}</div>
         ${top.map(x => `<div class="pk" style="left:${pos(x.t).toFixed(1)}%"><span>${esc(fmtHms(x.t))}</span></div>`).join("")}
         <div class="scan"></div></div>
       <div class="ax"><span>${esc(r ? fmtHms(r.start) : "")}</span><span>${esc(r ? fmtHms(r.end) : "")}</span></div></div>
       <div class="s2f">${top.length ? top.map(x => `<div class="fr"><b>${esc(fmtHms(x.t))}</b><span>${esc(String(x.text || x.why).slice(0, 64))}</span><em>${x.took ? "клип" : "мимо"}</em></div>`).join("")
-        : `<p class="mute small" style="grid-column:1/-1;margin:0">Моментов в этом куске пока не отмечено.</p>`}</div>`);
+        : `<p class="mute small" style="grid-column:1/-1;margin:0">В этом фрагменте пока нет отмеченных моментов.</p>`}</div>`);
   }
 
   /* 3 · анализ речи */
@@ -2183,9 +2301,9 @@ function sceneHtml(idx) {
   const c0 = uploadingClip()
     || cs.find(c => Object.values(c.posts || {}).some(p => ["uploading", "processing"].includes(p.status)))
     || cs.find(c => Object.keys(c.posts || {}).length) || cs[0];
-  if (!c0) return box("Выкладка", `<div class="s6g"><p class="mute small">Выкладывать пока нечего.</p></div>`);
+  if (!c0) return box("Публикация", `<div class="s6g"><p class="mute small">Выкладывать пока нечего.</p></div>`);
   const rows = (D.accounts || []).map((a, i) => {
-    const p = (c0.posts || {})[a.platform] || {}, st = PSTAT[p.status] || ["в очереди", ""];
+    const p = (c0.posts || {})[a.platform] || {}, st = PSTAT[p.status] || ["В очереди", ""];
     const okd = ["posted", "used", "inbox"].includes(p.status);
     return `<div class="ap ${PKEY[a.platform] || ""}" style="--d:${(i * 1.2 + 1.2).toFixed(1)}s">
       <span class="lg ${PKEY[a.platform] || ""}"><svg viewBox="0 0 16 16"><use href="${PLG[a.platform] || ""}"></use></svg></span>
@@ -2194,12 +2312,16 @@ function sceneHtml(idx) {
       <em>${esc(st[0])}</em></div>`;
   }).join("");
   const posted = Object.values(c0.posts || {}).map(p => p.posted_at).filter(Boolean).sort().pop();
-  return box("Выкладка", `<div class="s6g">
+  return box("Публикация", `<div class="s6g">
     <div class="s6p"><div class="ph9">${pic(c0)}<div class="cap">${esc(String(c0.overlay || "").slice(0, 60))}</div></div>${c0.duration ? `<span class="dur">${esc(mmss(c0.duration))}</span>` : ""}</div>
-    <div class="s6a"><div class="chh">Выкладка клипа</div>${rows || `<p class="mute small">Площадок пока нет.</p>`}
-      <p class="s6n">${esc(posted ? "Вышел " + ago(posted) + ", просмотры соберу через час" : "Жду окна выкладки")}</p></div></div>`);
+    <div class="s6a"><div class="chh">Публикация клипа</div>${rows || `<p class="mute small">Площадок пока нет.</p>`}
+      <p class="s6n">${esc(posted ? "Опубликован " + ago(posted) + ", статистику соберу через час" : "Ожидание окна публикации")}</p></div></div>`);
 }
 
+function fitDock() {
+  const hero = document.querySelector(".hero"), dock = document.querySelector(".dock");
+  if (hero && dock) hero.style.setProperty("--dock-h", dock.offsetHeight + "px");
+}
 function renderOverview() {
   const tz = audTz(), S = D.status.post || {}, plan = S.plan || {}, today = dayIn(tz);
   const P = D.status.process || {}, L = D.status.live || {};
@@ -2207,14 +2329,14 @@ function renderOverview() {
   /* ── герой: состояние, подпись, воронка последнего куска ── */
   const idx = phaseNow();
   const st = stopState();
-  const H = [["Жду", "стрим"], ["Идёт", "эфир"], ["Ищу", "моменты"], ["Слушаю", "речь"], ["Смотрю", "кадры"], ["Монтирую", "клип"], ["Выкладываю", "клипы"]][idx];
+  const H = [["Ожидание", "стрима"], ["Идёт", "эфир"], ["Поиск", "моментов"], ["Разбор", "речи"], ["Просмотр", "кадров"], ["Монтаж", "клипа"], ["Публикация", "клипов"]][idx];
   $("heroH").innerHTML = st.process && st.post ? `Бот<em>остановлен</em>` : `${esc(H[0])}<em>${esc(H[1])}</em>`;
   const leadParts = [];
-  if (st.process || st.post || st.stats) leadParts.push("Остановлено вручную: " + [st.process && "нарезка", st.post && "выкладка", st.stats && "статистика"].filter(Boolean).join(", ") + ".");
+  if (st.process || st.post || st.stats) leadParts.push("Остановлено вручную: " + [st.process && "нарезка", st.post && "публикация", st.stats && "статистика"].filter(Boolean).join(", ") + ".");
   else if (L.is_live) leadParts.push(`Эфир идёт ${dur((Date.now() - new Date(L.started_at)) / 1000)}${L.title ? ` — «${L.title}»` : ""}.`);
   else if (L.last_seen_live) leadParts.push(`Последний эфир был ${ago(L.last_seen_live)}.`);
   else leadParts.push("Эфиров ещё не было.");
-  if (P.state === "running") leadParts.push(`${P.stage || "Нарезка"}${P.chunk ? ` на куске ${P.chunk}` : ""}.`);
+  if (P.state === "running") leadParts.push(`${P.stage || "Нарезка"}${P.chunk ? ` на фрагменте ${P.chunk}` : ""}.`);
   else leadParts.push(PHASES[idx][1][0].toUpperCase() + PHASES[idx][1].slice(1) + ".");
   if (uploadBusy() && idx !== 6) leadParts.push("Параллельно прошлый клип уходит на площадки.");
   $("heroLead").textContent = leadParts.join(" ");
@@ -2248,6 +2370,7 @@ function renderOverview() {
 
   /* ── сцена этапа ── */
   $("scenes").innerHTML = sceneHtml(idx);
+  fitDock();
 
   /* ── баннер паузы ── */
   const paused = Object.entries((D.policy || {}).paused || {}).filter(([, until]) => new Date(until) > new Date());
@@ -2258,7 +2381,7 @@ function renderOverview() {
   /* ── деньги ── */
   const [d1, d2] = periodRange();
   const gain = M.periodGain(G, d1, d2, addDays, dayKey);
-  const label = { today: "сегодня", "7": "за 7 дней", "30": "за 30 дней", all: "за всё время" }[ui.period];
+  const label = periodLabel();
   const O = owedNow(), ready = O.sum.total >= O.min;
   const pctRing = Math.max(0, Math.min(1, O.sum.total / Math.max(.01, O.min)));
   const C = 2 * Math.PI * 60;
@@ -2291,7 +2414,7 @@ function renderOverview() {
       ${k.s.length > 1 ? `<svg class="m-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="${sparkPath(k.s)}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>` : ""}
     </div>`).join("");
   $("chartTotal").textContent = fmtInt(gain.total);
-  document.querySelectorAll("#period button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.p === ui.period)));
+  syncPeriod();
 
   /* ── площадки ── */
   const toks = D.status.tokens || {};
@@ -2372,7 +2495,7 @@ function clipCard(c) {
     const open = post?.url && ["posted"].includes(post.status) ? `<a class="mini" href="${esc(post.url)}" target="_blank" rel="noopener">открыть</a>` : "";
     const retry = st === "failed" ? `<button class="mini" type="button" data-retry="${esc(c.id)}" data-plat="${esc(p)}">повторить</button>` : "";
     const err = post?.error && st !== "posted" ? `<span class="muted" title="${esc(post.error)}">${esc(post.error.slice(0, 70))}</span>` : "";
-    return `<div>${plChip(p)}<span class="chip ${cls}">${lbl}</span>${post?.posted_at ? `<span class="muted">${fmtDT(post.posted_at)}</span>` : ""}${open}${retry}${err}</div>`;
+    return `<div>${plChip(p, st === "posted" || st === "inbox" ? post?.url : "")}<span class="chip ${cls}">${lbl}</span>${post?.posted_at ? `<span class="muted">${fmtDT(post.posted_at)}</span>` : ""}${open}${retry}${err}</div>`;
   }).join("");
   const asset = c.targets && Object.values(c.targets).find(t => t.asset)?.asset;
   const canPlay = asset && c.status === "ready";
@@ -2387,9 +2510,9 @@ function clipCard(c) {
     ${c.what ? `<div class="what">${esc(c.what)}</div>` : c.why ? `<div class="what">${esc(c.why)}</div>` : ""}
     <div class="plats">${plats}</div>
     <div class="row" style="margin-top:8px">${canPlay ? `<button class="mini acc" type="button" data-play="${esc(asset)}" data-title="${esc(c.overlay || "")}">▶ смотреть</button>` : ""}
-      ${c.status === "ready" ? `<button class="mini" type="button" data-postnow="${esc(c.id)}">выложить сейчас</button><button class="mini bad" type="button" data-cancel="${esc(c.id)}">не выкладывать</button>` : ""}
-      ${c.vod_url ? `<a class="mini" href="${esc(c.vod_url)}" target="_blank" rel="noopener">в стриме</a>` : ""}</div>
-    <details><summary>Почему взял и тексты</summary><div class="more">
+      ${c.status === "ready" ? `<button class="mini" type="button" data-postnow="${esc(c.id)}">Опубликовать сейчас</button><button class="mini bad" type="button" data-cancel="${esc(c.id)}">Не публиковать</button>` : ""}
+      ${c.vod_url ? `<a class="mini" href="${esc(c.vod_url)}" target="_blank" rel="noopener">На стриме</a>` : ""}</div>
+    <details><summary>Почему выбран и тексты</summary><div class="more">
       ${b.text || b.video ? `<div class="heads"><div><b>Отборщик (текст)</b>${tv.score ?? "—"}/10<br><span class="muted">${esc(tv.why || "")}</span></div>
         <div><b>Режиссёр (видео)</b>${vv.score ?? "—"}/10${vv.technical?.lag ? ` · лаги ${vv.technical.lag}/3` : ""}<br><span class="muted">${esc(vv.moment || vv.what_happens || "не смотрел")}</span></div>
         <div><b>Критик</b>${cr.skipped ? "не ответил" : cr.ok === false ? "поправил заголовок" : "согласен"}<br><span class="muted">${esc((cr.problems || []).join("; ") || (cr.fix_hook ? "было иначе, стало «" + cr.fix_hook + "»" : ""))}</span></div></div>` : ""}
@@ -2413,19 +2536,19 @@ function renderClips() {
   $("clipList").hidden = seg === "rejected";
   if (seg === "rejected") return renderRejected();
   const list = by[seg] || [];
-  $("clipList").innerHTML = list.length ? list.map(clipCard).join("") : `<p class="empty">${{ ready: "Сейчас нечего выкладывать — слабое бот не выпускает. Новые клипы придут со следующим куском стрима.", drafts: "Черновиков TikTok нет.", out: "За последние сутки ничего не вышло.", problems: "Ошибок нет." }[seg]}</p>`;
+  $("clipList").innerHTML = list.length ? list.map(clipCard).join("") : `<p class="empty">${{ ready: "Сейчас нечего публиковать: слабые клипы бот не выпускает. Новые клипы появятся после обработки следующего фрагмента стрима.", drafts: "Черновиков TikTok нет.", out: "За последние сутки публикаций не было.", problems: "Ошибок нет." }[seg]}</p>`;
 }
+/* Этапы, на которых момент отсеялся: бот пишет их по-своему, а на странице — понятные названия. */
+const STAGE = { "текст": "Анализ текста", "тексты": "Заголовки", "видео": "Анализ видео", "критик": "Контроль качества", "отбор": "Отбор", "дубль": "Дубликат", "звук": "Звук", "монтаж": "Монтаж" };
+const stageName = s => STAGE[s] || (s ? s[0].toUpperCase() + s.slice(1) : "—");
 function renderRejected() {
   const rej = ((D.status.funnel || {}).rejected || []).slice().reverse();
   const stages = [...new Set(rej.map(r => r.stage))];
-  $("rejStage").innerHTML = `<option value="">Все этапы</option>` + stages.map(s => `<option value="${esc(s)}"${s === ui.rejStage ? " selected" : ""}>${esc(s)}</option>`).join("");
+  $("rejStage").innerHTML = `<option value="">Все этапы</option>` + stages.map(s => `<option value="${esc(s)}"${s === ui.rejStage ? " selected" : ""}>${esc(stageName(s))}</option>`).join("");
   const list = rej.filter(r => !ui.rejStage || r.stage === ui.rejStage);
-  const top = {};
-  list.forEach(r => { const k = r.reason.replace(/\d+(\.\d+)?/g, "N").replace(/:.*/, "").slice(0, 60); top[k] = (top[k] || 0) + 1; });
-  $("rejTop").innerHTML = Object.entries(top).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, n]) => `<span class="chip">${esc(k)} · ${n}</span>`).join("");
   const vt = id => (D.vods || []).find(v => v.id === id);
   $("rejRows").innerHTML = list.length ? list.slice(0, 120).map(r => `<tr><td class="muted small">${ago(r.at)}</td><td><a class="mini" href="https://www.twitch.tv/videos/${esc(r.vod_id)}?t=${Math.floor(r.t / 3600)}h${Math.floor(r.t % 3600 / 60)}m${Math.floor(r.t % 60)}s" target="_blank" rel="noopener">${fmtHms(r.t)}</a>${vt(r.vod_id) ? "" : ""}</td>
-    <td><span class="chip">${esc(r.stage)}</span></td><td class="r num">${r.score ?? "—"}</td><td>${esc(r.reason)}${r.what ? `<br><span class="muted small">${esc(r.what)}</span>` : ""}</td></tr>`).join("")
+    <td><span class="chip">${esc(stageName(r.stage))}</span></td><td class="r num">${r.score ?? "—"}</td><td>${esc(r.reason)}${r.what ? `<br><span class="muted small">${esc(r.what)}</span>` : ""}</td></tr>`).join("")
     : `<tr><td colspan="5" class="muted">Пока пусто: список наполнится после куска стрима с новым мозгом.</td></tr>`;
 }
 
@@ -2438,7 +2561,7 @@ function linksHtml(posts, bestId) {
 }
 const median = a => { const s = a.slice().sort((x, y) => x - y), n = s.length; return n ? (n % 2 ? s[n >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2) : 0; };
 function renderStats() {
-  document.querySelectorAll("#period2 button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.p === ui.period)));
+  syncPeriod();
   const plats = [...new Set(D.accounts.map(a => a.platform))];
   $("platform").innerHTML = `<option value="">Все площадки</option>` + plats.map(p => `<option value="${p}"${p === ui.platform ? " selected" : ""}>${PL[p] || p}</option>`).join("");
   const FG = filteredGroups(), [d1, d2] = periodRange();
@@ -2495,21 +2618,9 @@ function renderBrain() {
   // одинаковые подряд «жду: ночь» схлопываем
   const out = []; for (const f of feed) { const p = out[out.length - 1]; if (p && p.action === "wait" && f.action === "wait" && p.reason === f.reason) { p.n = (p.n || 1) + 1; continue; } out.push({ ...f }); }
   $("feed").innerHTML = out.length ? out.slice(0, 40).map(f => `<div class="fitem"><span class="t">${new Date(f.at).toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit", timeZone: TZ, hour12: LANG() === "en" })}</span>
-    <div><span class="chip ${f.action === "post" ? "good" : ""}">${f.action === "post" ? "выложил" : "ждёт"}</span> ${f.clip ? `<b>«${esc(hook(f.clip))}»</b> ` : ""}${esc(why(f))}
-      <span class="muted small">· ${esc(f.by || "")}${f.n ? ` · ×${f.n}` : ""}${(f.released || []).length ? " · " + f.released.map(p => PL[p]).join(", ") : ""}</span></div>
-    ${(f.thoughts || []).length ? `<div class="thoughts">${f.thoughts.map(t => `<div><b>${esc(t.who)}:</b> ${esc(why(t))}${t.agree === false ? " (не согласен)" : ""}</div>`).join("")}</div>` : ""}</div>`).join("")
+    <div class="fi-b"><p class="fi-m">${f.clip ? `<b>«${esc(hook(f.clip))}»</b> ` : ""}<span class="fi-t">${esc(why(f))}</span> <span class="chip ${f.action === "post" ? "good" : ""}">${f.action === "post" ? "Опубликовал" : "Ожидает"}</span></p>
+    ${(f.thoughts || []).length ? `<div class="thoughts">${f.thoughts.map(t => `<div><b>${esc(t.who)}:</b> <span class="fi-t">${esc(why(t))}</span>${t.agree === false ? " (не согласен)" : ""}</div>`).join("")}</div>` : ""}</div></div>`).join("")
     : `<p class="empty">Решений ещё нет — появятся после первого запуска публикации с новым мозгом.</p>`;
-  const pol = D.policy || {};
-  $("freezeBtn").textContent = pol.frozen ? "Включить обучение" : "Поставить обучение на паузу";
-  const res = (D.commands || {}).results || {};
-  const noise = new Set(["audio", "skip"]);
-  let seen = new Set();
-  const list = (D.decisions || []).slice().reverse().filter(d => ui.decAll || !noise.has(d.kind)).filter(d => { const k = d.kind + d.summary; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 50);
-  const pend = pendingUi.filter(c => !res[c.id]);
-  $("decisions").innerHTML = (pend.length ? `<div class="alert warn" style="margin-bottom:8px"><b>Ждут выполнения:</b> <span class="msg">${pend.length} ${plural(pend.length, "команда", "команды", "команд")} — бот применит при следующем запуске.</span></div>` : "")
-    + (list.length ? list.map(d => `<div class="dec ${d.reverted ? "reverted" : ""}"><span class="chip">${KIND[d.kind] || d.kind}</span><div class="what">${esc(d.summary)}${d.reverted ? ` <span class="muted">(откачено)</span>` : ""}</div>
-      <div style="display:grid;gap:4px;justify-items:end"><span class="when">${ago(d.at)}</span>${d.reversible && !d.reverted ? `<button class="mini" type="button" data-revert="${esc(d.id)}">откатить</button>` : ""}</div></div>`).join("")
-      : `<p class="empty">Изменений поведения пока нет.</p>`);
 }
 
 /* ── УПРАВЛЕНИЕ ──────────────────────────────────── */
@@ -2612,19 +2723,39 @@ function openPay(adjust) {
   $("fdBody").innerHTML = adjust ? `<p class="muted small" style="margin-top:0">Ручная поправка суммы (бонус, комиссия, ошибка). Клипы не закрывает. Минус — вычесть.</p>
     <div class="field"><label for="fdAmt">Сумма</label><input id="fdAmt" type="number" step="0.01" inputmode="decimal"></div>
     <div class="field"><label for="fdNote">Комментарий</label><input id="fdNote" maxlength="120"></div>`
-    : `<div class="field"><label for="fdAmt">Сколько получил</label><input id="fdAmt" type="number" min="0" step="0.01" inputmode="decimal" value="${O.sum.total.toFixed(2)}"></div>
-    <div class="field"><label for="fdDate">Когда</label><input id="fdDate" type="datetime-local" value="${new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16)}"></div>
+    : `<div class="field"><label>Сумма выплаты</label>
+      <div class="amt-row">
+        <div class="amt-auto" id="fdAmtAuto"><b id="fdAmtView"></b><span class="muted small">Считается по выбранным клипам</span></div>
+        <div class="amt-edit" id="fdAmtEdit" hidden><span class="cur">${cur() === "USD" ? "$" : esc(cur())}</span><input id="fdAmt" type="number" min="0" step="0.01" inputmode="decimal" value="${O.sum.total.toFixed(2)}" aria-label="Сумма выплаты"></div>
+        <button class="iconbtn" type="button" id="fdManual">Изменить вручную</button>
+      </div></div>
+    <div class="field"><label for="fdDate">Дата и время получения</label><input id="fdDate" type="datetime-local" value="${new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16)}"></div>
     <div class="field"><label for="fdNote">Комментарий</label><input id="fdNote" maxlength="120" placeholder="например: PayPal, за неделю"></div>
-    ${lines.length ? `<div class="row" style="justify-content:space-between"><b>Что закрывает эта выплата</b><label class="check"><input type="checkbox" id="fdAll" checked> все</label></div>
-    <div class="tbl-wrap" style="max-height:300px;overflow:auto"><table><tbody>${lines.map((l, i) => `<tr><td><input type="checkbox" data-line="${i}" checked aria-label="Выбрать"></td><td>${esc(l.title)}</td><td><span class="kind ${l.kind}">${l.kind === "new" ? "новый" : "доплата"}</span></td><td class="r num">${fmtInt(l.views)}</td><td class="r money-cell">${money(l.amount)}</td></tr>`).join("")}</tbody></table></div>
-    <p class="muted small" id="fdSel"></p>` : `<p class="muted small">Неоплаченных просмотров нет — запишется только сумма.</p>`}`;
+    ${lines.length ? `<div class="pay-sec"><b>Что закрывает эта выплата</b><label class="check"><input type="checkbox" id="fdAll" checked> Все</label></div>
+    <div class="pay-list">${lines.map((l, i) => { const b = l.best || {}, pls = l.links || [];
+      return `<div class="payline">
+        <input type="checkbox" data-line="${i}" checked aria-label="Выбрать клип">
+        ${b.url ? `<a class="pay-th" href="${esc(b.url)}" target="_blank" rel="noopener">${l.thumb ? `<img src="${esc(l.thumb)}" alt="" loading="lazy">` : ""}</a>` : `<span class="pay-th">${l.thumb ? `<img src="${esc(l.thumb)}" alt="" loading="lazy">` : ""}</span>`}
+        <div class="pay-m"><span class="pay-t">${esc(l.title)}</span>
+          <div class="pay-s"><span class="kind ${l.kind}">${l.kind === "new" ? "Новый" : "Доплата"}</span>${pls.map(k => `<span class="pay-p${k.platform === b.platform ? " win" : ""}">${plChip(k.platform, k.url)}<span>${fmtInt(k.views)}</span></span>`).join("")}</div></div>
+        <div class="pay-r"><b>${money(l.amount)}</b><small>${fmtInt(l.views)} ${plural(l.views, "просмотр", "просмотра", "просмотров")}</small></div></div>`; }).join("")}</div>
+    <p class="muted small pay-sum" id="fdSel"></p>` : `<p class="muted small">Неоплаченных просмотров нет — запишется только сумма.</p>`}`;
   const sel = () => [...document.querySelectorAll("[data-line]")].filter(c => c.checked).map(c => lines[+c.dataset.line]);
-  let typed = false;
-  const upd = () => { const s = sel(), sum = s.reduce((a, l) => a + l.amount, 0); if ($("fdSel")) $("fdSel").textContent = `Выбрано ${s.length} из ${lines.length} на ${money(sum)}. Невыбранные останутся к выплате.`;
-    if (!adjust && !typed && lines.length) $("fdAmt").value = sum.toFixed(2); };
-  $("fdBody").oninput = e => { if (e.target.id === "fdAmt") typed = true; };
+  /* Сумма считается сама по отмеченным клипам; вручную — только если нажать «Изменить вручную». */
+  let manual = !adjust && !lines.length;
+  const sym = cur() === "USD" ? "$" : cur();
+  const paintAmt = () => {
+    if (adjust) return;
+    $("fdAmtAuto").hidden = manual; $("fdAmtEdit").hidden = !manual;
+    $("fdManual").textContent = manual && lines.length ? "Вернуть расчёт" : "Изменить вручную";
+    $("fdManual").hidden = !lines.length;
+  };
+  const upd = () => { const s = sel(), sum = s.reduce((a, l) => a + l.amount, 0);
+    if ($("fdSel")) $("fdSel").textContent = `Выбрано ${s.length} из ${lines.length} на ${money(sum)}. Невыбранные останутся к выплате.`;
+    if (!adjust && !manual) { $("fdAmt").value = sum.toFixed(2); $("fdAmtView").textContent = money(sum); } };
+  if (!adjust) $("fdManual").onclick = () => { manual = !manual; paintAmt(); upd(); if (manual) $("fdAmt").focus(); };
   $("fdBody").onchange = e => { if (e.target.id === "fdAll") document.querySelectorAll("[data-line]").forEach(c => c.checked = e.target.checked); if (e.target.dataset.line !== undefined || e.target.id === "fdAll") upd(); };
-  upd();
+  paintAmt(); upd();
   $("fdErr").textContent = ""; $("fdYes").textContent = "Дальше";
   $("fdNo").onclick = () => $("formDlg").close();
   $("fdYes").onclick = async () => {
@@ -2685,14 +2816,6 @@ function statement(e) {
    и право менять настройки. Ответ появляется в том же файле, страница его дожидается. */
 const chat = { msgs: [], loaded: false, sending: false, waiting: null, error: null, timer: null, tries: 0 };
 const CHAT_FILE = "control/chat.enc";
-const HINTS = [
-  "Почему последний клип не вышел на Reels?",
-  "Что ты делал сегодня?",
-  "Подними ставку до $1.50 за 1000 просмотров",
-  "Сделай порог вывода $30",
-  "Поставь выкладку на паузу на сутки",
-];
-
 async function fetchChat() {
   if (DEMO) { chat.loaded = true; return; }
   try {
@@ -2751,8 +2874,10 @@ async function askBot(text) {
 function renderHelp() {
   if (!chat.loaded && !DEMO) { fetchChat().then(() => { if (ui.page === "help") renderHelp(); }); }
   const waiting = !!chat.waiting || chat.sending;
-  $("askChip").className = "chip " + (chat.error ? "bad" : waiting ? "acc" : "good");
-  $("askChip").textContent = chat.error ? "ошибка" : waiting ? "думает" : DEMO ? "демо" : "готов";
+  // статус показываем, только когда с ним что-то не так или бот думает; «готов» не нужен
+  $("askChip").hidden = !(chat.error || waiting);
+  $("askChip").className = "chip " + (chat.error ? "bad" : "acc");
+  $("askChip").textContent = chat.error ? "Ошибка" : "Думает";
   const msgs = chat.msgs.slice(-24);
   let h = msgs.map(m => {
     const me = m.role === "user";
@@ -2769,8 +2894,7 @@ function renderHelp() {
   if (chat.error) h += `<div class="rg-msg bt err"><span class="bt-av" aria-hidden="true"></span><p>${esc(chat.error)}</p></div>`;
   $("say").innerHTML = h;
   $("askSend").disabled = waiting;
-  $("askSend").textContent = waiting ? "Жду ответ" : "Спросить";
-  $("askHints").innerHTML = HINTS.map(t => `<button type="button" data-hint="${esc(t)}">${esc(t)}</button>`).join("");
+  $("askSend").textContent = waiting ? "Ожидание ответа" : "Спросить";
 }
 
 const SET_UI = [
@@ -2781,7 +2905,7 @@ const SET_UI = [
     ["quality.exceptional", "Исключительный момент", "с такой оценкой берём сверх всех лимитов"],
     ["quality.reserve_target", "Запас клипов", "столько готовых держим про запас; дальше планка отбора поднимается на балл"],
     ["quality.reserve_max", "Потолок запаса", "выше монтируем только то, что сильнее уже лежащего"]]],
-  ["Мозг", [
+  ["Решения", [
     ["ai.scout_audio", "ИИ слушает весь стрим целиком", "находит истории и тихие панчлайны, которые чат не заметил"],
     ["ai.video_review", "ИИ смотрит видео каждого финалиста", "лаги, есть ли момент, где резать, правдив ли заголовок"],
     ["ai.video_model", "Модель для видео", "gemini-4-argon умнее, gemini-3.8-flash дешевле и быстрее"],
@@ -2808,11 +2932,11 @@ function renderSettings() {
   const s = stopState(), any = s.process || s.post || s.stats;
   $("stopChip").className = "chip " + (any ? "bad" : "good"); $("stopChip").textContent = any ? "остановлен" : "работает";
   const sw = switches();
-  $("stopBox").innerHTML = any ? `<div>Остановлено: <b>${[s.process && "нарезка и анализ", s.post && "выкладка", s.stats && "статистика"].filter(Boolean).join(", ")}</b>${sw.at ? ` · ${ago(sw.at)}` : ""}${sw.note ? ` · «${esc(sw.note)}»` : ""}</div>
+  $("stopBox").innerHTML = any ? `<div>Остановлено: <b>${[s.process && "нарезка и анализ", s.post && "публикация", s.stats && "статистика"].filter(Boolean).join(", ")}</b>${sw.at ? ` · ${ago(sw.at)}` : ""}${sw.note ? ` · «${esc(sw.note)}»` : ""}</div>
       <div class="row"><button class="btn good" type="button" id="resumeBtn">Запустить снова</button></div>`
     : `<div class="stopmodes">
-        <label><input type="radio" name="stopMode" value="all" checked hidden><b>Всё</b><span class="muted">нарезка, анализ, выкладка и статистика</span></label>
-        <label><input type="radio" name="stopMode" value="post" hidden><b>Только выкладка</b><span class="muted">клипы режутся и копятся, но не выходят</span></label>
+        <label><input type="radio" name="stopMode" value="all" checked hidden><b>Всё</b><span class="muted">нарезка, анализ, публикация и статистика</span></label>
+        <label><input type="radio" name="stopMode" value="post" hidden><b>Только публикация</b><span class="muted">клипы режутся и копятся, но не выходят</span></label>
         <label><input type="radio" name="stopMode" value="process" hidden><b>Только анализ</b><span class="muted">новые стримы не режутся, очередь выкладывается</span></label></div>
       <div class="field" style="margin:0"><label for="stopNote">Причина (необязательно)</label><input id="stopNote" class="inp" maxlength="100" placeholder="например: стример просил паузу"></div>
       <div class="row"><button class="btn danger" type="button" id="stopGo">Остановить</button></div>`;
@@ -2861,24 +2985,21 @@ function route() { const h = location.hash.slice(1) || "overview"; ui.page = ["o
 let bound = false;
 function bind() {
   addEventListener("hashchange", route);
-  const per = id => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => { ui.period = b.dataset.p; LS.set("period", ui.period); render(); });
+  const per = id => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => { if (b.dataset.p === "pick") return openPeriodPicker(b); ui.period = b.dataset.p; LS.set("period", ui.period); render(); });
   per("period"); per("period2");
   $("platform").onchange = e => { ui.platform = e.target.value; render(); };
   document.querySelectorAll("th button[data-sort]").forEach(b => b.onclick = () => { ui.sort = b.dataset.sort; LS.set("sort", ui.sort); render(); });
   document.querySelectorAll("#clipSeg button").forEach(b => b.onclick = () => { ui.clipSeg = b.dataset.c; render(); });
   $("rejStage").onchange = e => { ui.rejStage = e.target.value; renderRejected(); };
-  $("decAll").onchange = e => { ui.decAll = e.target.checked; renderBrain(); };
   $("lvoid").onchange = e => { ui.lvoid = e.target.checked; renderManage(); };
   $("vidSearch").oninput = e => { ui.vidSearch = e.target.value; renderManage(); };
   $("kpiOwed").onclick = () => { location.hash = "#manage"; };
   // помощь
   $("askSend").onclick = () => { const t = $("ask"); askBot(t.value); t.value = ""; };
   $("ask").addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); $("askSend").click(); } });
-  $("askHints").onclick = e => { const b = e.target.closest("button[data-hint]"); if (!b) return; $("ask").value = b.dataset.hint; $("ask").focus(); };
   $("payBtn").onclick = () => openPay(false); $("adjBtn").onclick = () => openPay(true);
   $("vidClose").onclick = () => $("vidDlg").close();
   $("vidDlg").addEventListener("close", () => { const v = $("vidEl"); v.pause(); v.removeAttribute("src"); v.load(); });
-  $("freezeBtn").onclick = async () => { const f = (D.policy || {}).frozen; if (!await confirmBox({ title: f ? "Включить обучение?" : "Поставить обучение на паузу?", body: f ? "Бот снова будет подстраивать стиль заголовков, темы и часы по статистике." : "Бот перестанет менять стиль заголовков, темы и часы. Отбор и выкладка продолжатся." })) return; await act(null, () => sendCommand({ cmd: f ? "unfreeze" : "freeze" }, "обучение"), "Отправлено"); };
   // деньги
   $("moneyForm").oninput = e => { const k = e.target.dataset.money; if (!k) return; ui.moneyDraft = { ...(ui.moneyDraft || {}), [k]: k === "currency" ? e.target.value : parseFloat(e.target.value) }; $("moneySave").disabled = false; e.target.classList.add("dirty"); };
   $("moneySave").onclick = async () => {
@@ -2933,8 +3054,8 @@ function bind() {
     }
     const c = D.clips.find(x => x.id === (t.dataset.postnow || t.dataset.cancel || t.dataset.retry));
     if (t.dataset.postnow) {
-      if (!await confirmBox({ title: "Выложить сейчас?", body: `<div class="diff"><b>«${esc(c.overlay)}»</b> · ${c.score}/10</div><div>Выйдет на все готовые площадки при ближайшем запуске публикации (бот сразу его запустит). Правила паузы между релизами для этого клипа не действуют.</div>`, yes: "Выложить" })) return;
-      return act(t, async () => { markPosting(c.id); await sendCommand({ cmd: "post_now", clip: c.id }, "выложить сейчас"); const ok = await runWorkflow("post.yml"); toast(ok ? "Публикация запущена — через пару минут клип выйдет" : "Команда отправлена; выйдет при ближайшем запуске (для мгновенного запуска ключу нужны права Actions)"); });
+      if (!await confirmBox({ title: "Опубликовать сейчас?", body: `<div class="diff"><b>«${esc(c.overlay)}»</b> · ${c.score}/10</div><div>Выйдет на все готовые площадки при ближайшем запуске публикации (бот сразу его запустит). Правила паузы между релизами для этого клипа не действуют.</div>`, yes: "Опубликовать" })) return;
+      return act(t, async () => { markPosting(c.id); await sendCommand({ cmd: "post_now", clip: c.id }, "Опубликовать сейчас"); const ok = await runWorkflow("post.yml"); toast(ok ? "Публикация запущена — через пару минут клип выйдет" : "Команда отправлена; выйдет при ближайшем запуске (для мгновенного запуска ключу нужны права Actions)"); });
     }
     if (t.dataset.cancel) { if (!await confirmBox({ title: "Не выкладывать клип?", body: `<div class="diff"><b>«${esc(c.overlay)}»</b></div><div>Клип не выйдет ни на одну площадку. Файл удалится.</div>`, yes: "Не выкладывать", danger: true })) return; return act(t, () => sendCommand({ cmd: "cancel_clip", clip: c.id }, "отмена клипа"), "Отправлено: бот выполнит до следующей публикации"); }
     if (t.dataset.retry) return act(t, () => sendCommand({ cmd: "retry_clip", clip: t.dataset.retry, platform: t.dataset.plat }, "повтор"), "Отправлено");
@@ -2955,6 +3076,7 @@ function bind() {
     }
   });
   let rs; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => D && ui.page === "overview" && renderOverview(), 150); });
+  document.fonts && document.fonts.ready && document.fonts.ready.then(() => fitDock());
   addEventListener("i18n:lang", () => { if (D) render(); });
 }
 
