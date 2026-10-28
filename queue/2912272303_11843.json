@@ -186,7 +186,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Доверяете автоторможению в современной машине?",
    "cover_ms": 500
   }
@@ -198,9 +198,14 @@
    "started_at": "2026-10-28T18:38:47Z"
   },
   "youtube": {
+   "status": "posted",
+   "video_id": "NGwC08xgXEs",
+   "url": "https://youtube.com/shorts/NGwC08xgXEs",
+   "privacy": "public",
    "account": "yt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T18:38:47Z"
+   "posted_at": "2026-10-28T18:38:47Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   },
   "instagram": {
    "account": "ig_main",
