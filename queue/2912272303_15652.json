@@ -1,0 +1,221 @@
+{
+ "id": "2912272303_15652",
+ "vod_id": "2912272303",
+ "vod_title": "АУК на костюм для Хэллоуина 🎃 В чём я буду ходить 3 стрима? LA доставка",
+ "vod_time": 15652.6,
+ "duration": 48.8,
+ "span": 91.3,
+ "score": 8,
+ "subscores": {
+  "hook": 8,
+  "payoff": 8,
+  "clarity": 9,
+  "emotion": 7,
+  "rewatch": 6
+ },
+ "category": "funny",
+ "risk": {
+  "level": 1,
+  "flags": [
+   "heavy_profanity"
+  ]
+ },
+ "why": "Стример за рулём в костюме Бэтмена с серьёзным лицом рассказывает историю Брюса Уэйна как свою собственную.",
+ "what": "Стример в костюме Бэтмена отвечает на вопрос из чата о том, почему он не скучает по родным, и с невозмутимым видом пересказывает каноничную историю Брюса Уэйна.",
+ "overlay": "История Бэтмена за 90 секунд",
+ "signal": 0.0,
+ "breakdown": {
+  "chat": 0,
+  "keywords": 0,
+  "spam_wave": 0,
+  "audio": 0,
+  "viewer_clips": 0
+ },
+ "audio": {
+  "muted": 0.0,
+  "music": {
+   "score": 0.472,
+   "stability": 0.452,
+   "tonal": 0.0,
+   "beat": 0.073
+  },
+  "action": "ok",
+  "reason": null
+ },
+ "brain": {
+  "text": {
+   "score": 8,
+   "hook": 8,
+   "payoff": 9,
+   "clarity": 10,
+   "emotion": 8,
+   "rewatch": 7,
+   "why": "Отвечая на личный вопрос из чата, стример на полном серьёзе пересказывает каноничную историю Бэтмена как свою настоящую биографию, находясь в костюме Бэтмена. Понятно абсолютно всем и очень смешно.",
+   "category": "funny"
+  },
+  "video": {
+   "verdict": "post",
+   "score": 8,
+   "subscores": {
+    "hook": 8,
+    "payoff": 8,
+    "clarity": 9,
+    "emotion": 7,
+    "rewatch": 6
+   },
+   "what_happens": "Стример в костюме Бэтмена отвечает на вопрос из чата о том, почему он не скучает по родным, и с невозмутимым видом пересказывает каноничную историю Брюса Уэйна.",
+   "moment": "Стример за рулём в костюме Бэтмена с серьёзным лицом рассказывает историю Брюса Уэйна как свою собственную.",
+   "technical": {
+    "lag": 0,
+    "issues": []
+   },
+   "standalone": true
+  },
+  "tech": {
+   "duration": 95.2,
+   "frozen": 0.0,
+   "frozen_frac": 0.0,
+   "freezes": [],
+   "black": 0
+  },
+  "proofread": [
+   "был. → было.",
+   "вышел → вышли",
+   "антиоживили. → антиживили.",
+   "Альберт → Альфред",
+   "и → если",
+   "с → отвечать",
+   "этой → на",
+   "Случайно → твой",
+   "на → вопрос,",
+   "твой → просто,",
+   "вопрос. → ну,",
+   "Просто, → не",
+   "ну, → по",
+   "не → кому",
+   "по → скучать",
+   "кому → условно,",
+   "скучать → и",
+   "условно. → всё."
+  ],
+  "length": {
+   "keep_long": false,
+   "why": "Монолог в статичной обстановке содержит лишние паузы и второстепенные детали. Вырезка подробностей про переулок и пещеру сохраняет динамику и концентрирует юмор на главных панчлайнах.",
+   "final_s": 54.8
+  },
+  "critic": {
+   "ok": true,
+   "problems": [],
+   "fix_hook": "",
+   "skipped": null
+  },
+  "cuts": 6,
+  "trimmed_s": 42.5
+ },
+ "transcript": "Почему, если не секрет, не скучаешь по родным? Голди, ну, не знаю, я уже говорил как-то на стриме. Я Бэтмен. Ну, отца убили. Мы, короче, там праздновали. У меня же отец богатый, ты же в курсе, он миллионер, миллиардер. Праздновали, короче, я был маленький ещё, с мамкой, с Паханом, короче, вышли какой-то хуй решил ограбить Пахана. Говорит, давай кошелёк. Ну Пахан там что-то начал выёбываться. По итогу что? И отца, и мать антиживили. И всё, я один остался, унаследовал это всё состояние Пахана, блядь, и решил ёбнуться, короче, костюм там купил себе всяких там, бэтмобилей набрал. Бабок куры не клюют, но родителей как занесло. И поэтому если отвечать на Твой вопрос просто ну. Не, по, кому скучать",
+ "thumb": "data:image/jpeg;base64,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",
+ "targets": {
+  "tiktok": {
+   "hook": "История Бэтмена за 90 секунд",
+   "hook_style": "number",
+   "caption": "Стример в костюме Бэтмена ответил на личный вопрос из чата",
+   "hashtags": [
+    "#бэтмен",
+    "#стрим",
+    "#нарезка",
+    "#юмор"
+   ],
+   "hook_alts": [
+    "История Бэтмена за 90 секунд",
+    "Почему Бэтмен не скучает по родным",
+    "В чате спросили про родителей",
+    "Я Бэтмен, отца убили"
+   ],
+   "asset": "2912272303_15652.mp4",
+   "size": 31577907,
+   "duration": 48.8,
+   "variant": {
+    "hook_style": "number"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Альберта жалко больше всего в этой истории",
+   "cover_ms": 500
+  },
+  "instagram": {
+   "hook": "История Бэтмена за 90 секунд",
+   "hook_style": "number",
+   "caption": "Спросили в чате, почему не скучает по родным. Ответ убил",
+   "hashtags": [
+    "#бэтмен",
+    "#юмор",
+    "#прикол",
+    "#стрим"
+   ],
+   "hook_alts": [
+    "История Бэтмена за 90 секунд",
+    "Почему Бэтмен не скучает по родным",
+    "В чате спросили про родителей",
+    "Я Бэтмен, отца убили"
+   ],
+   "asset": "2912272303_15652.mp4",
+   "size": 31577907,
+   "duration": 48.8,
+   "variant": {
+    "hook_style": "number"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Альберта жалко больше всего в этой истории",
+   "cover_ms": 500
+  },
+  "youtube": {
+   "hook": "История Бэтмена за 90 секунд",
+   "hook_style": "number",
+   "title": "Почему Бэтмен не скучает по родным?",
+   "description": "Стример в костюме Бэтмена с невозмутимым видом рассказывает историю Брюса Уэйна в ответ на вопрос из чата\n\nСтримы: twitch.tv/albert1million\n#shorts #albert1million",
+   "tags": [
+    "бэтмен",
+    "стример",
+    "юмор",
+    "история",
+    "irl"
+   ],
+   "caption": "Почему Бэтмен не скучает по родным?",
+   "hook_alts": [
+    "История Бэтмена за 90 секунд",
+    "Почему Бэтмен не скучает по родным",
+    "В чате спросили про родителей",
+    "Я Бэтмен, отца убили"
+   ],
+   "asset": "2912272303_15652.mp4",
+   "size": 31577907,
+   "duration": 48.8,
+   "variant": {
+    "hook_style": "number"
+   },
+   "hook_quality": {
+    "score": 100,
+    "issues": []
+   },
+   "status": "ready",
+   "comment": "Альберта жалко больше всего в этой истории",
+   "cover_ms": 500
+  }
+ },
+ "posts": {},
+ "created_at": "2026-10-28T02:50:45Z",
+ "live_when_made": false,
+ "shelf": "forever",
+ "expires_at": null,
+ "fresh": false,
+ "uid": "4c879a34",
+ "asset": "2912272303_15652.mp4",
+ "vod_url": "https://www.twitch.tv/videos/2912272303?t=4h20m52s"
+}
