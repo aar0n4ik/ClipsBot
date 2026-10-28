@@ -1,5 +1,5 @@
-Положи сюда `logo.png` — он встанет в плашку `twitch.tv/albert1million` в каждом ролике.
+Drop `logo.png` here — it goes into the `twitch.tv/albert1million` badge in every clip.
 
-- Квадратный PNG с прозрачным фоном, от 128×128.
-- Официальный значок Twitch можно скачать на brand.twitch.tv (раздел Logos → Glitch, белый вариант лучше всего смотрится на фиолетовой плашке). Или возьми логотип самого стримера.
-- Нет файла — в плашке будет нейтральный значок.
+- Square PNG with a transparent background, 128×128 or larger.
+- The official Twitch mark is at brand.twitch.tv (Logos → Glitch; the white variant looks best on the purple badge). Or use the streamer's own logo.
+- No file — the badge falls back to a neutral mark.
