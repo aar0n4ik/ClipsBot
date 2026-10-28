@@ -126,11 +126,38 @@ def separate_vocals(src: Path, out_dir: Path) -> tuple[Path, float] | None:
     return voc, (ea / (ev + ea + 1e-9)) * (1.0 if musical >= 0.5 else 0.0)
 
 
+def leading_silence(x: np.ndarray, sr: int = SR) -> float:
+    """Сколько секунд цифровой тишины в САМОМ начале куска (заглушка Twitch, попавшая на старт клипа).
+
+    muted_fraction считает тишину по всему клипу и 2 с в начале тридцатисекундного ролика (это 7 %)
+    спокойно пропускает — а зритель слышит ровно их: короткий всплеск и мёртвая пауза. Поэтому голова
+    проверяется отдельно.
+    """
+    if len(x) < sr // 10:
+        return 0.0
+    hop = max(1, sr // 100)                      # шаг 10 мс
+    n = len(x) // hop
+    rms = np.sqrt((x[: n * hop].reshape(n, hop) ** 2).mean(1))
+    loud = np.flatnonzero(rms >= 10 ** (-75 / 20))
+    if not len(loud):
+        return round(n * hop / sr, 3)
+    first = int(loud[0])
+    # одиночный щелчок в первых 100 мс не считается звуком: дальше всё равно тишина
+    for i in range(first, min(first + 10, len(rms))):
+        if rms[i] < 10 ** (-75 / 20):
+            nxt = np.flatnonzero(rms[i:] >= 10 ** (-75 / 20))
+            if len(nxt) and int(nxt[0]) > 25:    # > 250 мс провала сразу после всплеска
+                first = i + int(nxt[0])
+            break
+    return round(first * hop / sr, 3)
+
+
 def inspect_clip_audio(src: Path, start: float, dur: float, work: Path, cfg: dict) -> dict:
     """Итог для клипа: {"muted": доля, "music": {...}, "action": "ok|skip|vocals", "audio_override": path|None}"""
     acfg = cfg.get("audio") or {}
     x = load_wav(src, start, dur)
-    res = {"muted": round(muted_fraction(x), 3), "music": music_score(x), "action": "ok", "audio_override": None}
+    res = {"muted": round(muted_fraction(x), 3), "head_silence": leading_silence(x),
+           "music": music_score(x), "action": "ok", "audio_override": None}
     if res["muted"] > float(acfg.get("max_muted", 0.15)):
         res["action"] = "skip"
         res["reason"] = f"Twitch заглушил звук ({int(res['muted'] * 100)}% клипа в тишине)"

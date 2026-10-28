@@ -87,8 +87,10 @@ def link_clips(store: Store, acc_id: str, platform: str, A: dict, queue: list[di
     claimed = {str(p.get("video_id")) for c in queue for p in c["posts"].values() if p.get("video_id")}
     for c in queue:
         p = c["posts"].get(platform)
+        # retry/failed тоже ищем: если ролик на самом деле вышел (ответ площадки потерялся), без этого
+        # он остаётся без video_id — удаление его не находит, и бот вечно собирается «повторить».
         if not p or p.get("account") != acc_id or p.get("video_id") or \
-                p.get("status") not in ("inbox", "posted", "processing", "uploading"):
+                p.get("status") not in ("inbox", "posted", "processing", "uploading", "retry", "failed"):
             continue
         key = _norm((c["targets"].get(platform) or {}).get("caption", ""))[:40]
         when = p.get("posted_at") or p.get("started_at")
@@ -165,7 +167,15 @@ def cmd_stats(cfg: dict, store: Store):
         for cid in prune_deleted(A, owner, acc["platform"], paid_keys, now_ts):
             c = store.read_json(f"queue/{cid}.json", None)
             if c and c.get("posts", {}).get(acc["platform"]):
-                c["posts"][acc["platform"]]["status"] = "removed_by_user"
+                post = c["posts"][acc["platform"]]
+                # Удаление — решение владельца, оно важнее любой недокачки: снимаем остатки «повтора»,
+                # иначе клип висит в состоянии retry и бот собирается залить его обратно.
+                post["status"] = "removed_by_user"
+                for k in ("error", "tries", "started_at"):
+                    post.pop(k, None)
+                tg = (c.get("targets") or {}).get(acc["platform"])
+                if tg:
+                    tg["status"] = "removed_by_user"
                 store.write_json(f"queue/{cid}.json", c)
                 log(f"🗑 {acc['id']}: видео удалено в приложении — убрал из статистики ({cid})")
     stats["updated_at"] = now_iso()

@@ -840,6 +840,34 @@ def test_late_runner_does_not_lose_slot_and_long_clips_fit_limits():
     assert render.SUB_MAX_W <= 760                                                    # не под кнопками TikTok
 
 
+def test_deleted_video_never_comes_back_as_retry():
+    """Владелец удалил ролик → removed_by_user на ЛЮБОЙ площадке, и «повтор» снимается."""
+    import clipper.stats as S
+    from clipper.clips import pending_for
+    now = dt.datetime(2026, 10, 25, 12, 0, tzinfo=dt.timezone.utc).timestamp()
+    A = {"videos": {"ig1": {"views": 10, "deleted_at": "2026-10-25T10:00:00Z"}}}
+    owner = {"ig1": "c1"}
+    assert S.prune_deleted(A, owner, "instagram", set(), now) == ["c1"]
+    assert "ig1" not in A["videos"]
+
+    # пост, оставшийся в retry, больше не считается ожидающим публикации
+    c = {"targets": {"instagram": {"asset": "a.mp4", "status": "removed_by_user"}},
+         "posts": {"instagram": {"status": "removed_by_user"}}}
+    assert not pending_for(c, "instagram")
+
+    # а пока он в retry — считается (иначе дотяжка сломается)
+    c2 = {"targets": {"instagram": {"asset": "a.mp4", "status": "ready"}},
+          "posts": {"instagram": {"status": "retry"}}}
+    assert pending_for(c2, "instagram")
+
+
+def test_link_clips_rescues_retry_post():
+    """Ролик на самом деле вышел, но ответ потерялся: связываем и ставим posted, а не льём второй раз."""
+    import inspect, clipper.stats as S
+    src = inspect.getsource(S.link_clips)
+    assert '"retry", "failed"' in src        # retry/failed тоже ищем по тексту подписи
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

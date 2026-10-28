@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import os
 import re
 from functools import lru_cache
@@ -23,9 +24,14 @@ from .config import FONTS_DIR
 from .util import ffprobe_json, log, run
 
 W, H = 1080, 1920
-TITLE_TOP, TITLE_MAX_W, TITLE_SIZES = 300, 860, (64, 60, 56, 52, 48)
+# Заголовок крепится НИЖНИМ краем к верхней границе видео (выравнивание 2 + MarginV снизу кадра),
+# а не верхним краем к фиксированной y. Иначе однострочный заголовок висел далеко от видео,
+# а двухстрочный — впритык. Теперь зазор до картинки всегда один и тот же.
+FPS = 30                             # частота кадров итогового ролика
+TITLE_GAP = 26                       # просвет между заголовком и верхним краем видео
+TITLE_MAX_W, TITLE_SIZES = 860, (76, 72, 68, 64, 60)
 VS_RE = re.compile(r"^(.+?)\s+vs\.?\s+(.+)$", re.I)
-VS_SIZES = (56, 52, 48, 44)  # три строки (A / VS / B) должны уместиться над панелью
+VS_SIZES = (58, 54, 50, 46)  # три строки (A / VS / B) должны уместиться над панелью
 PANEL_Y, PANEL_H = 480, 960
 SUB_CENTER, SUB_SIZE, SUB_MAX_W = 1365, 54, 760   # x 160…920: справа ниже y≈1000 кнопки TikTok
 SUB_BOTTOM, TR_BOTTOM, TR_SIZE = 1400, 1456, 40      # низ строки субтитров и строки перевода (выше плашки канала)
@@ -213,6 +219,8 @@ def build_ass(words: list[dict], dur: float, title_lines: list[str], title_size:
     has_trans = bool(trans)
     # когда есть строка перевода, субтитры чуть выше, чтобы обе строки влезали без наложения
     sub_margin_v = H - SUB_BOTTOM + (TR_LIFT if has_trans else 0)
+    # нижний край заголовка — на TITLE_GAP выше верхней границы видео, сколько бы строк ни вышло
+    title_margin_v = H - (PANEL_Y - TITLE_GAP)
     tr_max_w = SUB_MAX_W - 2 * TR_PAD   # перевод с отступом с обеих сторон
     head = f"""[Script Info]
 ScriptType: v4.00+
@@ -223,7 +231,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Title,{f},{title_size},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,5,0,8,110,110,{TITLE_TOP},1
+Style: Title,{f},{title_size},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,5,0,2,110,110,{title_margin_v},1
 Style: Sub,{f},{SUB_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4.5,0,2,160,160,{sub_margin_v},1
 Style: Tr,{f},{TR_SIZE},{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,3.5,0,2,160,160,{H - TR_BOTTOM},1
 Style: Note,{f},42,{Wt},&H000000FF,{Bk},&H00000000,0,0,0,0,100,100,0,0,1,4,0,8,170,170,{NOTE_Y},1
@@ -377,6 +385,12 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
     """segments — куски исходника в порядке показа ([холодное открытие], основной);
     words_src, punches — во времени исходника; notes — во времени итогового ролика."""
     variant = variant or {}
+    # Границы кусков — РОВНО на сетке кадров. Звук режется по сэмплу, видео — только по кадрам, поэтому
+    # при произвольной границе звук уезжал относительно картинки на случайные 0..33 мс (замерено ~37 мс
+    # на реальном рендере), и на каждом куске по-разному. Снап обеих границ на 1/FPS режет звук и
+    # картинку в один и тот же момент: дорожка остаётся 1:1 со стримом, без всяких подстроек.
+    segments = [(round(a * FPS) / FPS, round(b * FPS) / FPS) for a, b in segments]
+    segments = [(a, b) for a, b in segments if b - a >= 1.0 / FPS]
     cl = {**cfg["clips"], **{k: v for k, v in variant.items() if k in ("subtitles",)}}
     cfg = {**cfg, "clips": cl}
     sw, sh, has_audio = probe(src)
@@ -421,7 +435,7 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         vi, ai = seg_in[i]
         keys_local = [(ta - a, va) for ta, va in keys] if keys else None  # ключи — во времени куска
         xe = x_expr(keys_local, 0.0, crop_frac) if keys_local else "(iw-ow)/2"
-        fc.append(f"[{vi}:v]setpts=PTS-STARTPTS,fps=30,"
+        fc.append(f"[{vi}:v]setpts=PTS-STARTPTS,fps={FPS},"
                   f"crop=w='min(iw\\,ih*{asp:.4f})':h='min(ih\\,iw/{asp:.4f})':x='{xe}':y='(ih-oh)/2',"
                   f"scale={fw}:{fh},setsar=1,format=yuv420p[v{i}]")
         if audio and ai is not None:
@@ -453,24 +467,24 @@ def render_clip(src: Path, segments: list[tuple[float, float]], words_src: list[
         last = "vb"
     fc.append(f"[{last}]ass={ass.name}:fontsdir={FONTS_DIR.as_posix()},format=yuv420p[vout]")
     if audio:
-        # Однопроходный loudnorm — ДИНАМИЧЕСКИЙ: первые ~1 с он задирает уровень, потом проваливает его
-        # на несколько дБ и выползает обратно только к 5-8 с. Клип всегда начинается с середины фразы,
-        # поэтому вся эта раскачка приходилась ровно на начало ролика (звук «пропадал и дёргался»).
-        # Меряем громкость отдельным проходом и накладываем ПОСТОЯННОЕ усиление: динамика оригинала
-        # сохраняется кадр в кадр, целевая громкость попадает точно, раскачки нет.
-        meas = measure_lufs(inputs, ";".join(a_parts + [a_concat]), "acm")
+        # Громкость выравнивается ОДНИМ множителем на всю дорожку. Ничего, что сдвигает сигнал во
+        # времени или мнёт его динамику, в тракте нет: loudnorm — динамический и раскачивается первые
+        # секунды, alimiter даёт +5 мс задержки (замерено), пересэмплирование здесь не нужно вовсе —
+        # исходник уже 48 кГц. Усиление ограничено сверху истинным пиком, поэтому лимитер не нужен:
+        # клиппинга не будет даже без него. Дорожка получается 1:1 со стримом, только громче.
+        meas = measure_audio(inputs, ";".join(a_parts + [a_concat]), "acm")
         if meas is None:
-            fc.append("[ac]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[aout]")
+            fc.append("[ac]anull[aout]")
         else:
-            gain = max(-12.0, min(25.0, TARGET_LUFS - meas))
-            log(f"громкость: {meas:.1f} LUFS → {gain:+.1f} дБ (цель {TARGET_LUFS:.0f})")
-            fc.append(f"[ac]volume={gain:.2f}dB,alimiter=limit={_LIMIT:.4f}:level=disabled,"
-                      f"aresample=48000[aout]")
+            lufs, tp = meas
+            gain = max(-12.0, min(TARGET_LUFS - lufs, TRUE_PEAK_DB - tp))
+            log(f"громкость: {lufs:.1f} LUFS, пик {tp:.1f} dBTP → {gain:+.1f} дБ")
+            fc.append(f"[ac]volume={gain:.2f}dB[aout]")
 
     cmd = ["ffmpeg", "-v", "error", "-y"]
     for inp in inputs:
         if inp["ss"] is not None:
-            cmd += ["-ss", f"{inp['ss']:.3f}", "-t", f"{inp['t']:.3f}"]
+            cmd += ["-ss", f"{inp['ss']:.6f}", "-t", f"{inp['t']:.6f}"]
         cmd += ["-i", inp["path"]]
     cmd += ["-filter_complex", ";".join(fc), "-map", "[vout]"]
     if audio:
@@ -498,27 +512,25 @@ TRUE_PEAK_DB = -1.5     # потолок пиков
 _LIMIT = 10 ** (TRUE_PEAK_DB / 20)
 
 
-def measure_lufs(cmd_inputs: list[dict], graph: str, out_pad: str) -> float | None:
-    """Интегральная громкость собранной звуковой дорожки (один дешёвый проход, видео не декодируется)."""
+def measure_audio(cmd_inputs: list[dict], graph: str, out_pad: str) -> tuple[float, float] | None:
+    """(интегральная громкость, истинный пик) собранной дорожки — один дешёвый проход без декодирования видео."""
     cmd = ["ffmpeg", "-hide_banner", "-y"]
     for inp in cmd_inputs:
         if inp["ss"] is not None:
-            cmd += ["-ss", f"{inp['ss']:.3f}", "-t", f"{inp['t']:.3f}"]
+            cmd += ["-ss", f"{inp['ss']:.6f}", "-t", f"{inp['t']:.6f}"]
         cmd += ["-i", inp["path"]]
-    cmd += ["-filter_complex", graph + f";[{out_pad}]ebur128=framelog=quiet[m]",
+    cmd += ["-filter_complex",
+            graph + f";[{out_pad}]loudnorm=I={TARGET_LUFS}:TP={TRUE_PEAK_DB}:print_format=json[m]",
             "-map", "[m]", "-f", "null", "-"]
     try:
         r = run(cmd, timeout=900, check=False, quiet=True)
+        txt = r.stderr or ""
+        j = json.loads(txt[txt.rindex("{"):txt.rindex("}") + 1])
+        i, tp = float(j["input_i"]), float(j["input_tp"])
     except Exception as e:  # noqa: BLE001
-        log(f"громкость: замер не удался ({str(e)[:120]})")
+        log(f"громкость: замер не удался ({str(e)[:120]}) — звук идёт как есть")
         return None
-    m = re.findall(r"I:\s*(-?\d+(?:\.\d+)?)\s*LUFS", r.stderr or "")
-    if not m:
-        log("громкость: замер не дал результата")
-        return None
-    v = float(m[-1])
-    return None if v < -60 else v
-
+    return (None if i < -60 else (i, tp))
 
 def thumb_b64(video: Path, at: float = 1.0, width: int = 240) -> str:
     jpg = video.with_suffix(".thumb.jpg")
