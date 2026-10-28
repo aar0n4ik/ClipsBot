@@ -2151,6 +2151,20 @@ function logEvents() {
   for (const [comp, x] of Object.entries(D.status.system || {}))
     add(x.at, `${sysName(comp)}: ${x.msg || (x.level === "ok" ? "в порядке" : x.level)}`, x.level === "error" ? "" : "dim");
   const L = D.status.live || {};
+  /* лимиты выкладки: всегда первой строкой */
+  const Sp = D.status.post || {}, lp = Sp.plan || {};
+  if (lp.cap != null) {
+    const nowH = hourIn(audTz());
+    const nx = (lp.today || []).find(t2 => { const [h2, m2] = t2.split(":").map(Number); return h2 + m2 / 60 > nowH; });
+    const bits = [`Лимит сегодня: вышло ${lp.releases_today ?? 0} из ${lp.cap}`, nx ? `следующий слот ${nx}` : "слотов на сегодня больше нет"];
+    for (const a of (D.accounts || [])) {
+      const sa = (Sp.accounts || {})[a.id] || {}, td = sa.today || {}, x = [];
+      if (td.drafts) x.push(`${td.drafts} в черновиках`);
+      if (sa.cooldown_until && new Date(sa.cooldown_until) > new Date()) x.push(`пауза до ${hhmm(sa.cooldown_until)}`);
+      if (x.length) bits.push(`${a.name}: ${x.join(", ")}`);
+    }
+    add(D.generated_at, bits.join(" · "));
+  }
   if (L.is_live) add(L.started_at, `Эфир идёт${L.title ? ": " + L.title : ""}${L.viewers ? ` · ${fmtInt(L.viewers)} зрителей` : ""}`);
   const P = D.status.process || {};
   if (P.state === "running") add(P.updated_at, `${P.stage || "нарезка"}${P.chunk ? " · фрагмент " + P.chunk : ""}${P.progress != null ? ` · ${Math.round(P.progress)}%` : ""}`);

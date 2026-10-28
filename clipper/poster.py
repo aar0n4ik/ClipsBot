@@ -278,8 +278,11 @@ def _cooldown(store: Store, a: dict, acc: dict, e: PlatformError, now: dt.dateti
 
 
 # ── главный цикл ────────────────────────────────────────────────
-def cmd_post(cfg: dict, store: Store, force: bool = False):
+def cmd_post(cfg: dict, store: Store, force: bool = False, reset: bool = False):
     posting = cfg["posting"]
+    if reset:    # разовый сброс «на сейчас»: счётчики дня, паузы площадок, интервал между релизами
+        from . import limits
+        limits.reset_today(store, posting["timezone"])
     policy = learn.load(store, cfg)
     from . import decisions
     if decisions.apply_commands(store, policy):
@@ -375,7 +378,9 @@ def cmd_post(cfg: dict, store: Store, force: bool = False):
     cap = min(hard, base + (1 if waves else 0))
     weights = learn.get(policy, "hours.youtube") or learn.get(policy, "hours.tiktok") or learn.PRIOR_HOURS
     sch = pstate.get("schedule") or {}
-    if sch.get("date") != today:
+    if reset:      # все слоты дня считаются наступившими: лимит открыт заново с этой минуты
+        sch = {"date": today, "hours": [local.hour] * cap}
+    elif sch.get("date") != today:
         sch = {"date": today, "hours": day_slots(cap, weights, quiet, gap / 60)}
     elif len(sch.get("hours") or []) != cap:      # волна или новая настройка: прошедшие слоты не трогаем
         past = [h for h in sch.get("hours") or [] if h <= local.hour]

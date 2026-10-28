@@ -2,7 +2,7 @@
 
   watch            — проверить Twitch, при необходимости запустить нарезку (каждые 10 мин)
   process          — нарезать готовые куски записи
-  post [--force]   — опубликовать, если пора (каждый час, все площадки)
+  post [--force] [--reset-limits] — опубликовать, если пора (каждый час, все площадки); --reset-limits: разово сбросить лимиты дня
   stats            — просмотры со всех площадок + здоровье + обучение (каждый час)
   doctor           — токены, секреты, чистка файлов (раз в сутки)
   assist           — ответить на вопросы из вкладки «Помощь» дашборда
@@ -29,6 +29,7 @@ def main():
     ap.add_argument("cmd", choices=["watch", "process", "post", "stats", "doctor", "auth", "fail", "dashboard",
                                     "diagnose", "summary", "assist"])
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--reset-limits", action="store_true")
     ap.add_argument("--account", default="")
     ap.add_argument("--platform", default="")
     ap.add_argument("--code", default="")
@@ -61,7 +62,7 @@ def main():
         cmd_process(cfg, store)
     elif a.cmd == "post":
         from .poster import cmd_post
-        cmd_post(cfg, store, force=a.force)
+        cmd_post(cfg, store, force=a.force, reset=a.reset_limits)
     elif a.cmd == "stats":
         from .stats import cmd_stats
         cmd_stats(cfg, store)

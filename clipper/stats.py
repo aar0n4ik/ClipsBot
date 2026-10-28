@@ -170,6 +170,7 @@ def cmd_stats(cfg: dict, store: Store):
                 post = c["posts"][acc["platform"]]
                 # Удаление — решение владельца, оно важнее любой недокачки: снимаем остатки «повтора»,
                 # иначе клип висит в состоянии retry и бот собирается залить его обратно.
+                was = post.get("status")
                 post["status"] = "removed_by_user"
                 for k in ("error", "tries", "started_at"):
                     post.pop(k, None)
@@ -178,6 +179,11 @@ def cmd_stats(cfg: dict, store: Store):
                     tg["status"] = "removed_by_user"
                 store.write_json(f"queue/{cid}.json", c)
                 log(f"🗑 {acc['id']}: видео удалено в приложении — убрал из статистики ({cid})")
+                try:   # удалил видео — дневной лимит освобождается
+                    from . import limits
+                    limits.free_slot(store, c, acc["id"], acc["platform"], was, cfg["posting"]["timezone"])
+                except Exception as e:  # noqa: BLE001 — лимиты не должны ломать сбор статистики
+                    log(f"⚠️ освобождение лимита: {e}")
     stats["updated_at"] = now_iso()
     store.write_json("stats.json", stats)
     store.write_json("status/tokens.json", {**(store.read_json("status/tokens.json", {}) or {}), **tokens})

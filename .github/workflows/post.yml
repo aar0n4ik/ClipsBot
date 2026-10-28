@@ -9,6 +9,10 @@ on:
         description: "Опубликовать прямо сейчас лучший клип, не дожидаясь плана"
         type: boolean
         default: false
+      reset_limits:
+        description: "Разово сбросить лимиты на сегодня (счётчики, паузы площадок, интервал) и выкладывать дальше по плану"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -51,7 +55,7 @@ jobs:
       - run: bash scripts/mount_state.sh
       - name: ffprobe (проверка файла перед TikTok)
         run: command -v ffprobe >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null)
-      - run: python -m clipper post ${{ inputs.force && '--force' || '' }}
+      - run: python -m clipper post ${{ inputs.force && '--force' || '' }} ${{ inputs.reset_limits && '--reset-limits' || '' }}
       - if: failure()
         run: python -m clipper fail --job post || true
       - if: always()

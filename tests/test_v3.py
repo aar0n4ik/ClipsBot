@@ -220,6 +220,35 @@ def test_target_texts_per_platform_differ():
     assert yt["hook"].startswith("Клиент") and "#shorts" in yt["description"] and "twitch.tv/albert1million" in yt["description"]
 
 
+def test_deleted_video_frees_daily_limit_and_reset():
+    from clipper import limits
+    s = _store()
+    tz = "Europe/Moscow"
+    now = dt.datetime.now(dt.timezone.utc)
+    day = now.astimezone(dt.timezone(dt.timedelta(hours=3))).date().isoformat()
+    s.write_json("status/post.json", {
+        "releases": {"by_day": {day: 3}, "last_at": _iso(now)},
+        "accounts": {"yt": {"count_by_day": {day: 3}}, "tt": {"count_by_day": {day: 3}, "drafts_by_day": {day: 2},
+                                                             "cooldown_until": "2999-01-01T00:00:00+00:00"}}})
+    posts = {"youtube": {"status": "removed_by_user", "posted_at": _iso(now)}, "tiktok": {"status": "inbox", "posted_at": _iso(now)}}
+    # клип остался живым на TikTok → общий релиз не снимается, на YouTube счётчик −1
+    assert limits.free_slot(s, {"id": "c1", "posts": posts}, "yt", "youtube", "posted", tz)
+    ps = s.read_json("status/post.json")
+    assert ps["accounts"]["yt"]["count_by_day"][day] == 2 and ps["releases"]["by_day"][day] == 3
+    # удалили и TikTok-черновик → релиз снят целиком, черновик освобождён
+    posts["tiktok"]["status"] = "removed_by_user"
+    assert limits.free_slot(s, {"id": "c1", "posts": posts}, "tt", "tiktok", "inbox", tz)
+    ps = s.read_json("status/post.json")
+    assert ps["releases"]["by_day"][day] == 2 and ps["accounts"]["tt"]["drafts_by_day"][day] == 1
+    # ролик, который не выходил, лимит не трогает
+    assert not limits.free_slot(s, {"id": "c2", "posts": {"youtube": {"status": "retry"}}}, "yt", "youtube", "retry", tz)
+    # ручной сброс: счётчики дня, паузы и интервал
+    limits.reset_today(s, tz, now)
+    ps = s.read_json("status/post.json")
+    assert ps["releases"]["by_day"][day] == 0 and "last_at" not in ps["releases"]
+    assert ps["accounts"]["tt"]["count_by_day"][day] == 0 and "cooldown_until" not in ps["accounts"]["tt"]
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):
