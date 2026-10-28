@@ -184,7 +184,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Брюс Уэйн уже не тот",
    "cover_ms": 500
   }
@@ -198,9 +198,14 @@
    "last_try": "2026-10-28T07:19:51Z"
   },
   "youtube": {
+   "status": "posted",
+   "video_id": "KdhWoWR1XY8",
+   "url": "https://youtube.com/shorts/KdhWoWR1XY8",
+   "privacy": "public",
    "account": "yt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T07:19:51Z"
+   "posted_at": "2026-10-28T07:19:51Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   },
   "instagram": {
    "account": "ig_main",
