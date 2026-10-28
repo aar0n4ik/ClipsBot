@@ -2156,7 +2156,9 @@ function logEvents() {
   if (lp.cap != null) {
     const nowH = hourIn(audTz());
     const nx = (lp.today || []).find(t2 => { const [h2, m2] = t2.split(":").map(Number); return h2 + m2 / 60 > nowH; });
-    const bits = [`Лимит сегодня: вышло ${lp.releases_today ?? 0} из ${lp.cap}`, nx ? `следующий слот ${nx}` : "слотов на сегодня больше нет"];
+    const left = lp.slots_left ?? Math.max(0, lp.cap - (lp.releases_today ?? 0));
+    const bits = [`Лимит сегодня: вышло ${lp.releases_today ?? 0} из ${lp.cap}`,
+      left <= 0 ? "лимит на сегодня исчерпан" : nx ? `осталось ${left}, следующий слот ${nx}` : `осталось ${left}, выйдут в ближайшие запуски (раз в час)`];
     for (const a of (D.accounts || [])) {
       const sa = (Sp.accounts || {})[a.id] || {}, td = sa.today || {}, x = [];
       if (td.drafts) x.push(`${td.drafts} в черновиках`);
