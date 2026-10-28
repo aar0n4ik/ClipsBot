@@ -179,7 +179,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Забыли про машину за 100 тысяч долларов 😅",
    "cover_ms": 500
   }
@@ -191,9 +191,14 @@
    "started_at": "2026-10-28T07:16:45Z"
   },
   "youtube": {
+   "status": "posted",
+   "video_id": "yRzxiV5Wemw",
+   "url": "https://youtube.com/shorts/yRzxiV5Wemw",
+   "privacy": "public",
    "account": "yt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T07:16:45Z"
+   "posted_at": "2026-10-28T07:16:45Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   },
   "instagram": {
    "account": "ig_main",
