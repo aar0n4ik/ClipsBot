@@ -15,14 +15,15 @@
     ],
     "health": "ok"
    },
-   "last_post_at": "2026-10-27T19:33:19Z",
-   "last_clip": "2911545684_8064",
+   "last_post_at": "2026-10-28T02:33:56Z",
+   "last_clip": "2912272303_1556",
    "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
     "2026-10-23": 2,
     "2026-10-26": 1,
-    "2026-10-27": 2
+    "2026-10-27": 2,
+    "2026-10-28": 1
    },
    "recent": [
     {
@@ -66,12 +67,13 @@
    "last_error_at": "2026-10-26T04:00:53Z",
    "today": {
     "published": 0,
-    "drafts": 1,
-    "max": 5
+    "drafts": 0,
+    "max": 4
    },
    "state": "готова",
    "drafts_by_day": {
-    "2026-10-27": 2
+    "2026-10-27": 2,
+    "2026-10-28": 1
    }
   },
   "yt_main": {
@@ -87,8 +89,8 @@
     ],
     "health": "cooldown"
    },
-   "last_post_at": "2026-10-27T19:33:19Z",
-   "last_clip": "2911545684_8064",
+   "last_post_at": "2026-10-28T02:33:56Z",
+   "last_clip": "2912272303_1556",
    "last_error": null,
    "count_by_day": {
     "2026-10-22": 2,
@@ -96,7 +98,8 @@
     "2026-10-24": 3,
     "2026-10-25": 1,
     "2026-10-26": 1,
-    "2026-10-27": 2
+    "2026-10-27": 2,
+    "2026-10-28": 1
    },
    "recent": [
     {
@@ -172,9 +175,9 @@
    ],
    "first_post_at": "2026-10-22T10:03:50Z",
    "today": {
-    "published": 1,
+    "published": 0,
     "drafts": 0,
-    "max": 5
+    "max": 4
    },
    "state": "готова",
    "diagnosis": null
@@ -195,12 +198,13 @@
     "threshold": 7,
     "why": []
    },
-   "last_post_at": "2026-10-27T19:33:19Z",
-   "last_clip": "2911545684_8064",
+   "last_post_at": "2026-10-28T02:33:56Z",
+   "last_clip": "2912272303_1556",
    "last_error": null,
    "count_by_day": {
     "2026-10-26": 2,
-    "2026-10-27": 2
+    "2026-10-27": 2,
+    "2026-10-28": 1
    },
    "recent": [
     {
@@ -220,16 +224,16 @@
    ],
    "first_post_at": "2026-10-26T06:02:28Z",
    "today": {
-    "published": 1,
+    "published": 0,
     "drafts": 0,
-    "max": 5
+    "max": 4
    },
    "state": "готова",
    "diagnosis": null
   }
  },
  "timezone": "Europe/Moscow",
- "updated_at": "2026-10-27T19:33:19Z",
+ "updated_at": "2026-10-28T02:33:56Z",
  "hour_weights": {
   "tiktok": [
    0.25,
@@ -310,13 +314,27 @@
    0.5
   ]
  },
- "next_check": "2026-10-27T20:07:00+00:00",
+ "next_check": "2026-10-28T03:07:00+00:00",
  "releases": {
   "by_day": {
-   "2026-10-27": 2
+   "2026-10-27": 2,
+   "2026-10-28": 1
   },
-  "last_at": "2026-10-27T19:33:19Z",
+  "last_at": "2026-10-28T02:33:56Z",
   "recent": [
+   {
+    "clip": "2912272303_1556",
+    "category": "funny",
+    "vod_id": "2912272303",
+    "vod_time": 1556.5,
+    "hook": "Когда чавкаешь еда вкуснее",
+    "at": "2026-10-28T02:33:56Z",
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   },
    {
     "clip": "2911545684_8064",
     "category": "funny",
@@ -347,34 +365,22 @@
  },
  "plan": {
   "today": [
-   "08:07",
    "13:07",
-   "17:07",
+   "16:07",
    "19:07",
-   "21:07"
+   "22:07"
   ],
   "slots_left": 3,
-  "cap": 5,
-  "releases_today": 2,
+  "cap": 4,
+  "releases_today": 1,
   "waves": {},
-  "backlog": 5,
+  "backlog": 6,
   "up_next": [
    {
     "id": "2911545684_6820",
     "hook": "Я ни разу не был у стоматолога",
     "score": 7,
-    "age_h": 13.0,
-    "platforms": [
-     "tiktok",
-     "youtube",
-     "instagram"
-    ]
-   },
-   {
-    "id": "2911545684_7991",
-    "hook": "Типичный день в Лос-Анджелесе",
-    "score": 7,
-    "age_h": 12.8,
+    "age_h": 20.0,
     "platforms": [
      "tiktok",
      "youtube",
@@ -385,7 +391,18 @@
     "id": "2910649819_39863",
     "hook": "Clean me please на Кибертраке",
     "score": 7,
-    "age_h": 18.2,
+    "age_h": 25.2,
+    "platforms": [
+     "tiktok",
+     "youtube",
+     "instagram"
+    ]
+   },
+   {
+    "id": "2912272303_5127",
+    "hook": "Нашёл ковбойскую шляпу",
+    "score": 7,
+    "age_h": 7.0,
     "platforms": [
      "tiktok",
      "youtube",
@@ -396,7 +413,7 @@
     "id": "2911545684_1202",
     "hook": "Донатит сам на стриме",
     "score": 7,
-    "age_h": 13.1,
+    "age_h": 20.1,
     "platforms": [
      "tiktok",
      "youtube",
@@ -406,13 +423,12 @@
   ]
  },
  "schedule": {
-  "date": "2026-10-27",
+  "date": "2026-10-28",
   "hours": [
-   8,
    13,
-   17,
+   16,
    19,
-   21
+   22
   ]
  }
 }
