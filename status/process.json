@@ -1,23 +1,20 @@
 {
- "state": "idle",
- "stage": "Готово, жду новые куски",
+ "state": "running",
+ "stage": "Скачиваю звук, чат и клипы зрителей (одновременно)",
  "vod_id": "2912994542",
  "vod_title": "🦇 ГОРОД ПРОГНИЛ. LA погружается во тьму… Сегодня ночью Бэтмен выходит на охоту. Что скрывают улицы Города Ангелов? Глава 1: Ночная вылазка.",
- "chunk": "0:58:00–2:00:00",
- "progress": null,
- "updated_at": "2026-10-28T14:54:45Z",
+ "chunk": "1:58:00–3:00:00",
+ "progress": 4,
+ "updated_at": "2026-10-28T17:44:26Z",
  "detail": "обработано кусков: 2",
- "stage_id": "render",
+ "stage_id": "audio",
  "funnel": {
-  "peaks": 6,
-  "scout": 3,
-  "candidates": 8,
-  "text_pass": 1,
-  "video_checked": 1,
-  "video_pass": 1,
-  "made": 0,
-  "asr": {
-   "gemini": 8
-  }
+  "peaks": 0,
+  "scout": 0,
+  "candidates": 0,
+  "text_pass": 0,
+  "video_checked": 0,
+  "video_pass": 0,
+  "made": 0
  }
 }
