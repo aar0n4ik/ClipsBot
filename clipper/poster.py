@@ -418,7 +418,7 @@ def cmd_post(cfg: dict, store: Store, force: bool = False, reset: bool = False):
         pool.append(c)
     recent = rs.get("recent", [])
     ranked = rank(pool, policy, recent)
-    forced = next((c for c in pool if c.get("force_post")), None)
+    forced = max((c for c in pool if c.get("force_post")), key=lambda c: str(c["force_post"]), default=None)   # последний нажатый «Выложить сейчас» — первым
     hot = next((c for _, c, _ in ranked if c.get("live_when_made") and int(c.get("score", 0)) >= int(posting.get("hot_score", 8))
                 and age_hours(c) <= 3 and posting.get("hot_now", True)), None)
     not_ready = sorted(set(active) - set(ready))
