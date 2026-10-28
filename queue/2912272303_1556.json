@@ -184,7 +184,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "А вы чавкаете когда едите дома в одиночестве?",
    "cover_ms": 500
   }
@@ -196,9 +196,14 @@
    "started_at": "2026-10-28T02:33:56Z"
   },
   "youtube": {
+   "status": "posted",
+   "video_id": "UVLO91E-XMM",
+   "url": "https://youtube.com/shorts/UVLO91E-XMM",
+   "privacy": "public",
    "account": "yt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T02:33:56Z"
+   "posted_at": "2026-10-28T02:33:56Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   },
   "instagram": {
    "account": "ig_main",
