@@ -1389,6 +1389,32 @@ a.m-cp:hover img{transform:scale(1.06)}
 /* мозг: лента решений продюсера */
 .feed { display: grid; gap: 10px }
 .check { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--k-mute) }
+
+/* ══════════════════════════════════════════════════════════════
+   Центровка: на узких экранах артборд сцены крепился правым краем
+   (transform-origin:100% 0, right:0), поэтому карточка уезжала вбок
+   и обрезалась. Ширину .u задавал более «сильный» селектор .scenes .u,
+   из-за чего правки ширины ниже не работали вовсе.
+   ══════════════════════════════════════════════════════════════ */
+@media(max-width:1180px){
+  .scenes{overflow:hidden;height:420px}
+  .sceneBox{left:50%;right:auto;transform:translateX(-50%) scale(.68);transform-origin:50% 0}
+  .scenes .u{left:50%;right:auto;transform:translateX(-50%);width:700px}
+}
+@media(max-width:760px){
+  .sceneBox{top:0;transform:translateX(-50%) scale(.42)}
+  .scenes .u{width:880px;top:40px}
+  .scenes{height:290px}
+}
+@media(max-width:420px){
+  .sceneBox{transform:translateX(-50%) scale(.37)}
+  .scenes .u{width:960px}
+}
+
+/* Экран пароля: выбор языка рядом со входом, пока настройки ещё недоступны */
+.gate-lang{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px;font-size:14px;color:var(--mute,#6B7689)}
+.gate-lang .sel{min-width:140px}
+
 </style>
 </head>
 <body>
@@ -1403,6 +1429,7 @@ a.m-cp:hover img{transform:scale(1.06)}
         <label class="check"><input type="checkbox" id="remember" checked> Запомнить на этом устройстве</label>
         <button class="btn amber" type="submit">Открыть</button>
         <div class="err" id="gateErr" role="alert"></div>
+        <div class="gate-lang"><span>Язык</span><select class="sel js-lang" id="langSelectGate" aria-label="Язык"><option value="ru">Русский</option><option value="en">English</option></select></div>
       </form>
     </section>
   </div>
@@ -1596,7 +1623,7 @@ a.m-cp:hover img{transform:scale(1.06)}
         <div class="panel">
           <div class="ph2"><h3>Это устройство</h3></div>
           <div class="form">
-            <div class="frow"><div>Язык</div><select class="sel" id="langSelect"><option value="ru">Русский</option><option value="en">English</option></select></div>
+            <div class="frow"><div>Язык</div><select class="sel js-lang" id="langSelect"><option value="ru">Русский</option><option value="en">English</option></select></div>
             <div class="frow"><div>Тема</div><select class="sel" id="themeSelect"><option value="">Как в системе</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select></div>
             <div class="frow"><div>Забыть пароль и ключ на этом устройстве</div><button class="iconbtn" type="button" id="forget">Забыть</button></div>
           </div>
@@ -1796,10 +1823,14 @@ let TZ = "UTC";
 const dayKey = d => new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 const addDays = (key, n) => { const d = new Date(key + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const daysBetween = (a, b) => Math.round((new Date(b + "T12:00:00Z") - new Date(a + "T12:00:00Z")) / 864e5);
-const fmtInt = n => Math.round(n || 0).toLocaleString("ru-RU");
-const money = (n, c) => { c = c || cur(); return (c === "USD" ? "$" : "") + (+n || 0).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (c !== "USD" ? " " + c : ""); };
-const fmtShortDate = key => new Date(key + "T12:00:00Z").toLocaleDateString("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" });
-const fmtDT = iso => new Date(iso).toLocaleString("ru-RU", { timeZone: TZ, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+/* Язык интерфейса задаёт и формат чисел с датами: в английском «$1.00» и «Oct 21»,
+   иначе выходил суржик вида «$1,00 за 1 000 views». */
+const LANG = () => (window.__i18n ? window.__i18n.lang() : "ru");
+const LOC = () => (LANG() === "en" ? "en-US" : "ru-RU");
+const fmtInt = n => Math.round(n || 0).toLocaleString(LOC());
+const money = (n, c) => { c = c || cur(); return (c === "USD" ? "$" : "") + (+n || 0).toLocaleString(LOC(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (c !== "USD" ? " " + c : ""); };
+const fmtShortDate = key => new Date(key + "T12:00:00Z").toLocaleDateString(LOC(), { day: "numeric", month: "short", timeZone: "UTC" });
+const fmtDT = iso => new Date(iso).toLocaleString(LOC(), { timeZone: TZ, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 function ago(iso) {
   if (!iso) return "—";
   const s = (Date.now() - new Date(iso)) / 1000;
@@ -2917,6 +2948,7 @@ function bind() {
     }
   });
   let rs; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => D && ui.page === "overview" && renderOverview(), 150); });
+  addEventListener("i18n:lang", () => { if (D) render(); });
 }
 
 async function load(manual) {

@@ -200,6 +200,11 @@ def chunk_words(words: list[dict], caps: bool = False, max_words: int = 7) -> li
     return [c for c in chunks if c]
 
 
+def _drop_final_dot(text: str) -> str:
+    """Точка в конце строки субтитров не нужна: строка и так кончается. Многоточие, «!» и «?» остаются."""
+    return re.sub(r"(?<![.…])\.\s*$", "", text)
+
+
 def _t(t: float) -> str:
     cs = int(round(max(0.0, t) * 100))
     return f"{cs // 360000:d}:{cs % 360000 // 6000:02d}:{cs % 6000 // 100:02d}.{cs % 100:02d}"
@@ -252,12 +257,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             nxt = chunks[ci + 1][0]["s"] if ci + 1 < len(chunks) else dur
             s0, s1 = max(0.0, ch[0]["s"] - 0.05), min(nxt - 0.05, ch[-1]["e"] + 0.35, dur)   # строки не налезают
             if s1 > s0:
-                text = " ".join(_esc(mask_profanity(w["w"])) for w in ch)
+                text = _drop_final_dot(" ".join(_esc(mask_profanity(w["w"])) for w in ch))
                 ev.append(f"Dialogue: 2,{_t(s0)},{_t(s1)},Sub,,0,0,0,,{text.upper() if caps else text}")
     for tr in trans or []:
         s0, s1, txt = float(tr["s"]), float(tr["e"]), _esc(str(tr.get("text", "")))
         if txt and s1 > s0 and s0 < dur:
-            quoted = "«" + txt.strip('«»"') + "»"
+            quoted = "«" + _drop_final_dot(txt.strip('«»"')) + "»"
             for line in _fit_lines(quoted, TR_SIZE, tr_max_w)[:1]:
                 ev.append(f"Dialogue: 1,{_t(max(0.0, s0))},{_t(min(dur, max(s1, s0 + 1.2)))},Tr,,0,0,0,,{line}")
     return head + "\n".join(ev) + "\n"

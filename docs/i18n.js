@@ -5,12 +5,24 @@
 (function () {
   "use strict";
   const LS_KEY = "clips:lang";
+  // Язык браузера нужен только до первого осознанного выбора: дальше решает localStorage.
+  function browserLang() {
+    try {
+      const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+      for (const l of list) {
+        const code = String(l).toLowerCase().slice(0, 2);
+        if (code === "ru" || code === "uk" || code === "be" || code === "kk") return "ru";
+        if (code) return "en";
+      }
+    } catch {}
+    return "ru";
+  }
   let lang = (() => {
     try {
       const saved = localStorage.getItem(LS_KEY);
-      if (saved === "en" || saved === "ru") return saved;
-      return "ru"; // сайт русский по умолчанию, выбор пользователя запоминается
-    } catch { return "ru"; }
+      if (saved === "en" || saved === "ru") return saved;   // выбор пользователя живёт между заходами
+    } catch {}
+    return browserLang();   // до первого выбора — как в браузере
   })();
 
   /* ── Full RU → EN dictionary ─────────────────────────────────────── */
@@ -827,12 +839,46 @@
     "auto — облако Gemini (быстро и точнее), при сбое Whisper; whisper — только локально": "auto — Gemini cloud (fast and more accurate), Whisper on failure; whisper — local only",
     "Бот перестанет менять стиль заголовков, темы и часы. Отбор и выкладка продолжатся.": "The bot stops changing title style, topics and hours. Selection and posting continue.",
     "выключено — работает простой план по лучшим часам": "off — a simple plan by best hours is used",
-    "ИИ смотрит видео финалиста 2/4": "the AI watches finalist 2/4",
+    "ИИ смотрит видео финалиста 2/4": "The AI watches finalist 2/4",
     ", просмотры соберу через час": ", views in an hour",
     "дашборд: стоп (": "dashboard: stop (",
     "остановлен": "stopped",
     "Просмотры": "Views",
     "· кусок": "· segment",
+    "Все выводы": "All payouts",
+    "Чат": "Chat",
+    "Клиенты": "Customers",
+    "выложил": "posted",
+    "Максимальная длина, с": "Max length, s",
+    "Медиана просмотров ролика": "Median views per video",
+    "число роликов": "video count",
+    "За период": "For the period",
+    "потолок; обычно ИИ режет 15–45 с, длиннее минуты — только после отдельной проверки": "a ceiling; the AI usually cuts 15–45 s, anything over a minute only after a separate check",
+    "Все площадки: стиль хука «цифра» заходит лучше (+35% к норме, n=11, уверенность 88%) — его доля 25% → 46%": "All platforms: the “number” hook style performs better (+35% over baseline, n=11, confidence 88%) — its share 25% → 46%",
+    "Новых клипов": "New clips",
+    "к прошлому периоду": "vs previous period",
+    "в среднем": "avg",
+    "Пока пусто — бот ещё ничего не делал.": "Nothing yet — the bot hasn't done anything.",
+    "Площадок пока нет.": "No platforms yet.",
+    "— бот кладёт ролик в черновики TikTok в ту же минуту, что и на Shorts и Reels. Открой TikTok → Профиль → Черновики (Входящие) и нажми «Опубликовать», чтобы вышло одновременно.": "— the bot drops the video into TikTok drafts the same minute it posts to Shorts and Reels. Open TikTok → Profile → Drafts (Inbox) and tap “Post” so everything goes out together.",
+    "Дубликат — один и тот же момент, выложенный отдельно: склеенные считаются одним клипом и оплачиваются по площадке с лучшим результатом. Исключённое пропадает из статистики и выплат, его можно вернуть.": "A duplicate is the same moment posted separately: merged ones count as a single clip and are paid by the best-performing platform. Excluded videos drop out of stats and payouts, and can be restored.",
+    "Отвечает тот же ИИ, что отбирает клипы: он читает настоящие данные бота — очередь, оценки, площадки, деньги. Вопрос и ответ зашифрованы паролем дашборда. Ответ приходит за минуту-две, страницу можно закрыть.": "You're answered by the same AI that picks the clips: it reads the bot's real data — queue, scores, platforms, money. Question and answer are encrypted with the dashboard password. The reply takes a minute or two, you can close the page.",
+    "ставку, порог вывода и валюту, пороги отбора и длину клипа, расписание и часы тишины, паузу площадки, стоп и запуск, повтор или отмену клипа, паузу обучения.": "the rate, payout threshold and currency, selection thresholds and clip length, the schedule and quiet hours, pausing a platform, stop and start, retrying or cancelling a clip, pausing learning.",
+    "новые функции, переделку сайта, правки кода и логики отбора, новую площадку, починку багов. На такое ответит прямо и скажет, что нужно сделать в коде, — эту работу лучше отдать полноценной модели с доступом к репозиторию.": "new features, rebuilding the site, code and selection-logic changes, a new platform, bug fixes. It will say so directly and tell you what to change in the code — that work is better given to a full model with repo access.",
+    "GitHub → Settings → Developer settings → Fine-grained tokens → только этот репозиторий, права Contents и Actions: Read and write. Ключ хранится в репозитории зашифрованным твоим паролем, поэтому вводится один раз для всех устройств.": "GitHub → Settings → Developer settings → Fine-grained tokens → this repository only, Contents and Actions: Read and write. The key is stored in the repo encrypted with your password, so you enter it once for all devices.",
+    "Медиана лучшего результата клипа старше 48 ч. Если высокие оценки не набирают больше — ИИ ошибается, и порог стоит поднять.": "Median best result for clips older than 48 h. If high scores don't earn more views, the AI is off and the threshold should go up.",
+    "Какие клипы закрыты, не меняется. Чтобы переделать выплату целиком — отмени её и запиши заново.": "Which clips are closed doesn't change. To redo a payout entirely, void it and record it again.",
+    "Выйдет на все готовые площадки при ближайшем запуске публикации (бот сразу его запустит). Правила паузы между релизами для этого клипа не действуют.": "It will go out to every ready platform on the next publishing run (the bot starts one right away). The pause rules between releases don't apply to this clip.",
+    "Ответ не пришёл за пять минут. Проверь вкладку Actions на GitHub: воркфлоу «6 · Assist» мог не запуститься.": "No answer in five minutes. Check the Actions tab on GitHub: the “6 · Assist” workflow may not have started.",
+    "Вопрос записан, но запустить воркфлоу не вышло. Открой Actions → «6 · Assist» → Run workflow, ответ придёт сюда.": "The question is saved, but the workflow didn't start. Open Actions → “6 · Assist” → Run workflow, the answer will show up here.",
+    "ИИ слушает фрагмент и исправляет ошибки распознавания (сленг, имена, бренды); бот запоминает исправления": "the AI listens to the fragment and fixes recognition errors (slang, names, brands); the bot remembers the corrections",
+    "Команда отправлена; выйдет при ближайшем запуске (для мгновенного запуска ключу нужны права Actions)": "Command sent; it runs on the next scheduled start (instant start needs Actions rights on the key)",
+    "Демо с выдуманными цифрами. На GitHub Pages будут только настоящие данные бота.": "Demo with made-up numbers. GitHub Pages shows only the bot's real data.",
+    "Данные зашифрованы. Введи пароль дашборда.": "The data is encrypted. Enter the dashboard password.",
+    "Запомнить на этом устройстве": "Remember on this device",
+    "Неверный пароль.": "Wrong password.",
+    "Язык": "Language",
+    "Русский": "Русский",
   };
 
   /* ─── Translation engine ──────────────────────────────────────────── */
@@ -857,7 +903,8 @@
     [/^Оценка по видео (\d+) из 10$/, "Video score $1 of 10"],
     [/^Вышел (.+), просмотры соберу через час$/, "Posted $1, views in an hour"],
     [/^(\d+) из (\d+) подключено$/, "$1 of $2 connected"],
-    [/^(\d+) площад(?:ка|ки|ок) подключено$/, "$1 platform(s) connected"],
+    [/^1 площадка подключено$/, "1 platform connected"],
+    [/^(\d+) площад(?:ка|ки|ок) подключено$/, "$1 platforms connected"],
     [/^(\d+) клип(?:ов|а|)$/, "$1 clips"],
     [/^(\d+) ч (\d+) мин$/, "$1 h $2 min"],
     [/^(\d+) мин$/, "$1 min"],
@@ -871,24 +918,99 @@
     [/^Лучшие часы \((.+)\)$/, "Best hours ($1)"],
     [/^название → «(.*)»$/, "title → “$1”"],
     [/^Скопировано$/, "Copied"],
+    [/^порог (.+) набран\.$/, "the $1 threshold is reached."],
+    [/^порог (.+) набран$/, "the $1 threshold is reached"],
+    [/^в очереди (.+)$/, "in queue $1"],
+    [/^(\d+(?:[.,]\d+)?) с$/, "$1 s"],
+    [/^(\d+) ч$/, "$1 h"],
+    [/^Вырезано пауз: (.+) \((\d+) склеек\)$/, "Pauses cut: $1 ($2 joins)"],
+    [/^новые клипы (.+)$/, "new clips $1"],
+    [/^доплата за рост (.+)$/, "growth top-up $1"],
+    [/^файлов клипов на GitHub: (\d+) \((.+) МБ\)$/, "clip files on GitHub: $1 ($2 MB)"],
+    [/^Эфир идёт (.+) — «(.+)»$/, "Live now $1 — “$2”"],
+    [/^Эфир идёт (.+)$/, "Live now $1"],
+    [/^Последний эфир был (.+)$/, "Last stream was $1"],
+    [/^Эфиров ещё не было$/, "No streams yet"],
+    [/^(.+) на куске (.+)$/, "$1 on segment $2"],
+    [/^Вышел «(.+)» на (.+)$/, "Posted “$1” on $2"],
+    [/^Вышел (.+)$/, "Posted $1"],
+    [/^([\d\s  .,]+) просм\.$/, "$1 views"],
+    [/^лучшая: (.+)$/, "best: $1"],
+    [/^Просмотры за (.+)$/, "Views for $1"],
+    [/^в среднем (.+) в день$/, "$1 per day on average"],
+    [/^(\d+)% из (.+)$/, "$1% of $2"],
+    [/^(.+) за 1 000 просмотров лучшей площадки$/, "$1 per 1,000 views on the best platform"],
+    [/^Можно выводить — порог (.+) набран$/, "Ready to withdraw — the $1 threshold is reached"],
+    [/^До вывода ещё (.+) · минимум (.+)$/, "$1 to go · minimum $2"],
+    [/^Пост в (.+)$/, "Post at $1"],
+    [/^отдыхает до (.+)$/, "resting until $1"],
+    [/^обновлено (.+)$/, "updated $1"],
+    [/^последнее решение (.+)$/, "last decision $1"],
+    [/^(\d+) из (\d+)$/, "$1 of $2"],
+    [/^Остановлено вручную: (.+)$/, "Stopped manually: $1"],
+    [/^Параллельно прошлый клип уходит на площадки$/, "Meanwhile the previous clip is going out to the platforms"],
     [/^Выдели текст и скопируй вручную$/, "Select the text and copy it manually"],
   ];
 
-  function toEn(src, depth) {
-    depth = depth || 0;
-    const trimmed = src.trim();
-    const full = EN[trimmed];
-    if (full !== undefined) return src.replace(trimmed, () => full);
+  const CYR = /[А-Яа-яЁё]/;
+  // Разделители, по которым строка режется на самостоятельные куски: точка-предложение, тире, точка с запятой, «·», двоеточие.
+  const SPLIT = /(\s*[—–]\s*|\s*·\s*|(?<=[.!?…])\s+|\s*;\s*|:\s+)/;
+
+  /* Перевод одной фразы. Возвращает null, если перевода нет — тогда остаётся русский оригинал.
+     Главное правило: либо кусок переводится целиком, либо не трогаем вовсе. Смесь языков
+     («паузу platforms», «Views за 7 days») хуже честного русского. */
+  function phrase(s, depth) {
+    s = s.trim();
+    if (!s || !CYR.test(s)) return null;
+
+    const full = EN[s];
+    if (full !== undefined) return full;
+
     for (const [re_, to] of RX) {
-      const m = trimmed.match(re_);
+      const m = s.match(re_);
       if (!m) continue;
-      // подставленный кусок сам может быть русским («Вышел 5 мин назад…») — переводим и его
-      const out = to.replace(/\$(\d)/g, (_, i) => depth < 3 ? toEn(m[+i] || "", depth + 1) : (m[+i] || ""));
-      return src.replace(trimmed, () => out);
+      return to.replace(/\$(\d)/g, (_, i) => {
+        const part = m[+i] || "";
+        if (depth >= 4 || !CYR.test(part)) return part;
+        const t = phrase(part, depth + 1);
+        return t === null ? part : t;
+      });
     }
-    let out = src;
+
+    // Строка собрана из нескольких самостоятельных кусков — переводим каждый отдельно.
+    if (depth < 4) {
+      const parts = s.split(SPLIT);
+      if (parts.length > 1) {
+        let hit = false;
+        const out = parts.map((p, i) => {
+          if (i % 2) return p;                       // разделитель
+          const t = p.trim();
+          if (!t) return p;
+          if (!CYR.test(t)) return p;
+          const r = phrase(t, depth + 1);
+          if (r === null) return p;
+          hit = true;
+          return p.replace(t, () => r);
+        }).join("");
+        if (hit && !CYR.test(out)) return out;
+      }
+    }
+
+    // Последнее средство — пословная подстановка, и только если она не оставила русских слов.
+    let out = s;
     for (const ru of PARTIAL) if (out.includes(ru)) out = out.split(ru).join(EN[ru]);
-    return out;
+    if (out !== s && !CYR.test(out)) return out;
+
+    return null;
+  }
+
+  function toEn(src, depth) {
+    const trimmed = src.trim();
+    if (!trimmed) return src;
+    let out = phrase(trimmed, depth || 0);
+    if (out === null) return src;
+    out = out.replace(/«([^»]*)»/g, "“$1”");   // кавычки тоже английские
+    return src.replace(trimmed, () => out);
   }
 
   /* ?i18n=debug — выводит в консоль всё, что осталось по-русски в английском режиме.
@@ -896,6 +1018,7 @@
   function reportMisses() {
     const left = new Set();
     document.querySelectorAll("body *").forEach(el => {
+      if (/^(SCRIPT|STYLE|TEXTAREA)$/.test(el.nodeName)) return;
       el.childNodes.forEach(n => {
         if (n.nodeType === 3 && /[А-Яа-яЁё]/.test(n.nodeValue)) left.add(n.nodeValue.trim());
       });
@@ -980,16 +1103,18 @@
     translateAll();
     startObserver();
     // update selector UI if present
-    const sel = document.getElementById("langSelect");
-    if (sel) sel.value = lang;
+    document.querySelectorAll(".js-lang").forEach(el => { el.value = lang; });
+    // числа, деньги и даты рисует само приложение — ему нужен повод перерисоваться
+    try { window.dispatchEvent(new CustomEvent("i18n:lang", { detail: lang })); } catch {}
   }
 
   function init() {
-    const sel = document.getElementById("langSelect");
-    if (sel) {
+    // селекторов языка может быть несколько (экран пароля и настройки) — все работают одинаково
+    document.querySelectorAll(".js-lang").forEach(sel => {
       sel.value = lang;
       sel.addEventListener("change", e => setLang(e.target.value));
-    }
+    });
+    document.documentElement.lang = lang === "en" ? "en" : "ru";
     translateAll();
     startObserver();
   }

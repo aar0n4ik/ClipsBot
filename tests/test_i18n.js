@@ -35,14 +35,34 @@ function ok(cond, msg) { if (!cond) { console.error("  FAIL " + msg); failed++; 
   ["Запись куска 14:00", "Recording segment 14:00"],
 ].forEach(([ru, en]) => ok(toEn(ru) === en, `${JSON.stringify(ru)} -> ${JSON.stringify(toEn(ru))}, ожидалось ${JSON.stringify(en)}`));
 
+/* 1b · составная строка переводится по кускам, а не превращается в смесь языков */
+[
+  ["Эфир идёт 3 ч 22 мин — «Delivering around LA in a Tesla». ИИ смотрит видео финалиста 2/4 на куске 2:00:00–4:00:00.",
+   "Live now 3 h 22 min — “Delivering around LA in a Tesla”. The AI watches finalist 2/4 on segment 2:00:00–4:00:00."],
+  ["Можно выводить — порог $20.00 набран.", "Ready to withdraw — the $20.00 threshold is reached."],
+  ["148 103 просм.", "148 103 views"],
+].forEach(([ru, en]) => ok(toEn(ru) === en, `${JSON.stringify(ru)} -> ${JSON.stringify(toEn(ru))}, ожидалось ${JSON.stringify(en)}`));
+
+/* 1c · чего не знаем — оставляем по-русски целиком; смесь языков недопустима */
+[
+  "Стример спорит с охранником у входа, тот не пускает с заказом",
+  "Какая-то совершенно новая строка от бота про площадки и клипы",
+].forEach(ru => {
+  const out = toEn(ru);
+  ok(!/[A-Za-z]/.test(out.replace(/[^А-Яа-яЁёA-Za-z]/g, "")) || !CYR.test(out),
+    `смесь языков: ${JSON.stringify(ru)} -> ${JSON.stringify(out)}`);
+});
+
 /* 2 · ни одна строка интерфейса не остаётся русской */
 const html = fs.readFileSync(path.join(ROOT, "docs/index.html"), "utf8");
 const cand = new Set();
-for (const m of html.matchAll(/"([^"\\\n]{2,90})"/g)) cand.add(m[1]);
-for (const m of html.matchAll(/'([^'\\\n]{2,90})'/g)) cand.add(m[1]);
-for (const m of html.matchAll(/>([^<>${}]{2,90})</g)) cand.add(m[1]);
+for (const m of html.matchAll(/"([^"\\\n]{2,400})"/g)) cand.add(m[1]);
+for (const m of html.matchAll(/'([^'\\\n]{2,400})'/g)) cand.add(m[1]);
+for (const m of html.matchAll(/>([^<>${}]{2,400})</g)) cand.add(m[1]);
 const ui = [...cand].map(x => x.trim()).filter(x => CYR.test(x) && !/[<>{}`]|\$\{/.test(x));
-const left = ui.filter(x => CYR.test(toEn(x))).sort();
+/* «Русский» в списке языков остаётся по-русски в обоих режимах — так принято в переключателях. */
+const KEEP_RU = new Set(["Русский"]);
+const left = ui.filter(x => !KEEP_RU.has(x) && CYR.test(toEn(x))).sort();
 ok(ui.length > 300, `строк для проверки подозрительно мало (${ui.length}) — сломался разбор index.html`);
 if (left.length) {
   console.error(`  FAIL не переведено ${left.length} из ${ui.length}:`);
