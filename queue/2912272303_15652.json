@@ -204,7 +204,7 @@
     "score": 100,
     "issues": []
    },
-   "status": "ready",
+   "status": "used",
    "comment": "Альберта жалко больше всего в этой истории",
    "cover_ms": 500
   }
@@ -216,9 +216,14 @@
    "started_at": "2026-10-28T04:44:49Z"
   },
   "youtube": {
+   "status": "posted",
+   "video_id": "9Z6omqnw5WI",
+   "url": "https://youtube.com/shorts/9Z6omqnw5WI",
+   "privacy": "public",
    "account": "yt_main",
-   "status": "uploading",
-   "started_at": "2026-10-28T04:44:49Z"
+   "posted_at": "2026-10-28T04:44:49Z",
+   "reason": "владелец нажал «Выложить сейчас»",
+   "by": "владелец"
   },
   "instagram": {
    "account": "ig_main",
