@@ -20,8 +20,8 @@
  "post": {
   "level": "paused",
   "msg": "остановлено вручную из дашборда",
-  "at": "2026-10-29T00:48:39Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40796426588",
+  "at": "2026-10-29T06:58:27Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40832413089",
   "since": "2026-10-28T20:58:13Z",
   "fails": 0,
   "last_ok": "2026-10-28T17:48:32Z"
