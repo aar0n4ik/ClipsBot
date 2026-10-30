@@ -29,8 +29,8 @@
  "doctor": {
   "level": "warn",
   "msg": "ИИ: ключи не работают: gemini-3.8-flash-7",
-  "at": "2026-10-30T09:59:08Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/41037350455",
+  "at": "2026-10-30T17:59:59Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/41103005253",
   "since": "2026-10-27T08:58:12Z",
   "fails": 0,
   "last_ok": "2026-10-27T00:25:14Z"
@@ -74,8 +74,8 @@
  "ai": {
   "level": "warn",
   "msg": "ИИ: ключи не работают: gemini-3.8-flash-7",
-  "at": "2026-10-30T09:59:07Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/41037350455",
+  "at": "2026-10-30T17:59:58Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/41103005253",
   "since": "2026-10-27T08:58:10Z",
   "fails": 0
  }
