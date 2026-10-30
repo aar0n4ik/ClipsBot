@@ -11,8 +11,8 @@
  "watch": {
   "level": "paused",
   "msg": "остановлено вручную из дашборда",
-  "at": "2026-10-29T21:21:59Z",
-  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40957149601",
+  "at": "2026-10-30T01:17:10Z",
+  "run_url": "https://github.com/aar0n4ik/ClipsBot/actions/runs/40984899403",
   "since": "2026-10-28T23:39:26Z",
   "fails": 0,
   "last_ok": "2026-10-28T19:47:24Z"
