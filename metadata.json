@@ -1,0 +1,7 @@
+{
+  "name": "ClipsBot",
+  "description": "SaaS platform for automated Twitch stream clipping, AI highlight detection, multi-channel streamer workspaces, and tiered subscription plans.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

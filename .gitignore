@@ -1,8 +1,9 @@
+node_modules/
+dist/
+.vite/
 __pycache__/
 *.pyc
 /state/
-!/state/tokens.enc
 /work/
-/fonts/
 .env
-.pytest_cache/
+.DS_Store
